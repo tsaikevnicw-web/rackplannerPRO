@@ -169,11 +169,11 @@ const RightPanel = () => {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-[10px] text-slate-500 mb-1">CX8 孔數</label>
-                                        <input type="number" value={getNicCount(selectedDevice, 'cx8p') || (selectedDevice.type === 'Server5U' ? 8 : 0)} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8p', 'qty', parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                        <input type="number" value={getNicCount(selectedDevice, 'cx8p') || (selectedDevice.type === 'Server5U' ? 8 : 0)} disabled className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 opacity-50 cursor-not-allowed"/>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] text-slate-500 mb-1">BMC 孔數</label>
-                                        <input type="number" value={getNicCount(selectedDevice, 'bmc') || 1} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', parseInt(e.target.value) || 1)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                        <input type="number" value={getNicCount(selectedDevice, 'bmc') || 1} disabled className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 opacity-50 cursor-not-allowed"/>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] text-slate-500 mb-1">NS-NIC-1</label>
