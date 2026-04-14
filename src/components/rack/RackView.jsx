@@ -65,6 +65,7 @@ const RackView = ({ racksToRender }) => {
                 className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
                 title={label}
                 onMouseDown={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     const rect = e.target.getBoundingClientRect();
                     const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
