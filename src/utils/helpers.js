@@ -22,7 +22,6 @@ export const getFabricGroup = (dev) => {
 export const getNicCount = (dev, key) => {
     const val = parseInt(dev.hardwareSpecs?.[key]?.qty);
     if (!isNaN(val)) return val;
-    if (key === 'ns_nic_1') return dev.type === 'Server5U' ? 4 : 2;
     return 0;
 };
 

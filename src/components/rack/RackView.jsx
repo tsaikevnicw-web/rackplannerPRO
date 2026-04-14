@@ -11,13 +11,33 @@ const RackView = ({ racksToRender }) => {
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
 
-    const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-1.5 h-1.5", colorOverride = null) => {
+    const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
         
-        // Connected ports are bright green, unconnected are dark slate
-        const bgClass = colorOverride ? colorOverride : (isConnected ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-700 opacity-60');
-        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+        let connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; // Default green
+        let defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+
+        if (isConnected) {
+            if (portKey.startsWith('cx8-')) {
+                const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
+                if (cx8NetworkType === 'InfiniBand') {
+                    connectedColorStr = 'bg-orange-500 shadow-[0_0_8px_#f97316]';
+                    defaultBorder = 'border-orange-200';
+                }
+            } else if (portKey.startsWith('ns_nic_')) {
+                connectedColorStr = 'bg-yellow-400 shadow-[0_0_8px_#facc15]';
+                defaultBorder = 'border-yellow-200';
+            } else if (portKey === 'bmc') {
+                connectedColorStr = 'bg-blue-400 shadow-[0_0_8px_#60a5fa]';
+                defaultBorder = 'border-blue-200';
+            } else if (portKey.startsWith('port-')) {
+                connectedColorStr = 'bg-purple-400 shadow-[0_0_8px_#c084fc]';
+                defaultBorder = 'border-purple-200';
+            }
+        }
+
+        const bgClass = colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
 
         return (
             <div
@@ -191,21 +211,21 @@ const RackView = ({ racksToRender }) => {
                                                     <div className="flex items-center justify-end gap-2 w-full">
                                                         <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">CX8</div>
                                                         <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
-                                                            {Array.from({ length: 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50', 'w-2.5 h-2.5 shrink-0', cx8ActiveColor))}
+                                                            {Array.from({ length: getNicCount(dev, 'cx8p') || (dev.type === 'Server5U' ? 8 : 0) }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
                                                         </div>
                                                     </div>
                                                     {nic1Count > 0 && (
                                                         <div className="flex items-center justify-end gap-2 w-full">
                                                             <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
                                                             <div className="flex gap-0.5">
-                                                                {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', 'w-2.5 h-2.5 shrink-0'))}
+                                                                {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
                                                             </div>
                                                         </div>
                                                     )}
                                                     <div className="flex items-center justify-end gap-2 w-full">
                                                         <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
-                                                            {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50', 'w-2.5 h-2.5 shrink-0')}
+                                                            {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
                                                     </div>
                                                 </div>
