@@ -10,13 +10,10 @@ const CablesOverlay = () => {
         let animationFrameId;
 
         const updateCoords = () => {
-            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
-            const scrollParent = document.querySelector('.main-canvas');
-            if (rackContainer && scrollParent) {
+            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+            if (rackContainer) {
                 const ports = document.querySelectorAll('[data-port-id]');
                 const containerRect = rackContainer.getBoundingClientRect();
-                const sLeft = scrollParent.scrollLeft;
-                const sTop = scrollParent.scrollTop;
 
                 const newCoords = {};
                 let changed = false;
@@ -24,8 +21,8 @@ const CablesOverlay = () => {
                 ports.forEach(port => {
                     const id = port.getAttribute('data-port-id');
                     const rect = port.getBoundingClientRect();
-                    const x = rect.left + rect.width / 2 - containerRect.left + sLeft;
-                    const y = rect.top + rect.height / 2 - containerRect.top + sTop;
+                    const x = rect.left + rect.width / 2 - containerRect.left;
+                    const y = rect.top + rect.height / 2 - containerRect.top;
                     newCoords[id] = { x, y };
                 });
 
@@ -50,16 +47,13 @@ const CablesOverlay = () => {
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (drawing) {
-                const scrollParent = document.querySelector('.main-canvas');
-                const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
-                if (!scrollParent || !rackContainer) return;
+                const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+                if (!rackContainer) return;
                 
                 const containerRect = rackContainer.getBoundingClientRect();
-                const sLeft = scrollParent.scrollLeft;
-                const sTop = scrollParent.scrollTop;
 
-                const currentX = e.clientX - containerRect.left + sLeft;
-                const currentY = e.clientY - containerRect.top + sTop;
+                const currentX = e.clientX - containerRect.left;
+                const currentY = e.clientY - containerRect.top;
 
                 setDrawing(prev => ({ ...prev, currentX, currentY }));
             }
