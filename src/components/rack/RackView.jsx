@@ -6,7 +6,7 @@ import { useRackInteractions } from '../../hooks/useRackInteractions';
 
 const RackView = ({ racksToRender }) => {
     const { 
-        devices, selectedId, setSelectedId, showCables, portCoords, setPortCoords, drawing, setDrawing, connectedPortsSet, generateId 
+        devices, selectedId, setSelectedId, showCables, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
     } = useRackPlanner();
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
@@ -15,27 +15,8 @@ const RackView = ({ racksToRender }) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
         
-        let connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; // Default green
-        let defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
-
-        if (isConnected) {
-            if (portKey.startsWith('cx8-')) {
-                const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-                if (cx8NetworkType === 'InfiniBand') {
-                    connectedColorStr = 'bg-orange-500 shadow-[0_0_8px_#f97316]';
-                    defaultBorder = 'border-orange-200';
-                }
-            } else if (portKey.startsWith('ns_nic_')) {
-                connectedColorStr = 'bg-yellow-400 shadow-[0_0_8px_#facc15]';
-                defaultBorder = 'border-yellow-200';
-            } else if (portKey === 'bmc') {
-                connectedColorStr = 'bg-blue-400 shadow-[0_0_8px_#60a5fa]';
-                defaultBorder = 'border-blue-200';
-            } else if (portKey.startsWith('port-')) {
-                connectedColorStr = 'bg-purple-400 shadow-[0_0_8px_#c084fc]';
-                defaultBorder = 'border-purple-200';
-            }
-        }
+        const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
+        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
 
         const bgClass = colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
 
@@ -45,6 +26,10 @@ const RackView = ({ racksToRender }) => {
                 data-port-id={fullId}
                 className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
                 title={label}
+                onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (isConnected) handleDisconnectPort(fullId);
+                }}
                 onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

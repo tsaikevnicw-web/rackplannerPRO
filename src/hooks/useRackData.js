@@ -40,6 +40,30 @@ export function useRackData(alertModalRef) {
         setDevices(prev => prev.map(dev => dev.id === id ? { ...dev, ...updates } : dev));
     };
 
+    const handleDisconnectPort = (fullPortId) => {
+        setDevices(prev => prev.map(dev => {
+            let modified = false;
+            const newConns = { ...(dev.connections || {}) };
+            
+            if (fullPortId.startsWith(dev.id + '-')) {
+                const portKey = fullPortId.replace(dev.id + '-', '');
+                if (newConns[portKey]) {
+                    delete newConns[portKey];
+                    modified = true;
+                }
+            }
+            
+            Object.keys(newConns).forEach(k => {
+                if (newConns[k] === fullPortId) {
+                    delete newConns[k];
+                    modified = true;
+                }
+            });
+
+            return modified ? { ...dev, connections: newConns } : dev;
+        }));
+    };
+
     const handleConnectionChange = (deviceId, portKey, targetConnection) => {
         setDevices(prev => prev.map(dev => {
             if (dev.id !== deviceId) return dev;
@@ -162,6 +186,7 @@ export function useRackData(alertModalRef) {
         handleUpdateRack,
         handleUpdateDevice,
         handleConnectionChange,
+        handleDisconnectPort,
         handleHardwareSpecChange,
         handleAutoConnectGroup,
         handleHAAutoConnect
