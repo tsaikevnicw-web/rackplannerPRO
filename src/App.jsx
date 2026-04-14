@@ -14,7 +14,7 @@ const AppContent = () => {
         viewMode, racks, devices, activeRackId, isFitToScreen, scaleFactor, setScaleFactor,
         mainAreaRef, rackContainerRef, layoutSize, setLayoutSize,
         alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
-        clearDeviceConfirm, setClearDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId
+        clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId
     } = useRackPlanner();
 
     // Scale Logic
@@ -75,6 +75,24 @@ const AppContent = () => {
             return { ...dev, connections: newConns };
         }));
         setClearDeviceConfirm({ isOpen: false, deviceId: null });
+    };
+
+    const executeDeleteDevice = () => {
+        setDevices(prev => prev.map(dev => {
+            if (dev.id === deleteDeviceConfirm.deviceId) return null;
+            const newConns = { ...(dev.connections || {}) };
+            let modified = false;
+            Object.keys(newConns).forEach(k => { 
+                if (newConns[k] && newConns[k].startsWith(`${deleteDeviceConfirm.deviceId}-`)) {
+                    delete newConns[k];
+                    modified = true;
+                }
+            });
+            if (!modified) return dev;
+            return { ...dev, connections: newConns };
+        }).filter(Boolean));
+        setDeleteDeviceConfirm({ isOpen: false, deviceId: null });
+        setSelectedId(null);
     };
 
     return (
@@ -157,6 +175,19 @@ const AppContent = () => {
                         <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
                             <button onClick={() => setClearDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
                             <button onClick={executeClearDeviceConnections} className="px-4 py-2 rounded-lg text-sm font-medium bg-yellow-600 hover:bg-yellow-500 text-white transition-colors shadow-lg shadow-yellow-600/30">確定清除</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {deleteDeviceConfirm.isOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700"><h3 className="text-lg font-bold text-red-500 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除設備</h3></div>
+                        <div className="p-6 text-slate-300"><p>確定要從機櫃中完全刪除這台設備嗎？</p><p className="text-sm text-slate-500 mt-2">此設備以及所有相連的網路線都將被移除，且此操作無法復原！</p></div>
+                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setDeleteDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
+                            <button onClick={executeDeleteDevice} className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-600/30">確定刪除</button>
                         </div>
                     </div>
                 </div>

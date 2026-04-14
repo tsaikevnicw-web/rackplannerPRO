@@ -7,7 +7,7 @@ import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Se
 const RightPanel = () => {
     const { 
         racks, devices, selectedId, setSelectedId, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
-        handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, showAlert
+        handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert
     } = useRackPlanner();
 
     const selectedRack = racks.find(r => r.id === selectedId);
@@ -98,12 +98,14 @@ const RightPanel = () => {
 
                 <div className="flex gap-2 -mt-2">
                     <div draggable onDragStart={handleDragStartClone} className="flex-1 flex items-center justify-center gap-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 py-2.5 rounded-lg transition-colors text-xs font-medium border border-blue-500/20 cursor-grab active:cursor-grabbing shadow-sm" title="按住並拖曳至機櫃以複製此設備">
-                        <Copy className="w-3.5 h-3.5" /> 拖曳複製
+                        <Copy className="w-3.5 h-3.5" /> 複製
                     </div>
                     <button onClick={() => setClearDeviceConfirm({ isOpen: true, deviceId: selectedDevice.id })} className="flex-1 flex items-center justify-center gap-1.5 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-300 py-2.5 rounded-lg transition-colors text-xs font-medium border border-yellow-500/20 shadow-sm" title="清除此設備的所有網路連線">
                         <Unplug className="w-3.5 h-3.5" /> 清除連線
                     </button>
-                    {/* Delete device will be handled by Context, we need a method but I'll add handleUpdateDevice for now, wait we need actual device remove */}
+                    <button onClick={() => setDeleteDeviceConfirm({ isOpen: true, deviceId: selectedDevice.id })} className="flex-1 flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-300 py-2.5 rounded-lg transition-colors text-xs font-medium border border-red-500/20 shadow-sm" title="完全刪除此設備及所有設定">
+                        <Trash2 className="w-3.5 h-3.5" /> 刪除設備
+                    </button>
                 </div>
 
                 <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">

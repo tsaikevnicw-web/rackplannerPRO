@@ -35,6 +35,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [clearConfirm, setClearConfirm] = useState({ isOpen: false, type: '' });
     const [deleteRackConfirm, setDeleteRackConfirm] = useState({ isOpen: false, rackId: null });
     const [clearDeviceConfirm, setClearDeviceConfirm] = useState({ isOpen: false, deviceId: null });
+    const [deleteDeviceConfirm, setDeleteDeviceConfirm] = useState({ isOpen: false, deviceId: null });
     const [raModalState, setRaModalState] = useState({ isOpen: false, type: '' });
 
     // Scaling
@@ -69,7 +70,7 @@ export const RackPlannerProvider = ({ children }) => {
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
             showCables, setShowCables, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
-            clearDeviceConfirm, setClearDeviceConfirm, raModalState, setRaModalState, isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
+            clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState, isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
             isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
             rackContainerRef, mainAreaRef, fileInputRef,
             connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
