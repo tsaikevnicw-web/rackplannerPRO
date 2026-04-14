@@ -1,5 +1,6 @@
 import { getFabricGroup, getNicCount, getSwitchPortCount } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
+import html2canvas from 'html2canvas';
 
 export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert) {
     const handleSaveData = () => {
@@ -164,18 +165,11 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
         setIsExporting(true);
         try {
             await document.fonts.ready;
-            if (!window.html2canvas) {
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    script.onload = resolve; script.onerror = reject; document.head.appendChild(script);
-                });
-            }
             const element = rackContainerRef.current;
             const originalStyle = element.style.cssText; const originalTransform = element.style.transform;
             element.style.transform = 'none'; element.style.backgroundColor = '#020617';
 
-            const canvas = await window.html2canvas(element, { backgroundColor: '#020617', scale: 2, logging: false, useCORS: true });
+            const canvas = await html2canvas(element, { backgroundColor: '#020617', scale: 2, logging: false, useCORS: true });
             element.style.cssText = originalStyle; element.style.transform = originalTransform;
 
             const ctx = canvas.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0);

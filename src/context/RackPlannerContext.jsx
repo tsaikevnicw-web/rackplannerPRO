@@ -12,7 +12,7 @@ export const RackPlannerProvider = ({ children }) => {
     const alertModalRef = useRef(null);
 
     // Context Hooks Data
-    const { racks, setRacks, devices, setDevices, connectedPortsSet, generateId, handleUpdateDevice, handleConnectionChange, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect } = useRackData(alertModalRef);
+    const { racks, setRacks, devices, setDevices, connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect } = useRackData(alertModalRef);
 
     // UI States
     const [activeRackId, setActiveRackId] = useState('rack-1');
@@ -72,7 +72,7 @@ export const RackPlannerProvider = ({ children }) => {
             clearDeviceConfirm, setClearDeviceConfirm, raModalState, setRaModalState, isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
             isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
             rackContainerRef, mainAreaRef, fileInputRef,
-            connectedPortsSet, generateId, handleUpdateDevice, handleConnectionChange, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
+            connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
             showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange
         }}>
             {children}

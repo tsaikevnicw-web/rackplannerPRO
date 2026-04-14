@@ -116,9 +116,9 @@ const Sidebar = () => {
                 })}
             </div>
             
-            <div className="p-4 border-t border-slate-800 bg-slate-950/80 text-xs text-slate-500 text-center flex flex-col items-center gap-1">
-                <span>Designed for AI Infrastructure</span>
-                <span>Powered by I E C</span>
+            <div className="p-4 border-t border-slate-800 bg-slate-950/80 text-xs text-slate-500 text-center flex flex-col items-center gap-1 font-mono">
+                <span>Inventec Corp. Kevin Tsai</span>
+                <span>Tsai.KevinC.W@inventec.com</span>
             </div>
         </aside>
     );

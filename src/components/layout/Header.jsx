@@ -40,32 +40,8 @@ const Header = () => {
                 </div>
 
                 <div className="h-6 w-px bg-slate-700/50 hidden sm:block"></div>
-                
-                <div className="hidden lg:flex items-center gap-4 text-xs font-mono font-bold">
-                    <div className="bg-slate-900/80 text-emerald-400 px-3 py-1.5 rounded border border-emerald-500/20 shadow-inner relative group">
-                        SPACE: {totalSpace} U
-                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">已使用 U 數 (不含SideCDU)</div>
-                    </div>
-                    <div className="bg-slate-900/80 text-orange-400 px-3 py-1.5 rounded border border-orange-500/20 shadow-inner relative group">
-                        PWR: {totalPower.toLocaleString()} W
-                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">機房總功耗</div>
-                    </div>
-                    <div className="bg-slate-900/80 text-blue-400 px-3 py-1.5 rounded border border-blue-500/20 shadow-inner relative group">
-                        VAL: ${totalPrice.toLocaleString()}
-                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">機房總報價 (USD)</div>
-                    </div>
-                </div>
-
-                <div className="h-6 w-px bg-slate-700/50 hidden sm:block"></div>
 
                 <div className="hidden sm:flex bg-slate-950/80 p-0.5 rounded-md border border-slate-700 shadow-inner gap-1">
-                    <button
-                        onClick={handleExportImage}
-                        disabled={isExporting}
-                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded transition-all text-orange-400 hover:bg-slate-800 hover:text-orange-300 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        <Monitor className="w-4 h-4" /> 截圖存檔
-                    </button>
                     <div className="relative">
                         <button
                             onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
@@ -103,20 +79,45 @@ const Header = () => {
                             </>
                         )}
                     </div>
+                    <button
+                        onClick={handleExportImage}
+                        disabled={isExporting}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded transition-all text-orange-400 hover:bg-slate-800 hover:text-orange-300 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <Monitor className="w-4 h-4" /> 截圖存檔
+                    </button>
+                </div>
+
+                <div className="h-6 w-px bg-slate-700/50 hidden sm:block"></div>
+                
+                <div className="hidden lg:flex items-center gap-4 text-xs font-bold tracking-wide">
+                    <div className="bg-slate-900/80 text-emerald-400 px-3 py-1.5 rounded border border-emerald-500/20 shadow-inner relative group">
+                        機房總空間：{totalSpace} U
+                    </div>
+                    <div className="bg-slate-900/80 text-orange-400 px-3 py-1.5 rounded border border-orange-500/20 shadow-inner relative group">
+                        機房總功耗：{totalPower.toLocaleString()} W
+                    </div>
+                    <div className="bg-slate-900/80 text-blue-400 px-3 py-1.5 rounded border border-blue-500/20 shadow-inner relative group">
+                        機房總價：${totalPrice.toLocaleString()}
+                    </div>
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
-                {viewMode === 'single' && (
+                {(viewMode === 'single' || viewMode === 'overview') && (
                     <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-md border border-slate-700 shadow-inner mr-4">
-                        <span className="text-xs text-slate-400 font-bold px-2">當前機櫃</span>
-                        <select
-                            value={activeRackId}
-                            onChange={(e) => { setActiveRackId(e.target.value); setSelectedId(e.target.value); }}
-                            className="bg-slate-800 border-none text-sm text-white focus:ring-0 cursor-pointer outline-none pl-2 pr-6 py-1 rounded"
-                        >
-                            {racks.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                        </select>
+                        {viewMode === 'single' && (
+                            <>
+                                <span className="text-xs text-slate-400 font-bold px-2">當前機櫃</span>
+                                <select
+                                    value={activeRackId}
+                                    onChange={(e) => { setActiveRackId(e.target.value); setSelectedId(e.target.value); }}
+                                    className="bg-slate-800 border-none text-sm text-white focus:ring-0 cursor-pointer outline-none pl-2 pr-6 py-1 rounded"
+                                >
+                                    {racks.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                </select>
+                            </>
+                        )}
                         <button
                             onClick={handleAddRackClick}
                             className="ml-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)]"
