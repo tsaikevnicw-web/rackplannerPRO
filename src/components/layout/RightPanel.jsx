@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount } from '../../utils/helpers';
-import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive } from 'lucide-react';
+import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap } from 'lucide-react';
 
 const RightPanel = () => {
     const { 
