@@ -222,6 +222,14 @@ const RackView = ({ racksToRender }) => {
                                                             </div>
                                                         </div>
                                                     )}
+                                                    {nic2Count > 0 && (
+                                                        <div className="flex items-center justify-end gap-2 w-full">
+                                                            <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                            <div className="flex gap-0.5">
+                                                                {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center justify-end gap-2 w-full">
                                                         <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
