@@ -188,10 +188,9 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
             ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = Math.max(4, fontSize * 0.1); ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
 
             const drawWatermarkText = (text, yOffset) => {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; ctx.fillText(text, 0, yOffset);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.lineWidth = Math.max(1, fontSize * 0.02); ctx.strokeText(text, 0, yOffset);
+                ctx.fillStyle = 'rgba(128, 128, 128, 0.35)'; ctx.fillText(text, 0, yOffset);
             };
-            drawWatermarkText('Inventec Confidential', -fontSize * 0.6); drawWatermarkText(timestamp, fontSize * 0.6);
+            drawWatermarkText(`Inventec Confidential ${timestamp}`, 0);
             ctx.restore();
 
             const url = canvas.toDataURL('image/png');

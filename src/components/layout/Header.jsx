@@ -4,6 +4,7 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
     const { 
+        devices,
         viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
         isFitToScreen, setIsFitToScreen, showCables, setShowCables,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
@@ -11,6 +12,10 @@ const Header = () => {
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage,
         setClearConfirm, generateId, showAlert 
     } = useRackPlanner();
+
+    const totalSpace = devices.filter(d => d.type !== 'SideCDU').reduce((sum, dev) => sum + (dev.size || 0), 0);
+    const totalPower = devices.reduce((sum, dev) => sum + (dev.power || 0), 0);
+    const totalPrice = devices.reduce((sum, dev) => sum + (dev.price || 0), 0);
 
     const handleClearAllClick = () => {
         if (viewMode === 'single') setClearConfirm({ isOpen: true, type: 'single' });
@@ -35,8 +40,32 @@ const Header = () => {
                 </div>
 
                 <div className="h-6 w-px bg-slate-700/50 hidden sm:block"></div>
+                
+                <div className="hidden lg:flex items-center gap-4 text-xs font-mono font-bold">
+                    <div className="bg-slate-900/80 text-emerald-400 px-3 py-1.5 rounded border border-emerald-500/20 shadow-inner relative group">
+                        SPACE: {totalSpace} U
+                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">已使用 U 數 (不含SideCDU)</div>
+                    </div>
+                    <div className="bg-slate-900/80 text-orange-400 px-3 py-1.5 rounded border border-orange-500/20 shadow-inner relative group">
+                        PWR: {totalPower.toLocaleString()} W
+                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">機房總功耗</div>
+                    </div>
+                    <div className="bg-slate-900/80 text-blue-400 px-3 py-1.5 rounded border border-blue-500/20 shadow-inner relative group">
+                        VAL: ${totalPrice.toLocaleString()}
+                        <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-max bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-xl z-50">機房總報價 (USD)</div>
+                    </div>
+                </div>
 
-                <div className="hidden sm:flex bg-slate-950/80 p-0.5 rounded-md border border-slate-700 shadow-inner">
+                <div className="h-6 w-px bg-slate-700/50 hidden sm:block"></div>
+
+                <div className="hidden sm:flex bg-slate-950/80 p-0.5 rounded-md border border-slate-700 shadow-inner gap-1">
+                    <button
+                        onClick={handleExportImage}
+                        disabled={isExporting}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded transition-all text-orange-400 hover:bg-slate-800 hover:text-orange-300 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <Monitor className="w-4 h-4" /> 截圖存檔
+                    </button>
                     <div className="relative">
                         <button
                             onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
@@ -45,8 +74,7 @@ const Header = () => {
                                 isFileMenuOpen ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                             } ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            {isExporting ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <FileBox className="w-4 h-4" />}
-                            檔案
+                            <FileBox className="w-4 h-4" /> 檔案
                         </button>
 
                         {isFileMenuOpen && (
@@ -70,9 +98,6 @@ const Header = () => {
                                     </button>
                                     <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-purple-500/20 hover:text-purple-400 text-sm text-slate-300 transition-colors">
                                         <Share2 className="w-4 h-4" /> 匯出網路線路表 (.csv)
-                                    </button>
-                                    <button onClick={handleExportImage} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-500/20 hover:text-orange-400 text-sm text-slate-300 transition-colors">
-                                        <Monitor className="w-4 h-4" /> 匯出機櫃示意圖 (.png)
                                     </button>
                                 </div>
                             </>

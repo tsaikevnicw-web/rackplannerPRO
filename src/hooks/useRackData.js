@@ -3,7 +3,7 @@ import { getNicCount, getSwitchPortCount, getFabricGroup } from '../utils/helper
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
 export function useRackData(alertModalRef) {
-    const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-A01', type: 'General', uCount: DEFAULT_RACK_U_COUNT }]);
+    const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT }]);
     const [devices, setDevices] = useState([]);
     
     // Core references for calculations
@@ -24,6 +24,17 @@ export function useRackData(alertModalRef) {
         });
         return set;
     }, [devices]);
+
+    const handleUpdateRack = (id, updates) => {
+        setRacks(prev => prev.map(rack => {
+            if (rack.id !== id) return rack;
+            const updatedRack = { ...rack, ...updates };
+            if (updatedRack.type === 'ORv3') {
+                updatedRack.uCount = 44;
+            }
+            return updatedRack;
+        }));
+    };
 
     const handleUpdateDevice = (id, updates) => {
         setDevices(prev => prev.map(dev => dev.id === id ? { ...dev, ...updates } : dev));
@@ -148,6 +159,7 @@ export function useRackData(alertModalRef) {
         devices, setDevices,
         connectedPortsSet,
         generateId,
+        handleUpdateRack,
         handleUpdateDevice,
         handleConnectionChange,
         handleHardwareSpecChange,
