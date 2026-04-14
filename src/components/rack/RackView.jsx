@@ -42,26 +42,7 @@ const RackView = ({ racksToRender }) => {
         return (
             <div
                 key={portKey}
-                ref={(el) => {
-                    if (el) {
-                        const rect = el.getBoundingClientRect();
-                        const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
-                        const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0 };
-                        const scrollParent = document.querySelector('.main-canvas');
-                        const sLeft = scrollParent ? scrollParent.scrollLeft : 0;
-                        const sTop = scrollParent ? scrollParent.scrollTop : 0;
-
-                        const x = rect.left + rect.width / 2 - containerRect.left + sLeft;
-                        const y = rect.top + rect.height / 2 - containerRect.top + sTop;
-                        
-                        setPortCoords(prev => {
-                            if (!prev[fullId] || Math.abs(prev[fullId].x - x) > 1 || Math.abs(prev[fullId].y - y) > 1) {
-                                return { ...prev, [fullId]: { x, y } };
-                            }
-                            return prev;
-                        });
-                    }
-                }}
+                data-port-id={fullId}
                 className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
                 title={label}
                 onMouseDown={(e) => {

@@ -1,8 +1,51 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const CablesOverlay = () => {
-    const { devices, portCoords, drawing, setDrawing, showCables, handleConnectionChange } = useRackPlanner();
+    const { devices, drawing, setDrawing, showCables, handleConnectionChange } = useRackPlanner();
+    const [localCoords, setLocalCoords] = useState({});
+
+    useEffect(() => {
+        if (!showCables) return;
+        let animationFrameId;
+
+        const updateCoords = () => {
+            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
+            const scrollParent = document.querySelector('.main-canvas');
+            if (rackContainer && scrollParent) {
+                const ports = document.querySelectorAll('[data-port-id]');
+                const containerRect = rackContainer.getBoundingClientRect();
+                const sLeft = scrollParent.scrollLeft;
+                const sTop = scrollParent.scrollTop;
+
+                const newCoords = {};
+                let changed = false;
+
+                ports.forEach(port => {
+                    const id = port.getAttribute('data-port-id');
+                    const rect = port.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2 - containerRect.left + sLeft;
+                    const y = rect.top + rect.height / 2 - containerRect.top + sTop;
+                    newCoords[id] = { x, y };
+                });
+
+                setLocalCoords(prev => {
+                    for (let k in newCoords) {
+                        if (!prev[k] || Math.abs(prev[k].x - newCoords[k].x) > 0.5 || Math.abs(prev[k].y - newCoords[k].y) > 0.5) {
+                            changed = true;
+                            break;
+                        }
+                    }
+                    if (Object.keys(newCoords).length !== Object.keys(prev).length) changed = true;
+                    return changed ? newCoords : prev;
+                });
+            }
+            animationFrameId = requestAnimationFrame(updateCoords);
+        };
+
+        animationFrameId = requestAnimationFrame(updateCoords);
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [showCables]);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -76,8 +119,8 @@ const CablesOverlay = () => {
                 if (targetKey) {
                     const localFullId = `${dev.id}-${localKey}`;
                     const targetFullId = targetKey;
-                    const startCoord = portCoords[localFullId];
-                    const endCoord = portCoords[targetFullId];
+                    const startCoord = localCoords[localFullId];
+                    const endCoord = localCoords[targetFullId];
 
                     if (startCoord && endCoord) {
                         connectionPaths.push({
