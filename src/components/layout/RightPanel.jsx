@@ -194,18 +194,18 @@ const RightPanel = () => {
                         <label className="block text-xs font-bold text-slate-400 mb-3 flex items-center justify-between">
                             硬體規格 (Hardware Specs)
                         </label>
-                        <div className="grid grid-cols-[64px_1fr_80px] gap-2 mb-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        <div className="grid grid-cols-[64px_1fr_60px] gap-2 mb-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                             <div></div>
-                            <div>零組件型號 (Model)</div>
-                            <div className="text-center">數量 (Qty)</div>
+                            <div>零組件 (Model)</div>
+                            <div className="text-center">數量</div>
                         </div>
                         {HW_SPECS_CONFIG.map(spec => {
                             const currentVal = (selectedDevice.hardwareSpecs || {})[spec.key] || { model: '', qty: '' };
                             return (
-                                <div key={spec.key} className="grid grid-cols-[64px_1fr_80px] gap-2 items-center mb-2">
+                                <div key={spec.key} className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
                                     <div className="text-[10px] font-mono text-slate-400 text-right pr-2">{spec.label}</div>
-                                    <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)} className="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none"/>
-                                    <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')} className="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none text-center"/>
+                                    <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)} className="w-full min-w-0 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none"/>
+                                    <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')} className="w-full min-w-0 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none text-center"/>
                                 </div>
                             );
                         })}
