@@ -144,8 +144,72 @@ const RightPanel = () => {
                     </div>
                 </div>
 
-                {/* Additional Spec panels are simplified here for line count limits. They would use HW_SPECS_CONFIG */}
-                
+                {((selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage')) && (
+                    <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[11px] font-bold text-orange-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 設備功耗 (W)</label>
+                                <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono"/>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 設備報價 (USD)</label>
+                                <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono"/>
+                            </div>
+
+                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <label className="block text-[11px] font-bold text-blue-400 mb-1.5">CX8 Network Type</label>
+                                <select value={cx8NetworkType} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8NetworkType', 'type', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                                    <option value="Ethernet">Ethernet / RoCE v2 (綠線)</option>
+                                    <option value="InfiniBand">InfiniBand / NDR (橘線)</option>
+                                </select>
+                            </div>
+                            
+                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] text-slate-500 mb-1">CX8 孔數</label>
+                                        <input type="number" value={getNicCount(selectedDevice, 'cx8p') || (selectedDevice.type === 'Server5U' ? 8 : 0)} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8p', 'qty', parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-slate-500 mb-1">BMC 孔數</label>
+                                        <input type="number" value={getNicCount(selectedDevice, 'bmc') || 1} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', parseInt(e.target.value) || 1)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-slate-500 mb-1">NS-NIC-1</label>
+                                        <input type="number" value={nic1Count} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ns_nic_1', 'qty', parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-slate-500 mb-1">NS-NIC-2</label>
+                                        <input type="number" value={nic2Count} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ns_nic_2', 'qty', parseInt(e.target.value) || 0)} className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {((selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage')) && (
+                    <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 mt-4">
+                        <label className="block text-xs font-bold text-slate-400 mb-3 flex items-center justify-between">
+                            硬體規格 (Hardware Specs)
+                        </label>
+                        <div className="grid grid-cols-[1fr_80px] gap-2 mb-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
+                            <div>零組件型號 (Model)</div>
+                            <div>數量 (Qty)</div>
+                        </div>
+                        {HW_SPECS_CONFIG.map(spec => {
+                            const currentVal = (selectedDevice.hardwareSpecs || {})[spec.key] || { model: '', qty: '' };
+                            return (
+                                <div key={spec.key} className="grid grid-cols-[auto_1fr_80px] gap-2 items-center mb-2">
+                                    <div className="text-[10px] font-mono text-slate-400 w-16 text-right pr-2">{spec.label}</div>
+                                    <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)} className="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none"/>
+                                    <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')} className="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none text-center"/>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </aside>
     );

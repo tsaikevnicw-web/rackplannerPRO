@@ -5,6 +5,7 @@ import Sidebar from './components/layout/Sidebar';
 import RightPanel from './components/layout/RightPanel';
 import RackView from './components/rack/RackView';
 import NetworkTopology from './components/network/NetworkTopology';
+import CablesOverlay from './components/rack/CablesOverlay';
 import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug } from 'lucide-react';
 
@@ -91,6 +92,7 @@ const AppContent = () => {
                             className={`relative flex p-8 pb-12 ${viewMode === 'overview' ? 'gap-8 flex-row items-start justify-start w-max' : 'flex-col items-center w-full'} ${viewMode === 'network' ? 'min-w-[1800px] shrink-0' : ''}`} 
                             style={{ transform: isFitToScreen && viewMode !== 'single' ? `scale(${scaleFactor})` : 'none', transformOrigin: 'top left' }}
                         >
+                             <CablesOverlay />
                              {viewMode === 'network' ? (
                                  <NetworkTopology nsDevs={nsDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
                              ) : (

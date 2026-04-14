@@ -15,16 +15,9 @@ const RackView = ({ racksToRender }) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
         
-        let cx8Color = '';
-        if (portKey.startsWith('cx8-')) {
-            const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-            cx8Color = cx8NetworkType === 'Ethernet' 
-                ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' 
-                : 'bg-orange-500 shadow-[0_0_8px_#f97316]';
-        }
-
-        const bgClass = colorOverride ? colorOverride : (isConnected ? (cx8Color || 'bg-blue-400') : 'bg-slate-700');
-        const defaultBorder = 'border-slate-500';
+        // Connected ports are bright green, unconnected are dark slate
+        const bgClass = colorOverride ? colorOverride : (isConnected ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-700 opacity-60');
+        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
 
         return (
             <div
@@ -32,10 +25,8 @@ const RackView = ({ racksToRender }) => {
                 ref={(el) => {
                     if (el) {
                         const rect = el.getBoundingClientRect();
-                        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                         const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
-                        const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0, scrollLeft: 0, scrollTop: 0 };
+                        const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0 };
                         const scrollParent = document.querySelector('.main-canvas');
                         const sLeft = scrollParent ? scrollParent.scrollLeft : 0;
                         const sTop = scrollParent ? scrollParent.scrollTop : 0;
@@ -51,7 +42,7 @@ const RackView = ({ racksToRender }) => {
                         });
                     }
                 }}
-                className={`rounded-full ${sizeClass} border ${defaultBorder} transition-colors cursor-crosshair shrink-0 relative group z-50 ${hoverClass} ${bgClass}`}
+                className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
                 title={label}
                 onMouseDown={(e) => {
                     e.stopPropagation();
@@ -69,7 +60,6 @@ const RackView = ({ racksToRender }) => {
                 onMouseUp={(e) => {
                     e.stopPropagation();
                     if (drawing && drawing.sourceId !== dev.id) {
-                        // Create connection (Simplified for separation, handled in main App or context)
                         const event = new CustomEvent('rackplanner-connect', { detail: { targetDevId: dev.id, targetPortKey: portKey, drawing }});
                         window.dispatchEvent(event);
                     }
@@ -78,7 +68,7 @@ const RackView = ({ racksToRender }) => {
                 onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
                 onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
             >
-                {isConnected && !colorOverride && !cx8Color && <div className="absolute inset-0 m-auto w-1 h-1 bg-white rounded-full"></div>}
+                {isConnected && !colorOverride && <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>}
             </div>
         );
     };
