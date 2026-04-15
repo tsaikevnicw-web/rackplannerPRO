@@ -114,7 +114,8 @@ const CablesOverlay = () => {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                 if (targetKey) {
                     const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
-                    const shouldDraw = showCables || (selectedId && (dev.id === selectedId || targetDevId === selectedId));
+                    const isHighlighted = selectedId && (dev.id === selectedId || targetDevId === selectedId);
+                    const shouldDraw = showCables || isHighlighted;
                     
                     if (shouldDraw) {
                         const localFullId = `${dev.id}-${localKey}`;
@@ -126,7 +127,8 @@ const CablesOverlay = () => {
                             connectionPaths.push({
                                 id: `${localFullId}-to-${targetFullId}`,
                                 path: generatePath(startCoord.x, startCoord.y, endCoord.x, endCoord.y),
-                                colorClass: getLineColor(localKey)
+                                colorClass: getLineColor(localKey),
+                                isHighlighted
                             });
                         }
                     }
@@ -137,14 +139,19 @@ const CablesOverlay = () => {
 
     return (
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
-            {connectionPaths.map(conn => (
-                <g key={conn.id}>
-                    {/* Shadow line */}
-                    <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.3"/>
-                    {/* Colored line, filter removed for html2canvas compatibility */}
-                    <path d={conn.path} className={`${conn.colorClass}`} strokeWidth="2" fill="none" opacity="0.8" />
-                </g>
-            ))}
+            {connectionPaths.map(conn => {
+                const opacityClass = conn.isHighlighted ? "opacity-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]" : (selectedId ? "opacity-[0.03]" : "opacity-80");
+                const thickness = conn.isHighlighted ? "3" : "2";
+                
+                return (
+                    <g key={conn.id} className={`transition-all duration-300 ${opacityClass} ${conn.isHighlighted ? 'z-50' : 'z-10'}`}>
+                        {/* Shadow line */}
+                        <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.3"/>
+                        {/* Colored line, filter removed for html2canvas compatibility */}
+                        <path d={conn.path} className={`${conn.colorClass}`} strokeWidth={thickness} fill="none" />
+                    </g>
+                );
+            })}
 
             {drawing && drawing.startX !== drawing.currentX && (
                 <g>
