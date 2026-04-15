@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const CablesOverlay = () => {
-    const { devices, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode } = useRackPlanner();
+    const { devices, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
-        if (!showCables) return;
+        if (!showCables && !selectedId) return;
         let animationFrameId;
 
         const updateCoords = () => {
@@ -44,7 +44,7 @@ const CablesOverlay = () => {
 
         animationFrameId = requestAnimationFrame(updateCoords);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [showCables, isFitToScreen, scaleFactor, viewMode]);
+    }, [showCables, isFitToScreen, scaleFactor, viewMode, selectedId]);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -114,17 +114,22 @@ const CablesOverlay = () => {
         if (dev.connections) {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                 if (targetKey) {
-                    const localFullId = `${dev.id}-${localKey}`;
-                    const targetFullId = targetKey;
-                    const startCoord = localCoords[localFullId];
-                    const endCoord = localCoords[targetFullId];
+                    const targetDevId = targetKey.split('-')[0];
+                    const shouldDraw = showCables || (selectedId && (dev.id === selectedId || targetDevId === selectedId));
+                    
+                    if (shouldDraw) {
+                        const localFullId = `${dev.id}-${localKey}`;
+                        const targetFullId = targetKey;
+                        const startCoord = localCoords[localFullId];
+                        const endCoord = localCoords[targetFullId];
 
-                    if (startCoord && endCoord) {
-                        connectionPaths.push({
-                            id: `${localFullId}-to-${targetFullId}`,
-                            path: generatePath(startCoord.x, startCoord.y, endCoord.x, endCoord.y),
-                            colorClass: getLineColor(localKey)
-                        });
+                        if (startCoord && endCoord) {
+                            connectionPaths.push({
+                                id: `${localFullId}-to-${targetFullId}`,
+                                path: generatePath(startCoord.x, startCoord.y, endCoord.x, endCoord.y),
+                                colorClass: getLineColor(localKey)
+                            });
+                        }
                     }
                 }
             });
