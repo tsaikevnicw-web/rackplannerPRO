@@ -203,7 +203,8 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
             ctx.shadowOffsetY = 2;
 
             ctx.fillStyle = 'rgba(128, 128, 128, 0.35)'; 
-            ctx.fillText(`Inventec Confidential ${timestamp}`, 0, 0);
+            ctx.fillText('Inventec Confidential', 0, -fontSize * 0.6);
+            ctx.fillText(timestamp, 0, fontSize * 0.6);
             ctx.restore();
 
             const url = canvas.toDataURL('image/png');
