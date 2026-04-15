@@ -141,7 +141,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                                 {group.name} ({group.devs.length})
                             </button>
                             {isOpen && (
-                                <div className="flex flex-wrap justify-center gap-4 pt-2">
+                                <div className="flex flex-col items-center gap-4 pt-2 w-full">
                                     {group.devs.map(d => renderCompactLogicalDeviceCard(d, bgClass))}
                                 </div>
                             )}
