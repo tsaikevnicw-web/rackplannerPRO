@@ -87,7 +87,7 @@ const CablesOverlay = () => {
         };
     }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode]);
 
-    if (!showCables) return null;
+    if (!showCables && !selectedId) return null;
 
     const getLineColor = (portKey) => {
         if (portKey.startsWith('cx8-')) return 'stroke-green-500';
@@ -138,7 +138,7 @@ const CablesOverlay = () => {
     });
 
     return (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
             {connectionPaths.map(conn => {
                 const opacityClass = conn.isHighlighted ? "opacity-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]" : (selectedId ? "opacity-[0.03]" : "opacity-80");
                 const thickness = conn.isHighlighted ? "3" : "2";
