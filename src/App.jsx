@@ -35,8 +35,8 @@ const AppContent = () => {
                     const mw = entry.contentRect.width;
                     
                     // Use standard JS scroll size logic, ignoring transforms visually
-                    const cw = rackContainerRef.current.clientWidth || 100;
-                    const ch = rackContainerRef.current.clientHeight || 100;
+                    const cw = rackContainerRef.current.scrollWidth || 100;
+                    const ch = rackContainerRef.current.scrollHeight || 100;
                     setLayoutSize({ w: cw, h: ch });
 
                     if (cw > 0) {

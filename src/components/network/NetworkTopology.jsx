@@ -1,56 +1,124 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount } from '../../utils/helpers';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
 const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
-    const { racks, devices, selectedId, setSelectedId, expandedNetGroups, setExpandedNetGroups, portCoords, setPortCoords } = useRackPlanner();
+    const { racks, devices, selectedId, setSelectedId, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
+
+    const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
+        const fullId = `${dev.id}-${portKey}`;
+        const isConnected = connectedPortsSet.has(fullId);
+        
+        const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
+        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+
+        const bgClass = colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
+
+        return (
+            <div
+                key={portKey}
+                data-port-id={fullId}
+                className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
+                title={label}
+                onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (isConnected) handleDisconnectPort(fullId);
+                }}
+                onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const rect = e.target.getBoundingClientRect();
+                    const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+                    const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0 };
+                    const scrollParent = document.querySelector('.main-canvas');
+                    const sLeft = scrollParent ? scrollParent.scrollLeft : 0;
+                    const sTop = scrollParent ? scrollParent.scrollTop : 0;
+
+                    const startX = rect.left + rect.width / 2 - containerRect.left + sLeft;
+                    const startY = rect.top + rect.height / 2 - containerRect.top + sTop;
+                    setDrawing({ sourceId: dev.id, sourcePortKey: portKey, startX, startY, currentX: startX, currentY: startY });
+                }}
+                onMouseUp={(e) => {
+                    e.stopPropagation();
+                    if (drawing && drawing.sourceId !== dev.id) {
+                        const event = new CustomEvent('rackplanner-connect', { detail: { targetDevId: dev.id, targetPortKey: portKey, drawing }});
+                        window.dispatchEvent(event);
+                    }
+                    setDrawing(null);
+                }}
+                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
+                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
+            >
+                {isConnected && !colorOverride && <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>}
+            </div>
+        );
+    };
 
     const renderCompactLogicalDeviceCard = (dev, bgClass) => {
         const isSelected = selectedId === dev.id;
         const Icon = getIconByType(dev.type);
         const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
         
+        const nic1Count = getNicCount(dev, 'ns_nic_1');
+        const nic2Count = getNicCount(dev, 'ns_nic_2');
+        const portCount = getSwitchPortCount(dev);
+
         return (
             <div
                 key={dev.id}
                 onClick={(e) => { e.stopPropagation(); setSelectedId(dev.id); }}
-                className={`relative p-3 rounded-xl border border-slate-700 cursor-pointer transition-all w-48 shrink-0 flex flex-col gap-2 ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-125 z-20 shadow-md'} overflow-visible group`}
+                className={`relative rounded-xl border border-slate-700 cursor-pointer transition-all w-[320px] shrink-0 flex flex-col ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-110 z-20 shadow-md'} overflow-hidden group`}
             >
-                <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${bgClass} border border-black/50 z-10`}></div>
-                <div className="flex items-center gap-2 relative z-10">
+                {/* Header Area */}
+                <div className={`p-2 flex items-center justify-center gap-2 relative bg-black/20 border-b border-slate-700`}>
+                    <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${bgClass} border border-black/50 z-10`}></div>
                     <Icon className={`w-5 h-5 opacity-90 ${tStyle.text}`} />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex flex-col items-center">
                         <div className="text-sm font-bold text-slate-200 truncate">{dev.customName}</div>
                         <div className="text-[10px] text-slate-400 font-mono truncate">[{racks.find(r => r.id === dev.rackId)?.name}]</div>
                     </div>
                 </div>
 
-                <div 
-                    className="absolute bottom-[-16px] left-1/2 transform -translate-x-1/2 w-4 h-4 bg-slate-800 border-2 border-slate-600 rounded-full cursor-crosshair hover:bg-white hover:scale-125 transition-all z-20 shadow-md"
-                    title="連線錨點"
-                    ref={(el) => {
-                        if (el) {
-                            const rect = el.getBoundingClientRect();
-                            const scrollParent = document.querySelector('.main-canvas');
-                            const canvasContainer = document.querySelector('.rack-container')?.parentElement?.parentElement;
-                            const containerRect = canvasContainer ? canvasContainer.getBoundingClientRect() : { left: 0, top: 0 };
-                            const sLeft = scrollParent ? scrollParent.scrollLeft : 0;
-                            const sTop = scrollParent ? scrollParent.scrollTop : 0;
-                            const x = rect.left + rect.width / 2 - containerRect.left + sLeft;
-                            const y = rect.top + rect.height / 2 - containerRect.top + sTop;
-
-                            const fullId = `${dev.id}-topology-anchor`;
-                            setPortCoords(prev => {
-                                if (!prev[fullId] || Math.abs(prev[fullId].x - x) > 1 || Math.abs(prev[fullId].y - y) > 1) {
-                                    return { ...prev, [fullId]: { x, y } };
-                                }
-                                return prev;
-                            });
-                        }
-                    }}
-                ></div>
+                {/* Ports Area */}
+                <div className="p-3 flex flex-col gap-2 bg-slate-900/40">
+                    {((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap justify-center gap-1">
+                                {Array.from({ length: portCount }).map((_, i) => renderPortAnchor(dev, `port-${i + 1}`, `Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
+                            </div>
+                            <div className="flex justify-center border-t border-slate-700 pt-2 mt-1">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>
+                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (dev.type === 'Server5U' ? (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-center">
+                                <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">CX8</span>
+                                <div className="flex flex-wrap justify-center gap-1 max-w-[200px]">
+                                    {Array.from({ length: getNicCount(dev, 'cx8p') || 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
+                                </div>
+                            </div>
+                            {(nic1Count > 0 || nic2Count > 0 || true) && (
+                                <div className="flex flex-wrap justify-center gap-4 border-t border-slate-700 pt-2 mt-1">
+                                    {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-1</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-2</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap justify-center gap-4">
+                            {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-1</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                            {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-2</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                            <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     };
