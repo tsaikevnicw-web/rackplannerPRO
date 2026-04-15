@@ -158,21 +158,25 @@ const RightPanel = () => {
                                 <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono"/>
                             </div>
 
-                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
-                                <label className="block text-[11px] font-bold text-blue-400 mb-1.5">CX8 Network Type</label>
-                                <select value={cx8NetworkType} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8NetworkType', 'type', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
-                                    <option value="Ethernet">Ethernet / RoCE v2 (綠線)</option>
-                                    <option value="InfiniBand">InfiniBand / NDR (橘線)</option>
-                                </select>
-                            </div>
+                            {selectedDevice.type === 'Server5U' && (
+                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                    <label className="block text-[11px] font-bold text-blue-400 mb-1.5">CX8 Network Type</label>
+                                    <select value={cx8NetworkType} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8NetworkType', 'type', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                                        <option value="Ethernet">Ethernet / RoCE v2 (綠線)</option>
+                                        <option value="InfiniBand">InfiniBand / NDR (橘線)</option>
+                                    </select>
+                                </div>
+                            )}
                             
                             <div className="col-span-2 pt-2 border-t border-slate-800/50">
                                 <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] text-slate-500 mb-1">CX8 孔數</label>
-                                        <input type="number" value={getNicCount(selectedDevice, 'cx8p') || (selectedDevice.type === 'Server5U' ? 8 : 0)} disabled className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 opacity-50 cursor-not-allowed"/>
-                                    </div>
+                                    {selectedDevice.type === 'Server5U' && (
+                                        <div>
+                                            <label className="block text-[10px] text-slate-500 mb-1">CX8 孔數</label>
+                                            <input type="number" value={getNicCount(selectedDevice, 'cx8p') || 8} disabled className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 opacity-50 cursor-not-allowed"/>
+                                        </div>
+                                    )}
                                     <div>
                                         <label className="block text-[10px] text-slate-500 mb-1">BMC 孔數</label>
                                         <input type="number" value={getNicCount(selectedDevice, 'bmc') || 1} disabled className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300 opacity-50 cursor-not-allowed"/>
