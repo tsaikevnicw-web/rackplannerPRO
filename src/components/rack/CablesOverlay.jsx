@@ -6,7 +6,6 @@ const CablesOverlay = () => {
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
-        if (!showCables && !selectedId) return;
         let animationFrameId;
 
         const updateCoords = () => {
@@ -114,7 +113,7 @@ const CablesOverlay = () => {
         if (dev.connections) {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                 if (targetKey) {
-                    const targetDevId = targetKey.split('-')[0];
+                    const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
                     const shouldDraw = showCables || (selectedId && (dev.id === selectedId || targetDevId === selectedId));
                     
                     if (shouldDraw) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout } from '../../utils/helpers';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
 const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -64,6 +64,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
         const nic1Count = getNicCount(dev, 'ns_nic_1');
         const nic2Count = getNicCount(dev, 'ns_nic_2');
         const portCount = getSwitchPortCount(dev);
+        const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
 
         return (
             <div
@@ -83,10 +84,18 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
 
                 {/* Ports Area */}
                 <div className="p-3 flex flex-col gap-2 bg-slate-900/40">
-                    {((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? (
+                    {portLayout ? (
                         <div className="flex flex-col gap-2">
-                            <div className="flex flex-wrap justify-center gap-1">
-                                {Array.from({ length: portCount }).map((_, i) => renderPortAnchor(dev, `port-${i + 1}`, `Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
+                            <div className="flex flex-col gap-1 items-center justify-center">
+                                {Array.from({ length: portLayout.rows }).map((_, rowIndex) => (
+                                    <div key={rowIndex} className="flex gap-1 justify-center flex-wrap">
+                                        {Array.from({ length: portLayout.cols }).map((_, colIndex) => {
+                                            const portNum = rowIndex * portLayout.cols + colIndex + 1;
+                                            if (portNum > portCount) return null;
+                                            return renderPortAnchor(dev, `port-${portNum}`, `Port ${portNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
+                                        })}
+                                    </div>
+                                ))}
                             </div>
                             <div className="flex justify-center border-t border-slate-700 pt-2 mt-1">
                                 <div className="flex items-center gap-1.5">
