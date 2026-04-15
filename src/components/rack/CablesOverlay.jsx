@@ -44,7 +44,7 @@ const CablesOverlay = () => {
 
         animationFrameId = requestAnimationFrame(updateCoords);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [showCables]);
+    }, [showCables, isFitToScreen, scaleFactor, viewMode]);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -86,7 +86,7 @@ const CablesOverlay = () => {
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('rackplanner-connect', handleConnectEvent);
         };
-    }, [drawing, setDrawing, handleConnectionChange]);
+    }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode]);
 
     if (!showCables) return null;
 

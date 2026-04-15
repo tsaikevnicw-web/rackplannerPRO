@@ -1,7 +1,6 @@
 import React from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import exampleData from '../../data/exampleData.json';
 
 const Header = () => {
     const { 
@@ -28,15 +27,6 @@ const Header = () => {
         setRacks([...racks, { id: newId, name: `RACK-${String(racks.length + 1).padStart(3, '0')}`, type: 'General', uCount: 48 }]);
         setActiveRackId(newId);
         if (viewMode === 'network') setViewMode('overview');
-    };
-
-    const handleLoadExample = () => {
-        if (exampleData && exampleData.racks && exampleData.devices) {
-            setRacks(exampleData.racks);
-            setDevices(exampleData.devices);
-            setViewMode('overview');
-            setSelectedId(null);
-        }
     };
 
     return (
@@ -102,7 +92,7 @@ const Header = () => {
             </div>
 
             {/* Bottom Row: Stats and Toolbar */}
-            <div className="h-12 w-full flex items-center justify-between px-6 bg-slate-900 border-b-2 border-slate-950 overflow-x-auto">
+            <div className="h-12 w-full flex items-center justify-between px-6 bg-slate-900 border-b-2 border-slate-950">
                 <div className="flex items-center gap-3 shrink-0">
                     <div className="flex items-center gap-3 bg-slate-950/80 p-1.5 rounded-lg border border-slate-700 shadow-inner">
                         <div className="text-emerald-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-emerald-500/20">
@@ -112,7 +102,7 @@ const Header = () => {
                             機房總功耗：{totalPower.toLocaleString()} W
                         </div>
                         <div className="text-blue-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-blue-500/20">
-                            機房總價：${totalPrice.toLocaleString()}
+                            機房總價：{totalPrice.toLocaleString()} USD
                         </div>
                     </div>
 
@@ -184,14 +174,6 @@ const Header = () => {
                             </>
                         )}
                     </div>
-
-                    <button
-                        onClick={handleLoadExample}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all border bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700 hover:text-emerald-300"
-                        title="載入預設範例專案"
-                    >
-                        <BookOpen className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">範例</span>
-                    </button>
 
                     <button
                         onClick={handleClearAllClick}

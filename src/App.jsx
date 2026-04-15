@@ -7,7 +7,8 @@ import RackView from './components/rack/RackView';
 import NetworkTopology from './components/network/NetworkTopology';
 import CablesOverlay from './components/rack/CablesOverlay';
 import { getFabricGroup } from './utils/helpers';
-import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
+import exampleData from './data/exampleData.json';
 
 const AppContent = () => {
     const { 
@@ -29,16 +30,16 @@ const AppContent = () => {
             for (let entry of entries) {
                 if (entry.target === mainAreaRef.current) {
                     const mw = entry.contentRect.width;
-                    const mh = entry.contentRect.height;
                     
-                    const cw = rackContainerRef.current.scrollWidth;
-                    const ch = rackContainerRef.current.scrollHeight;
+                    // Use standard JS scroll size logic, ignoring transforms visually
+                    const cw = rackContainerRef.current.clientWidth || 100;
+                    const ch = rackContainerRef.current.clientHeight || 100;
                     setLayoutSize({ w: cw, h: ch });
 
-                    if (cw > 0 && ch > 0) {
-                        const scaleW = mw / (cw + 64);
-                        const scaleH = mh / (ch + 64);
-                        setScaleFactor(Math.min(scaleW, scaleH, 1));
+                    if (cw > 0) {
+                        const padding = 64; // accounting for the p-8 padding
+                        const scaleW = Math.max((mw - padding) / cw, 0.1);
+                        setScaleFactor(scaleW);
                     }
                 }
             }
@@ -47,6 +48,16 @@ const AppContent = () => {
         resizeObserver.observe(mainAreaRef.current);
         return () => resizeObserver.disconnect();
     }, [viewMode, racks.length, isFitToScreen]);
+
+    const handleLoadExample = () => {
+        if (exampleData && exampleData.racks && exampleData.devices) {
+            setRacks(exampleData.racks);
+            setDevices(exampleData.devices);
+            setViewMode('overview');
+            setSelectedId(null);
+            setRaModalState({ isOpen: false, type: '' });
+        }
+    };
 
     // Derived states
     const racksToRender = viewMode === 'single' ? racks.filter(r => r.id === activeRackId) : racks;
@@ -279,7 +290,17 @@ const AppContent = () => {
                                 <p className="text-slate-400 italic text-center py-10">此 {raModalState.type} 節點規模的詳細架構配置說明尚在建置中。</p>
                             )}
                         </div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end">
+                        <div className="bg-slate-800 px-6 py-4 flex justify-between items-center">
+                            {raModalState.type === '20台' ? (
+                                <button
+                                    onClick={handleLoadExample}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+                                >
+                                    <BookOpen className="w-4 h-4" /> 載入此範例專案
+                                </button>
+                            ) : (
+                                <div></div>
+                            )}
                             <button 
                                 onClick={() => setRaModalState({ isOpen: false, type: '' })} 
                                 className="px-6 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-600/30"
