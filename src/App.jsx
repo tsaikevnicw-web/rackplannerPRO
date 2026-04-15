@@ -10,6 +10,7 @@ import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
+import example4Data from './data/example4Data.json';
 
 const AppContent = () => {
     const { 
@@ -348,6 +349,66 @@ const AppContent = () => {
                                         </ul>
                                     </div>
                                 </>
+                            ) : raModalState.type === '4台' ? (
+                                <>
+                                    <p className="text-sm text-slate-300">針對 4 台 NVIDIA HGX B300 伺服器的部署規劃，這在 NVIDIA 架構中正好代表 1 個標準擴充單元 (Scalable Unit, SU)。以下為 4 台規模會用到的設備清單與角色說明：</p>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-blue-500 rounded-full"></div> 一、運算節點硬體 (Compute Nodes)</h4>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">伺服器本體 (4 台)：</span>基於 NVIDIA HGX B300 的伺服器，構成 1 個 SU。</li>
+                                            <li><span className="font-bold text-slate-100">GPU (共 32 張)：</span>每台配置 8 張 B300 SXM GPU。</li>
+                                            <li><span className="font-bold text-slate-100">CPU (共 8 顆)：</span>每台配置 2 顆 CPU。</li>
+                                            <li><span className="font-bold text-slate-100">運算網路卡 (共 32 張)：</span>每台配置 8 張 ConnectX-8 SuperNIC，負責節點間 (East-West) 的 GPU 高速通訊。</li>
+                                            <li><span className="font-bold text-slate-100">融合網路卡 (共 4 張)：</span>每台配置 1 張 BlueField-3 B3240 DPU，負責節點對外的連線與通訊。</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div> 二、網路交換器與基礎架構 (Networking Infrastructure)</h4>
+                                        <p className="mb-3 text-slate-400">在 4 台節點的規模下，網路架構極度簡化，完全不需要 Spine 層級交換器。</p>
+                                        <ul className="list-none space-y-3">
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-emerald-400 mb-1">運算網路交換器 (Compute / East-West Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">角色：</span>專供 GPU 叢集間的高速運算流量與 RDMA 傳輸。</div>
+                                                    <div><span className="text-slate-400">雙平面 (Dual Plane) 架構配置：</span>需 4 台 NVIDIA SN5600 Leaf 交換器。</div>
+                                                    <div><span className="text-slate-400">單平面 (Single Plane) 架構配置：</span>需 2 台 NVIDIA SN5600 Leaf 交換器。</div>
+                                                </div>
+                                            </li>
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-yellow-400 mb-1">融合網路交換器 (Converged / North-South Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">角色：</span>負責處理叢集對外通訊、連接客戶端網路與儲存設備。</div>
+                                                    <div><span className="text-slate-400">配置：</span>需 2 台 NVIDIA SN5600 交換器。</div>
+                                                </div>
+                                            </li>
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-purple-400 mb-1">頻外管理交換器 (OOB Management Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">角色：</span>連接所有設備的 BMC，提供底層硬體管理通道。</div>
+                                                    <div><span className="text-slate-400">配置：</span>需 2 台 NVIDIA SN2201 交換器。</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-orange-500 rounded-full"></div> 三、控制平面與輔助伺服器 (Control Plane / Support Servers)</h4>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">角色：</span>提供作業系統部署、工作負載排程與客戶端存取點。</li>
+                                            <li><span className="font-bold text-slate-100">數量與配置：</span>根據架構規範，4 台節點的叢集建議配置 4 台輔助伺服器。標準配置通常包含 2 台 Base Command Manager 節點 (具備 HA 高可用性)，以及 2 台 Slurm 排程節點。</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div> 四、核心軟體堆疊 (Software Stack)</h4>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">NVIDIA AI Enterprise (NVAIE)：</span>軟體為逐 GPU 授權，因此需配合 32 張 GPU 採購 32 個軟體授權。</li>
+                                            <li><span className="font-bold text-slate-100">軟體內容：</span>包含負責叢集配置的 Base Command Manager、提供 AI 框架的 NGC 容器，以及簡化部署流程的 NIM 微服務等。</li>
+                                        </ul>
+                                    </div>
+                                </>
                             ) : (
                                 <p className="text-slate-400 italic text-center py-10">此 {raModalState.type} 節點規模的詳細架構配置說明尚在建置中。</p>
                             )}
@@ -363,6 +424,13 @@ const AppContent = () => {
                             ) : raModalState.type === '16台' ? (
                                 <button
                                     onClick={() => handleLoadExample(example16Data)}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+                                >
+                                    <BookOpen className="w-4 h-4" /> 載入此範例專案
+                                </button>
+                            ) : raModalState.type === '4台' ? (
+                                <button
+                                    onClick={() => handleLoadExample(example4Data)}
                                     className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
                                 >
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
