@@ -1,6 +1,6 @@
 import { getFabricGroup, getNicCount, getSwitchPortCount } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
-import html2canvas from 'html2canvas';
+import { toCanvas } from 'html-to-image';
 
 export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert) {
     const handleSaveData = () => {
@@ -171,11 +171,12 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
             element.style.transform = 'none'; 
             element.style.backgroundColor = '#020617';
 
-            const canvas = await html2canvas(element, { 
+            // Ensure browser performs layout recalculation
+            void element.offsetWidth;
+
+            const canvas = await toCanvas(element, { 
                 backgroundColor: '#020617', 
-                scale: 1, 
-                logging: false, 
-                useCORS: true 
+                pixelRatio: window.devicePixelRatio || 1,
             });
             
             element.style.cssText = originalStyle; 
