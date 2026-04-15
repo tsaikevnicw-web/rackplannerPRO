@@ -119,7 +119,7 @@ const AppContent = () => {
                 <Sidebar />
                 <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#020617] flex flex-col">
                     <div 
-                        className={`relative flex ${viewMode === 'overview' ? 'min-h-full' : 'justify-center w-full'}`}
+                        className={`relative flex ${viewMode === 'overview' ? 'min-h-full' : (isFitToScreen && viewMode !== 'single' ? 'justify-start' : 'justify-center w-full')}`}
                         style={{ 
                             width: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.w * scaleFactor, 100) : undefined,
                             height: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.h * scaleFactor, 100) : undefined,
