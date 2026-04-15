@@ -148,7 +148,7 @@ const RackView = ({ racksToRender }) => {
                                                         <>
                                                             {nic1Count > 0 && (
                                                                 <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
+                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
                                                                     <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
                                                                         {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
                                                                     </div>
@@ -156,7 +156,7 @@ const RackView = ({ racksToRender }) => {
                                                             )}
                                                             {nic2Count > 0 && (
                                                                 <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
                                                                     <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
                                                                         {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
                                                                     </div>
@@ -165,7 +165,7 @@ const RackView = ({ racksToRender }) => {
                                                         </>
                                                     )}
                                                     <div className="flex items-center gap-1.5">
-                                                        <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
                                                             {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
@@ -176,14 +176,14 @@ const RackView = ({ racksToRender }) => {
                                             {dev.type === 'Server5U' && (
                                                 <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full w-full">
                                                     <div className="flex items-center justify-end gap-2 w-full">
-                                                        <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">CX8</div>
+                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">CX8</div>
                                                         <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
                                                             {Array.from({ length: getNicCount(dev, 'cx8p') || (dev.type === 'Server5U' ? 8 : 0) }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
                                                         </div>
                                                     </div>
                                                     {nic1Count > 0 && (
                                                         <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
                                                             <div className="flex gap-0.5">
                                                                 {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
                                                             </div>
@@ -191,14 +191,14 @@ const RackView = ({ racksToRender }) => {
                                                     )}
                                                     {nic2Count > 0 && (
                                                         <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
                                                             <div className="flex gap-0.5">
                                                                 {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
                                                             </div>
                                                         </div>
                                                     )}
                                                     <div className="flex items-center justify-end gap-2 w-full">
-                                                        <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
                                                             {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
@@ -209,7 +209,7 @@ const RackView = ({ racksToRender }) => {
                                             {((dev.type || '').startsWith('Switch') || dev.type === 'Router') && (
                                                 <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
                                                     <div className="flex items-center gap-1.5">
-                                                        <div className="text-[8px] font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
                                                             {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>

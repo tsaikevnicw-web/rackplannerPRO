@@ -140,9 +140,9 @@ const CablesOverlay = () => {
             {connectionPaths.map(conn => (
                 <g key={conn.id}>
                     {/* Shadow line */}
-                    <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.6"/>
+                    <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.3"/>
                     {/* Colored glow line */}
-                    <path d={conn.path} className={`${conn.colorClass}`} strokeWidth="2" fill="none" opacity="0.8" filter="url(#glow)"/>
+                    <path d={conn.path} className={`${conn.colorClass}`} strokeWidth="2" fill="none" opacity="0.5" filter="url(#glow)"/>
                 </g>
             ))}
 
@@ -150,11 +150,11 @@ const CablesOverlay = () => {
                 <g>
                     <path 
                         d={generatePath(drawing.startX, drawing.startY, drawing.currentX, drawing.currentY)} 
-                        className="stroke-slate-950" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.5"
+                        className="stroke-slate-950" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.25"
                     />
                     <path 
                         d={generatePath(drawing.startX, drawing.startY, drawing.currentX, drawing.currentY)} 
-                        className={`${getLineColor(drawing.sourcePortKey)} opacity-70`} 
+                        className={`${getLineColor(drawing.sourcePortKey)} opacity-40`} 
                         strokeWidth="2" fill="none" strokeDasharray="8 4"
                     />
                 </g>
