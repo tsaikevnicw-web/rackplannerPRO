@@ -50,16 +50,21 @@ export const DEVICE_TEMPLATES = [
         ]
     },
     {
-        isGroup: true, name: '網路交換器', icon: Network, theme: 'purple',
+        isGroup: true, name: '網路設備', icon: Network, theme: 'purple',
         subItems: [
             { type: 'Switch1G', name: '1U 1G 交換器', size: 1, icon: Network, theme: 'purple', power: 30 },
             { type: 'Switch10G', name: '1U 10G 交換器', size: 1, icon: Network, theme: 'purple', power: 50 },
             { type: 'Switch400G1U', name: '1U 400G 交換器', size: 1, icon: Network, theme: 'purple', power: 150 },
             { type: 'Switch400G', name: '2U 400G 交換器', size: 2, icon: Network, theme: 'purple', power: 150 },
             { type: 'Switch800G', name: '2U 800G 交換器', size: 2, icon: Network, theme: 'purple', power: 200 },
+            { type: 'Router', name: '路由器', size: 1, icon: Cpu, theme: 'violet', power: 100 },
         ]
     },
-    { type: 'Router', name: '路由器', size: 1, icon: Cpu, theme: 'violet', power: 100 },
-    { type: 'UPS', name: '不斷電系統', size: 2, icon: Zap, theme: 'orange', power: 0 },
-    { type: 'Blank', name: '空白擋板', size: 1, icon: LayoutGrid, theme: 'slate', power: 0 },
+    {
+        isGroup: true, name: '其他設備', icon: LayoutGrid, theme: 'slate',
+        subItems: [
+            { type: 'UPS', name: '不斷電系統', size: 2, icon: Zap, theme: 'orange', power: 0 },
+            { type: 'Blank', name: '空白擋板', size: 1, icon: LayoutGrid, theme: 'slate', power: 0 },
+        ]
+    }
 ];

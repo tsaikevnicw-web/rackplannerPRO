@@ -43,10 +43,6 @@ const Sidebar = () => {
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-                <div className="text-xs text-slate-500 mb-4 px-2 italic font-medium tracking-wide">
-                    可用設備 (拖曳加入)
-                </div>
-
                 {DEVICE_TEMPLATES.map((group, idx) => {
                     const isOpen = group.isGroup ? expandedGroups[group.name] : false;
                     const GroupIcon = group.icon;
