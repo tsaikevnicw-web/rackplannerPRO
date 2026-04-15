@@ -66,11 +66,19 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
         const portCount = getSwitchPortCount(dev);
         const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
 
+        let cardWidthClass = "w-[320px]";
+        if (portLayout) {
+            if (portLayout.cols > 16) cardWidthClass = "w-[400px]";
+            else if (portLayout.cols > 12) cardWidthClass = "w-[340px]";
+        } else if (dev.type === 'Server5U') {
+            cardWidthClass = "w-[360px]"; // 5U servers might also need a bit more space for CX8 + NICs
+        }
+
         return (
             <div
                 key={dev.id}
                 onClick={(e) => { e.stopPropagation(); setSelectedId(dev.id); }}
-                className={`relative rounded-xl border border-slate-700 cursor-pointer transition-all w-[320px] shrink-0 flex flex-col ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-110 z-20 shadow-md'} overflow-hidden group`}
+                className={`relative rounded-xl border border-slate-700 cursor-pointer transition-all ${cardWidthClass} shrink-0 flex flex-col ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-110 z-20 shadow-md'} overflow-hidden group mx-auto`}
             >
                 {/* Header Area */}
                 <div className={`p-2 flex items-center justify-center gap-2 relative bg-black/20 border-b border-slate-700`}>
@@ -170,7 +178,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                         {renderTreeSection(nsDevs, 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]', 'NS')}
                     </div>
                 </div>
-                <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-slate-800/20 p-8 rounded-3xl border border-slate-700/50 shadow-xl min-w-0 overflow-hidden">
+                <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-slate-800/20 p-8 rounded-3xl border border-slate-700/50 shadow-xl min-w-0">
                     <div className="text-sm font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">EAST-WEST FABRIC</div>
                     <div className="flex flex-col items-center w-full gap-4">
                         <div className="text-xs font-bold text-slate-500 tracking-widest bg-slate-900/50 px-4 py-1 rounded-full">SPINE LAYER</div>
