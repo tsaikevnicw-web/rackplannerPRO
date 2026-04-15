@@ -9,6 +9,7 @@ import CablesOverlay from './components/rack/CablesOverlay';
 import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
 import exampleData from './data/exampleData.json';
+import example16Data from './data/example16Data.json';
 
 const AppContent = () => {
     const { 
@@ -49,10 +50,10 @@ const AppContent = () => {
         return () => resizeObserver.disconnect();
     }, [viewMode, racks.length, isFitToScreen]);
 
-    const handleLoadExample = () => {
-        if (exampleData && exampleData.racks && exampleData.devices) {
-            setRacks(exampleData.racks);
-            setDevices(exampleData.devices);
+    const handleLoadExample = (dataToLoad) => {
+        if (dataToLoad && dataToLoad.racks && dataToLoad.devices) {
+            setRacks(dataToLoad.racks);
+            setDevices(dataToLoad.devices);
             setViewMode('overview');
             setSelectedId(null);
             setRaModalState({ isOpen: false, type: '' });
@@ -354,7 +355,14 @@ const AppContent = () => {
                         <div className="bg-slate-800 px-6 py-4 flex justify-between items-center">
                             {raModalState.type === '20台' ? (
                                 <button
-                                    onClick={handleLoadExample}
+                                    onClick={() => handleLoadExample(exampleData)}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+                                >
+                                    <BookOpen className="w-4 h-4" /> 載入此範例專案
+                                </button>
+                            ) : raModalState.type === '16台' ? (
+                                <button
+                                    onClick={() => handleLoadExample(example16Data)}
                                     className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
                                 >
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案

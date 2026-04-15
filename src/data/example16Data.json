@@ -1,0 +1,3040 @@
+{
+  "racks": [
+    {
+      "id": "rack-1",
+      "name": "RACK-A01",
+      "type": "General",
+      "uCount": 48
+    },
+    {
+      "id": "rack-itxytxd1w",
+      "name": "RACK-A02",
+      "type": "General",
+      "uCount": 48
+    },
+    {
+      "id": "rack-npw6cvdae",
+      "name": "RACK-A03",
+      "type": "General",
+      "uCount": 48
+    },
+    {
+      "id": "rack-loqwqeckj",
+      "name": "RACK-A04",
+      "type": "General",
+      "uCount": 48
+    }
+  ],
+  "devices": [
+    {
+      "id": "ve3d5hii5",
+      "type": "Switch1G",
+      "name": "1U 1G 交換器",
+      "size": 1,
+      "theme": "purple",
+      "power": 500,
+      "startU": 47,
+      "rackId": "rack-1",
+      "customName": "BMC SN2201 #1",
+      "price": 3000,
+      "connections": {},
+      "hardwareSpecs": {},
+      "topologyGroup": "OOB Management Fabric"
+    },
+    {
+      "id": "1esvtouxy",
+      "type": "CDU4U",
+      "name": "4U CDU",
+      "size": 4,
+      "theme": "cyan",
+      "power": 1001,
+      "startU": 1,
+      "rackId": "rack-1",
+      "customName": "4U Delta In Rack CDU 1",
+      "price": 0,
+      "connections": {
+        "bmc": "ve3d5hii5-port-24"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "937d01t8g",
+      "type": "CDU4U",
+      "name": "4U Delta In Rack CDU",
+      "size": 4,
+      "theme": "cyan",
+      "power": 1001,
+      "startU": 1,
+      "rackId": "rack-itxytxd1w",
+      "customName": "4U Delta In Rack CDU",
+      "price": 0,
+      "connections": {
+        "bmc": "ve3d5hii5-port-25"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "db4eprq3a",
+      "type": "CDU4U",
+      "name": "4U Delta In Rack CDU",
+      "size": 4,
+      "theme": "cyan",
+      "power": 1001,
+      "startU": 1,
+      "rackId": "rack-npw6cvdae",
+      "customName": "4U Delta In Rack CDU",
+      "price": 0,
+      "connections": {
+        "bmc": "ve3d5hii5-port-26"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "zit390bzx",
+      "type": "CDU4U",
+      "name": "4U Delta In Rack CDU",
+      "size": 4,
+      "theme": "cyan",
+      "power": 1001,
+      "startU": 1,
+      "rackId": "rack-loqwqeckj",
+      "customName": "4U Delta In Rack CDU",
+      "price": 0,
+      "connections": {
+        "bmc": "ve3d5hii5-port-27"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "hrtmbc0er",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "startU": 30,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "czlslphnf",
+      "type": "Server2U",
+      "name": "2U 伺服器",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 37,
+      "rackId": "rack-itxytxd1w",
+      "customName": "BCM Node #2",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-43",
+        "nic-2": "nooth7kib-port-43",
+        "nic-3": "oc06bx71b-port-44",
+        "nic-4": "nooth7kib-port-44",
+        "ns_nic_1-1": "02eah0d2w-port-33",
+        "ns_nic_1-2": "bqppsxula-port-33",
+        "bmc": "ve3d5hii5-port-17"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "5wvweecsx",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 35,
+      "rackId": "rack-itxytxd1w",
+      "customName": "BCM Node #1",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-41",
+        "nic-2": "nooth7kib-port-41",
+        "nic-3": "oc06bx71b-port-42",
+        "nic-4": "nooth7kib-port-42",
+        "ns_nic_1-1": "02eah0d2w-port-34",
+        "ns_nic_1-2": "bqppsxula-port-34",
+        "bmc": "ve3d5hii5-port-18"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "642cdmycy",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 33,
+      "rackId": "rack-itxytxd1w",
+      "customName": "Slurm Node #2",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-47",
+        "nic-2": "nooth7kib-port-47",
+        "nic-3": "oc06bx71b-port-48",
+        "nic-4": "nooth7kib-port-48",
+        "ns_nic_1-1": "02eah0d2w-port-35",
+        "ns_nic_1-2": "bqppsxula-port-35",
+        "bmc": "ve3d5hii5-port-19"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "psi2989wp",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 31,
+      "rackId": "rack-itxytxd1w",
+      "customName": "Slurm Node #1",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-45",
+        "nic-2": "nooth7kib-port-45",
+        "nic-3": "oc06bx71b-port-46",
+        "nic-4": "nooth7kib-port-46",
+        "ns_nic_1-1": "02eah0d2w-port-36",
+        "ns_nic_1-2": "bqppsxula-port-39",
+        "bmc": "ve3d5hii5-port-20"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "0604w4z7g",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 33,
+      "rackId": "rack-npw6cvdae",
+      "customName": "K8S Node #1",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-49",
+        "nic-2": "nooth7kib-port-49",
+        "nic-3": "oc06bx71b-port-50",
+        "nic-4": "nooth7kib-port-50",
+        "ns_nic_1-1": "02eah0d2w-port-39",
+        "ns_nic_1-2": "bqppsxula-port-38",
+        "bmc": "ve3d5hii5-port-23"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "jn6uvrlzb",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 35,
+      "rackId": "rack-npw6cvdae",
+      "customName": "K8S Node #2",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-51",
+        "nic-2": "nooth7kib-port-51",
+        "nic-3": "oc06bx71b-port-52",
+        "nic-4": "nooth7kib-port-52",
+        "ns_nic_1-1": "02eah0d2w-port-38",
+        "ns_nic_1-2": "bqppsxula-port-37",
+        "bmc": "ve3d5hii5-port-22"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "ifiga48sd",
+      "type": "Server2U",
+      "name": "K888G7",
+      "size": 2,
+      "theme": "blue",
+      "power": 1000,
+      "startU": 37,
+      "rackId": "rack-npw6cvdae",
+      "customName": "K8S Node #3",
+      "price": 10000,
+      "connections": {
+        "nic-1": "oc06bx71b-port-53",
+        "nic-2": "nooth7kib-port-53",
+        "nic-3": "oc06bx71b-port-54",
+        "nic-4": "nooth7kib-port-54",
+        "ns_nic_1-1": "02eah0d2w-port-37",
+        "ns_nic_1-2": "bqppsxula-port-36",
+        "bmc": "ve3d5hii5-port-21"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64GB 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField-3 B3220H",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "4"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        }
+      }
+    },
+    {
+      "id": "g6usx21o7",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 31,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "24udjdjol",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 48,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "94or6z0jz",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 31,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "r8i8u9cqd",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 32,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "hxtuo54e8",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 30,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "qjahzn33e",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 48,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "ft1nolrw9",
+      "type": "Switch1G",
+      "name": "1U 1G 交換器",
+      "size": 1,
+      "theme": "purple",
+      "power": 30,
+      "coolingCapacity": 0,
+      "startU": 46,
+      "rackId": "rack-1",
+      "customName": "BMC SN2201 #2",
+      "price": 0,
+      "connections": {
+        "bmc": "ve3d5hii5-port-28",
+        "port-48": "ve3d5hii5-port-48"
+      },
+      "hardwareSpecs": {},
+      "topologyGroup": "OOB Management Fabric"
+    },
+    {
+      "id": "phkwefx7f",
+      "type": "Switch800G",
+      "name": "EW-Spine-2",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 46,
+      "rackId": "rack-itxytxd1w",
+      "customName": "EW-Leaf-1",
+      "price": 0,
+      "topologyGroup": "EW-Leaf-Group -1",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "bmc": "ve3d5hii5-port-31"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "u2zsx8np9",
+      "type": "Switch800G",
+      "name": "EW-Leaf-1",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 44,
+      "rackId": "rack-itxytxd1w",
+      "customName": "EW-Leaf-2",
+      "price": 0,
+      "topologyGroup": "EW-Leaf-Group -1",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "bmc": "ve3d5hii5-port-30"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "43lnbdc0z",
+      "type": "Switch800G",
+      "name": "EW-Spine-4",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 46,
+      "rackId": "rack-npw6cvdae",
+      "customName": "EW-Leaf-3",
+      "price": 0,
+      "topologyGroup": "EW-Leaf-Group -2",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "bmc": "ve3d5hii5-port-32"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "0augky5me",
+      "type": "Switch800G",
+      "name": "EW-Leaf-5",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 44,
+      "rackId": "rack-npw6cvdae",
+      "customName": "EW-Leaf-4",
+      "price": 0,
+      "topologyGroup": "EW-Leaf-Group -2",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "bmc": "ve3d5hii5-port-33"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "02eah0d2w",
+      "type": "Switch800G",
+      "name": "EW-Leaf-4",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 41,
+      "rackId": "rack-itxytxd1w",
+      "customName": "NS-1",
+      "price": 0,
+      "topologyGroup": "NS-Group-1",
+      "networkRole": "Spine",
+      "fabricGroup": "North-South",
+      "connections": {
+        "bmc": "ve3d5hii5-port-29"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "bqppsxula",
+      "type": "Switch800G",
+      "name": "EW-Leaf-8",
+      "size": 2,
+      "theme": "purple",
+      "power": 200,
+      "coolingCapacity": 0,
+      "startU": 41,
+      "rackId": "rack-npw6cvdae",
+      "customName": "NS-2",
+      "price": 0,
+      "topologyGroup": "NS-Group-2",
+      "networkRole": "Spine",
+      "fabricGroup": "North-South",
+      "connections": {
+        "bmc": "ve3d5hii5-port-34"
+      },
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "2yiu9gp0q",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 48,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "jj14hmsr8",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 48,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "udhbp6flq",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 43,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "27oat7a6k",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 39,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "dvv1mpr8v",
+      "type": "Server5U",
+      "name": "P5800G7 A01-1",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 20,
+      "rackId": "rack-1",
+      "customName": "P5800G7 A01-1",
+      "price": 500000,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-1",
+        "cx8-2": "u2zsx8np9-port-1",
+        "cx8-3": "phkwefx7f-port-2",
+        "cx8-4": "u2zsx8np9-port-2",
+        "cx8-5": "phkwefx7f-port-3",
+        "cx8-6": "u2zsx8np9-port-3",
+        "cx8-7": "phkwefx7f-port-4",
+        "cx8-8": "u2zsx8np9-port-4",
+        "bmc": "ve3d5hii5-port-1",
+        "ns_nic_1-1": "02eah0d2w-port-1",
+        "ns_nic_1-2": "bqppsxula-port-1",
+        "ns_nic_2-1": "02eah0d2w-port-2",
+        "ns_nic_2-2": "bqppsxula-port-2"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "1iz99rkm2",
+      "type": "Server5U",
+      "name": "P5800G7 A01-2",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 15,
+      "rackId": "rack-1",
+      "customName": "P5800G7 A01-2",
+      "price": 500000,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-5",
+        "cx8-2": "u2zsx8np9-port-5",
+        "cx8-3": "phkwefx7f-port-6",
+        "cx8-4": "u2zsx8np9-port-6",
+        "cx8-5": "phkwefx7f-port-7",
+        "cx8-6": "u2zsx8np9-port-7",
+        "cx8-7": "phkwefx7f-port-8",
+        "cx8-8": "u2zsx8np9-port-8",
+        "ns_nic_1-1": "02eah0d2w-port-3",
+        "ns_nic_1-2": "bqppsxula-port-3",
+        "ns_nic_2-1": "02eah0d2w-port-4",
+        "ns_nic_2-2": "bqppsxula-port-4",
+        "bmc": "ve3d5hii5-port-2"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "x74u439gg",
+      "type": "Server5U",
+      "name": "P5800G7 A01-3",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 10,
+      "rackId": "rack-1",
+      "customName": "P5800G7 A01-3",
+      "price": 500000,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-9",
+        "cx8-2": "u2zsx8np9-port-9",
+        "cx8-3": "phkwefx7f-port-10",
+        "cx8-4": "u2zsx8np9-port-10",
+        "cx8-5": "phkwefx7f-port-11",
+        "cx8-6": "u2zsx8np9-port-11",
+        "cx8-7": "phkwefx7f-port-12",
+        "cx8-8": "u2zsx8np9-port-12",
+        "ns_nic_1-1": "02eah0d2w-port-5",
+        "ns_nic_1-2": "bqppsxula-port-5",
+        "ns_nic_2-1": "02eah0d2w-port-6",
+        "ns_nic_2-2": "bqppsxula-port-6",
+        "bmc": "ve3d5hii5-port-3"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "vsjdlq0f7",
+      "type": "Server5U",
+      "name": "P5800G7 A01-3",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 5,
+      "rackId": "rack-1",
+      "customName": "P5800G7 A01-4",
+      "price": 500000,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-13",
+        "cx8-2": "u2zsx8np9-port-13",
+        "cx8-3": "phkwefx7f-port-14",
+        "cx8-4": "u2zsx8np9-port-14",
+        "cx8-5": "phkwefx7f-port-15",
+        "cx8-6": "u2zsx8np9-port-15",
+        "cx8-7": "phkwefx7f-port-16",
+        "cx8-8": "u2zsx8np9-port-16",
+        "ns_nic_1-1": "02eah0d2w-port-7",
+        "ns_nic_1-2": "bqppsxula-port-7",
+        "ns_nic_2-1": "02eah0d2w-port-8",
+        "ns_nic_2-2": "bqppsxula-port-8",
+        "bmc": "ve3d5hii5-port-4"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "in44vfpzp",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 5,
+      "rackId": "rack-itxytxd1w",
+      "customName": "P5800G7 A02-8",
+      "price": 500000,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-29",
+        "cx8-2": "u2zsx8np9-port-29",
+        "cx8-3": "phkwefx7f-port-30",
+        "cx8-4": "u2zsx8np9-port-30",
+        "cx8-5": "phkwefx7f-port-31",
+        "cx8-6": "u2zsx8np9-port-31",
+        "cx8-7": "phkwefx7f-port-32",
+        "cx8-8": "u2zsx8np9-port-32",
+        "ns_nic_1-1": "02eah0d2w-port-15",
+        "ns_nic_1-2": "bqppsxula-port-15",
+        "ns_nic_2-1": "02eah0d2w-port-16",
+        "ns_nic_2-2": "bqppsxula-port-16",
+        "bmc": "ve3d5hii5-port-8"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "u0fr8qbso",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 10,
+      "rackId": "rack-itxytxd1w",
+      "customName": "P5800G7 A02-7",
+      "price": 500000,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-25",
+        "cx8-2": "u2zsx8np9-port-25",
+        "cx8-3": "phkwefx7f-port-26",
+        "cx8-4": "u2zsx8np9-port-26",
+        "cx8-5": "phkwefx7f-port-27",
+        "cx8-6": "u2zsx8np9-port-27",
+        "cx8-7": "phkwefx7f-port-28",
+        "cx8-8": "u2zsx8np9-port-28",
+        "ns_nic_1-1": "02eah0d2w-port-13",
+        "ns_nic_1-2": "bqppsxula-port-13",
+        "ns_nic_2-1": "02eah0d2w-port-14",
+        "ns_nic_2-2": "bqppsxula-port-14",
+        "bmc": "ve3d5hii5-port-7"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "mtdqz1npj",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 15,
+      "rackId": "rack-itxytxd1w",
+      "customName": "P5800G7 A02-6",
+      "price": 500000,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-21",
+        "cx8-2": "u2zsx8np9-port-21",
+        "cx8-3": "phkwefx7f-port-22",
+        "cx8-4": "u2zsx8np9-port-22",
+        "cx8-5": "phkwefx7f-port-23",
+        "cx8-6": "u2zsx8np9-port-23",
+        "cx8-7": "phkwefx7f-port-24",
+        "cx8-8": "u2zsx8np9-port-24",
+        "ns_nic_1-1": "02eah0d2w-port-11",
+        "ns_nic_1-2": "bqppsxula-port-11",
+        "ns_nic_2-1": "02eah0d2w-port-12",
+        "ns_nic_2-2": "bqppsxula-port-12",
+        "bmc": "ve3d5hii5-port-6"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "1ukq5yw3v",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 20,
+      "rackId": "rack-itxytxd1w",
+      "customName": "P5800G7 A02-5",
+      "price": 500000,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "phkwefx7f-port-17",
+        "cx8-2": "u2zsx8np9-port-17",
+        "cx8-3": "phkwefx7f-port-18",
+        "cx8-4": "u2zsx8np9-port-18",
+        "cx8-5": "phkwefx7f-port-19",
+        "cx8-6": "u2zsx8np9-port-19",
+        "cx8-7": "phkwefx7f-port-20",
+        "cx8-8": "u2zsx8np9-port-20",
+        "ns_nic_1-1": "02eah0d2w-port-9",
+        "ns_nic_1-2": "bqppsxula-port-9",
+        "ns_nic_2-1": "02eah0d2w-port-10",
+        "ns_nic_2-2": "bqppsxula-port-10",
+        "bmc": "ve3d5hii5-port-5"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "dvnieknyx",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 5,
+      "rackId": "rack-npw6cvdae",
+      "customName": "P5800G7 A03-12",
+      "price": 500000,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-13",
+        "cx8-2": "0augky5me-port-13",
+        "cx8-3": "43lnbdc0z-port-14",
+        "cx8-4": "0augky5me-port-14",
+        "cx8-5": "43lnbdc0z-port-15",
+        "cx8-6": "0augky5me-port-15",
+        "cx8-7": "43lnbdc0z-port-16",
+        "cx8-8": "0augky5me-port-16",
+        "ns_nic_1-1": "02eah0d2w-port-23",
+        "ns_nic_1-2": "bqppsxula-port-23",
+        "ns_nic_2-1": "02eah0d2w-port-24",
+        "ns_nic_2-2": "bqppsxula-port-24",
+        "bmc": "ve3d5hii5-port-12"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "hhr83djad",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 10,
+      "rackId": "rack-npw6cvdae",
+      "customName": "P5800G7 A03-11",
+      "price": 500000,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-9",
+        "cx8-2": "0augky5me-port-9",
+        "cx8-3": "43lnbdc0z-port-10",
+        "cx8-4": "0augky5me-port-10",
+        "cx8-5": "43lnbdc0z-port-11",
+        "cx8-6": "0augky5me-port-11",
+        "cx8-7": "43lnbdc0z-port-12",
+        "cx8-8": "0augky5me-port-12",
+        "ns_nic_1-1": "02eah0d2w-port-21",
+        "ns_nic_1-2": "bqppsxula-port-21",
+        "ns_nic_2-1": "02eah0d2w-port-22",
+        "ns_nic_2-2": "bqppsxula-port-22",
+        "bmc": "ve3d5hii5-port-11"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "xgearlskj",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 15,
+      "rackId": "rack-npw6cvdae",
+      "customName": "P5800G7 A03-10",
+      "price": 500000,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-5",
+        "cx8-2": "0augky5me-port-5",
+        "cx8-3": "43lnbdc0z-port-6",
+        "cx8-4": "0augky5me-port-6",
+        "cx8-5": "43lnbdc0z-port-7",
+        "cx8-6": "0augky5me-port-7",
+        "cx8-7": "43lnbdc0z-port-8",
+        "cx8-8": "0augky5me-port-8",
+        "ns_nic_1-1": "02eah0d2w-port-19",
+        "ns_nic_1-2": "bqppsxula-port-19",
+        "ns_nic_2-1": "02eah0d2w-port-20",
+        "ns_nic_2-2": "bqppsxula-port-20",
+        "bmc": "ve3d5hii5-port-10"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "1crntv3af",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 20,
+      "rackId": "rack-npw6cvdae",
+      "customName": "P5800G7 A03-9",
+      "price": 500000,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-1",
+        "cx8-2": "0augky5me-port-1",
+        "cx8-3": "43lnbdc0z-port-2",
+        "cx8-4": "0augky5me-port-2",
+        "cx8-5": "43lnbdc0z-port-3",
+        "cx8-6": "0augky5me-port-3",
+        "cx8-7": "43lnbdc0z-port-4",
+        "cx8-8": "0augky5me-port-4",
+        "ns_nic_1-1": "02eah0d2w-port-17",
+        "ns_nic_1-2": "bqppsxula-port-17",
+        "ns_nic_2-1": "02eah0d2w-port-18",
+        "ns_nic_2-2": "bqppsxula-port-18",
+        "bmc": "ve3d5hii5-port-9"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "05r0k4ram",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 5,
+      "rackId": "rack-loqwqeckj",
+      "customName": "P5800G7 A04-16",
+      "price": 500000,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-29",
+        "cx8-2": "0augky5me-port-29",
+        "cx8-3": "43lnbdc0z-port-30",
+        "cx8-4": "0augky5me-port-30",
+        "cx8-5": "43lnbdc0z-port-31",
+        "cx8-6": "0augky5me-port-31",
+        "cx8-7": "43lnbdc0z-port-32",
+        "cx8-8": "0augky5me-port-32",
+        "ns_nic_1-1": "02eah0d2w-port-31",
+        "ns_nic_1-2": "bqppsxula-port-31",
+        "ns_nic_2-1": "02eah0d2w-port-32",
+        "ns_nic_2-2": "bqppsxula-port-32",
+        "bmc": "ve3d5hii5-port-16"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "7kupxuxvy",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 10,
+      "rackId": "rack-loqwqeckj",
+      "customName": "P5800G7 A04-15",
+      "price": 500000,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-25",
+        "cx8-2": "0augky5me-port-25",
+        "cx8-3": "43lnbdc0z-port-26",
+        "cx8-4": "0augky5me-port-26",
+        "cx8-5": "43lnbdc0z-port-27",
+        "cx8-6": "0augky5me-port-27",
+        "cx8-7": "43lnbdc0z-port-28",
+        "cx8-8": "0augky5me-port-28",
+        "ns_nic_1-1": "02eah0d2w-port-29",
+        "ns_nic_1-2": "bqppsxula-port-29",
+        "ns_nic_2-1": "02eah0d2w-port-30",
+        "ns_nic_2-2": "bqppsxula-port-30",
+        "bmc": "ve3d5hii5-port-15"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "siysn6znv",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 15,
+      "rackId": "rack-loqwqeckj",
+      "customName": "P5800G7 A04-14",
+      "price": 500000,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-21",
+        "cx8-2": "0augky5me-port-21",
+        "cx8-3": "43lnbdc0z-port-22",
+        "cx8-4": "0augky5me-port-22",
+        "cx8-5": "43lnbdc0z-port-23",
+        "cx8-6": "0augky5me-port-23",
+        "cx8-7": "43lnbdc0z-port-24",
+        "cx8-8": "0augky5me-port-24",
+        "ns_nic_1-1": "02eah0d2w-port-27",
+        "ns_nic_1-2": "bqppsxula-port-27",
+        "ns_nic_2-1": "02eah0d2w-port-28",
+        "ns_nic_2-2": "bqppsxula-port-28",
+        "bmc": "ve3d5hii5-port-14"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "2vw4yoenf",
+      "type": "Server5U",
+      "name": "P5800G7 A01-5",
+      "size": 5,
+      "theme": "blue",
+      "power": 14000,
+      "coolingCapacity": 0,
+      "startU": 20,
+      "rackId": "rack-loqwqeckj",
+      "customName": "P5800G7 A04-13",
+      "price": 500000,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {
+        "cx8-1": "43lnbdc0z-port-17",
+        "cx8-2": "0augky5me-port-17",
+        "cx8-3": "43lnbdc0z-port-18",
+        "cx8-4": "0augky5me-port-18",
+        "cx8-5": "43lnbdc0z-port-19",
+        "cx8-6": "0augky5me-port-19",
+        "cx8-7": "43lnbdc0z-port-20",
+        "cx8-8": "0augky5me-port-20",
+        "ns_nic_1-1": "02eah0d2w-port-25",
+        "ns_nic_1-2": "bqppsxula-port-25",
+        "ns_nic_2-1": "02eah0d2w-port-26",
+        "ns_nic_2-2": "bqppsxula-port-26",
+        "bmc": "ve3d5hii5-port-13"
+      },
+      "hardwareSpecs": {
+        "cpu": {
+          "model": "Intel GNR 6767P",
+          "qty": "2"
+        },
+        "dimm": {
+          "model": "Samsung 64G 6400MT/s",
+          "qty": "32"
+        },
+        "nic": {
+          "model": "Nvidia BlueField 3 B3240H",
+          "qty": "1"
+        },
+        "gpu": {
+          "model": "Nvidia B300 LC",
+          "qty": "1"
+        },
+        "m2": {
+          "model": "Samsung PM9A3 1.92TB M.2",
+          "qty": "2"
+        },
+        "hdd": {
+          "model": "Samsung PM9A3 3.84TB U.2 NVMe SSD",
+          "qty": "8"
+        },
+        "psu54v": {
+          "model": "Chicony 3300W",
+          "qty": "6"
+        },
+        "psu12v": {
+          "model": "GreatWall 2000W",
+          "qty": "2"
+        },
+        "other": {
+          "model": "Intel VROC Key",
+          "qty": "1"
+        },
+        "ns_nic_1": {
+          "model": "Nvidia BlueField-3 B3240H",
+          "qty": "2"
+        },
+        "ns_nic_2": {
+          "model": "Nvidia Connect-6 100G 2P",
+          "qty": "2"
+        }
+      }
+    },
+    {
+      "id": "yel5d8ed9",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 40,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "50zhqq04f",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 43,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "tr2zk70ae",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 39,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "1dpcxql6k",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 40,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "f4hgpynl7",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 29,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "2uspg8vy9",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 28,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "7loiv01va",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 27,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "qece0jwyz",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 26,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "bre6fby7r",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 25,
+      "rackId": "rack-npw6cvdae",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A03",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "432326sjz",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 30,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "hckq2jz91",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 29,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "pp7svuwlb",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 28,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "b1260bm8k",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 27,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "amqo5jdz2",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 26,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "ieolkbekz",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 25,
+      "rackId": "rack-itxytxd1w",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A02",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "jbhcqpkvs",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 45,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "c9lwfzk55",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 44,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "gi5uhhhk8",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 43,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "rt4y4g4ja",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 42,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "qc73xp9p5",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 41,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "plsq62x7e",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 40,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "pzthnts0x",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 39,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "y2typg7h2",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 38,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "w0tmkkdxx",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 37,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "d8hb7xbv9",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 36,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "jfnqy7bcg",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 35,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "e4pvjv28v",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 34,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "q7i7xa87o",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 33,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "rwpmq8uyf",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 32,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "wqeg61hoi",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 29,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "96oxcubqv",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 28,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "tdymrcpb6",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 27,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "bvaljawx0",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 26,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "actli53z8",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 25,
+      "rackId": "rack-1",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A01",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "yba8uljtn",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 47,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "qkjv1a31o",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 46,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "xxs933o2f",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 45,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "xhk75br5c",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 44,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "v01mj2udy",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 43,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "w5rx3zqoq",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 42,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "ysbqbn7lk",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 41,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "9n3ot3tdy",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 40,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "pze2p6o7s",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 39,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "46iihofys",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 38,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "i2i8lbvto",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 37,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "prnewg9rk",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 36,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "6ssqg1f1l",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 35,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "ly5za40bx",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 34,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "49hqatsjn",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 33,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "yn1f4gs36",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 32,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "cyrxsxdv4",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 30,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "lbosex3p2",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 31,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "8tw0nwycs",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 29,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "d55drr8dy",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 28,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "jwiag90qr",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 27,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "ofcb999lo",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 26,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    },
+    {
+      "id": "u077pp5pw",
+      "type": "Blank",
+      "name": "空白擋板",
+      "size": 1,
+      "theme": "slate",
+      "power": 0,
+      "coolingCapacity": 0,
+      "startU": 25,
+      "rackId": "rack-loqwqeckj",
+      "customName": "空白擋板",
+      "price": 0,
+      "topologyGroup": "RACK-A04",
+      "networkRole": "Leaf",
+      "fabricGroup": "East-West",
+      "connections": {},
+      "hardwareSpecs": {}
+    }
+  ],
+  "timestamp": "2026-04-14T17:05:21.223Z"
+}
