@@ -1,6 +1,7 @@
 import React from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
+import exampleData from '../../data/exampleData.json';
 
 const Header = () => {
     const { 
@@ -27,6 +28,15 @@ const Header = () => {
         setRacks([...racks, { id: newId, name: `RACK-${String(racks.length + 1).padStart(3, '0')}`, type: 'General', uCount: 48 }]);
         setActiveRackId(newId);
         if (viewMode === 'network') setViewMode('overview');
+    };
+
+    const handleLoadExample = () => {
+        if (exampleData && exampleData.racks && exampleData.devices) {
+            setRacks(exampleData.racks);
+            setDevices(exampleData.devices);
+            setViewMode('overview');
+            setSelectedId(null);
+        }
     };
 
     return (
@@ -93,21 +103,21 @@ const Header = () => {
 
             {/* Bottom Row: Stats and Toolbar */}
             <div className="h-12 w-full flex items-center justify-between px-6 bg-slate-900 border-b-2 border-slate-950 overflow-x-auto">
-                <div className="flex items-center gap-4 text-xs font-bold tracking-wide shrink-0">
-                    <div className="text-emerald-400 px-3 py-1 rounded border border-emerald-500/20 shadow-inner group whitespace-nowrap">
-                        機房總空間：{totalSpace} U
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-3 bg-slate-950/80 p-1.5 rounded-lg border border-slate-700 shadow-inner">
+                        <div className="text-emerald-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-emerald-500/20">
+                            機房總空間：{totalSpace} U
+                        </div>
+                        <div className="text-orange-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-orange-500/20">
+                            機房總功耗：{totalPower.toLocaleString()} W
+                        </div>
+                        <div className="text-blue-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-blue-500/20">
+                            機房總價：${totalPrice.toLocaleString()}
+                        </div>
                     </div>
-                    <div className="text-orange-400 px-3 py-1 rounded border border-orange-500/20 shadow-inner group whitespace-nowrap">
-                        機房總功耗：{totalPower.toLocaleString()} W
-                    </div>
-                    <div className="text-blue-400 px-3 py-1 rounded border border-blue-500/20 shadow-inner group whitespace-nowrap">
-                        機房總價：${totalPrice.toLocaleString()}
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-3 shrink-0 ml-6">
                     {(viewMode === 'single' || viewMode === 'overview') && (
-                        <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-md border border-slate-700 shadow-inner mr-2">
+                        <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-lg border border-slate-700 shadow-inner">
                             {viewMode === 'single' && (
                                 <>
                                     <span className="text-xs text-slate-400 font-bold px-2">當前機櫃</span>
@@ -122,33 +132,22 @@ const Header = () => {
                             )}
                             <button
                                 onClick={handleAddRackClick}
-                                className="ml-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)] whitespace-nowrap"
+                                className="ml-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)] whitespace-nowrap"
                             >
                                 + 新增機櫃
                             </button>
                         </div>
                     )}
+                </div>
 
-                    {(viewMode === 'overview' || viewMode === 'network') && (
-                        <button
-                            onClick={() => setIsFitToScreen(!isFitToScreen)}
-                            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all border ${
-                                isFitToScreen ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-300'
-                            }`}
-                            title={isFitToScreen ? "恢復原始比例" : "自適應縮放至符合螢幕大小"}
-                        >
-                            {isFitToScreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
-                            <span className="whitespace-nowrap">{isFitToScreen ? '原始比例' : '自適應'}</span>
-                        </button>
-                    )}
-
+                <div className="flex items-center gap-3 shrink-0 ml-auto">
                     <div className="relative">
                         <button
                             onClick={() => setIsRaMenuOpen(!isRaMenuOpen)}
-                            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all border ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all border ${
                                 isRaMenuOpen ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
                             }`}
-                            title="NV RA 建議配置"
+                            title="建議配置資訊"
                         >
                             <LayoutTemplate className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">建議配置</span>
                         </button>
@@ -156,21 +155,30 @@ const Header = () => {
                         {isRaMenuOpen && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsRaMenuOpen(false)}></div>
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-slate-800 rounded-xl shadow-2xl border border-slate-600 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                                    <div className="px-3 py-1.5 text-xs font-bold text-slate-500 tracking-wider">NVIDIA Reference Architecture</div>
+                                <div className="absolute right-0 top-full mt-2 w-32 bg-slate-800 rounded-xl shadow-2xl border border-slate-600 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
                                     <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: 'GB200_NVL72' }); setIsRaMenuOpen(false); }}
-                                        className="w-full flex flex-col items-start px-4 py-2 hover:bg-blue-500/20 transition-colors group"
+                                        onClick={() => { setRaModalState({ isOpen: true, type: '20台' }); setIsRaMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
                                     >
-                                        <div className="text-sm font-bold text-slate-200 group-hover:text-blue-400">GB200 NVL72</div>
-                                        <div className="text-[10px] text-slate-500">Liquid-Cooled AI Rack (72 GPUs)</div>
+                                        20台
                                     </button>
                                     <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: 'H100_HGX' }); setIsRaMenuOpen(false); }}
-                                        className="w-full flex flex-col items-start px-4 py-2 hover:bg-blue-500/20 transition-colors group"
+                                        onClick={() => { setRaModalState({ isOpen: true, type: '16台' }); setIsRaMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
                                     >
-                                        <div className="text-sm font-bold text-slate-200 group-hover:text-blue-400">H100 HGX (8-GPU)</div>
-                                        <div className="text-[10px] text-slate-500">Air-Cooled BasePOD Architecture</div>
+                                        16台
+                                    </button>
+                                    <button 
+                                        onClick={() => { setRaModalState({ isOpen: true, type: '4台' }); setIsRaMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
+                                    >
+                                        4台
+                                    </button>
+                                    <button 
+                                        onClick={() => { setRaModalState({ isOpen: true, type: '2台' }); setIsRaMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
+                                    >
+                                        2台
                                     </button>
                                 </div>
                             </>
@@ -178,8 +186,16 @@ const Header = () => {
                     </div>
 
                     <button
+                        onClick={handleLoadExample}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all border bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700 hover:text-emerald-300"
+                        title="載入預設範例專案"
+                    >
+                        <BookOpen className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">範例</span>
+                    </button>
+
+                    <button
                         onClick={handleClearAllClick}
-                        className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300"
                         title="清空設備"
                     >
                         <Eraser className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">一鍵清除</span>
@@ -187,7 +203,7 @@ const Header = () => {
 
                     <button
                         onClick={() => setShowCables(!showCables)}
-                        className={`flex items-center gap-1.5 px-3 py-1 mr-2 text-xs font-medium rounded transition-all border ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 mr-2 text-xs font-medium rounded transition-all border ${
                             showCables ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-300'
                         }`}
                     >
@@ -195,7 +211,22 @@ const Header = () => {
                         <span className="whitespace-nowrap">{showCables ? '顯示線路' : '隱藏線路'}</span>
                     </button>
 
-                    <div className="flex bg-slate-900 rounded-md p-1 border border-slate-700 shadow-inner">
+                    <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-700 shadow-inner items-center">
+                        {(viewMode === 'overview' || viewMode === 'network') && (
+                            <>
+                                <button
+                                    onClick={() => setIsFitToScreen(!isFitToScreen)}
+                                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all border ${
+                                        isFitToScreen ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-transparent text-slate-400 hover:text-slate-200'
+                                    }`}
+                                    title={isFitToScreen ? "恢復原始比例" : "自適應縮放至符合螢幕大小"}
+                                >
+                                    {isFitToScreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
+                                    <span className="whitespace-nowrap">{isFitToScreen ? '原始比例' : '自適應'}</span>
+                                </button>
+                                <div className="h-4 w-px bg-slate-700 mx-1"></div>
+                            </>
+                        )}
                         <button
                             onClick={() => setViewMode('single')}
                             className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded transition-all ${

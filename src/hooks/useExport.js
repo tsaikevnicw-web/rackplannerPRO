@@ -164,35 +164,58 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
         if (!rackContainerRef.current) return;
         setIsExporting(true);
         try {
-            await document.fonts.ready;
             const element = rackContainerRef.current;
-            const originalStyle = element.style.cssText; const originalTransform = element.style.transform;
-            element.style.transform = 'none'; element.style.backgroundColor = '#020617';
+            const originalStyle = element.style.cssText; 
+            const originalTransform = element.style.transform;
+            
+            element.style.transform = 'none'; 
+            element.style.backgroundColor = '#020617';
 
-            const canvas = await html2canvas(element, { backgroundColor: '#020617', scale: 2, logging: false, useCORS: true });
-            element.style.cssText = originalStyle; element.style.transform = originalTransform;
+            const canvas = await html2canvas(element, { 
+                backgroundColor: '#020617', 
+                scale: 1, 
+                logging: false, 
+                useCORS: true 
+            });
+            
+            element.style.cssText = originalStyle; 
+            element.style.transform = originalTransform;
 
-            const ctx = canvas.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const now = new Date(); const timestamp = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const ctx = canvas.getContext('2d'); 
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            
+            const now = new Date(); 
+            const timestamp = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             
             ctx.save();
-            const centerX = canvas.width / 2; const centerY = canvas.height / 2;
-            ctx.translate(centerX, centerY); ctx.rotate(-45 * Math.PI / 180);
-            let fontSize = canvas.width * 0.06; ctx.font = `bold ${fontSize}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = Math.max(4, fontSize * 0.1); ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+            const centerX = canvas.width / 2; 
+            const centerY = canvas.height / 2;
+            ctx.translate(centerX, centerY); 
+            ctx.rotate(-45 * Math.PI / 180);
+            let fontSize = canvas.width * 0.05; 
+            ctx.font = `bold ${fontSize}px sans-serif`; 
+            ctx.textAlign = 'center'; 
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; 
+            ctx.shadowBlur = Math.max(4, fontSize * 0.1); 
+            ctx.shadowOffsetX = 2; 
+            ctx.shadowOffsetY = 2;
 
-            const drawWatermarkText = (text, yOffset) => {
-                ctx.fillStyle = 'rgba(128, 128, 128, 0.35)'; ctx.fillText(text, 0, yOffset);
-            };
-            drawWatermarkText(`Inventec Confidential ${timestamp}`, 0);
+            ctx.fillStyle = 'rgba(128, 128, 128, 0.35)'; 
+            ctx.fillText(`Inventec Confidential ${timestamp}`, 0, 0);
             ctx.restore();
 
             const url = canvas.toDataURL('image/png');
-            const link = document.createElement('a'); link.download = `Rack-Architecture-${new Date().toISOString().slice(0, 10)}.png`;
-            link.href = url; link.click();
+            const link = document.createElement('a'); 
+            link.download = `Rack-Architecture-${new Date().toISOString().slice(0, 10)}.png`;
+            link.href = url; 
+            link.click();
         } catch (error) {
-            showAlert('匯出圖片失敗，請稍後再試。', '錯誤', 'error');
-        } finally { setIsExporting(false); }
+            console.error("Screenshot Error:", error);
+            showAlert('匯出圖片失敗，請確保畫面上沒有不支援的圖形或字體。', '錯誤', 'error');
+        } finally { 
+            setIsExporting(false); 
+        }
     };
 
     return { handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage };
