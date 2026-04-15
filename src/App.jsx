@@ -7,14 +7,15 @@ import RackView from './components/rack/RackView';
 import NetworkTopology from './components/network/NetworkTopology';
 import CablesOverlay from './components/rack/CablesOverlay';
 import { getFabricGroup } from './utils/helpers';
-import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate } from 'lucide-react';
 
 const AppContent = () => {
     const { 
         viewMode, racks, devices, activeRackId, isFitToScreen, scaleFactor, setScaleFactor,
         mainAreaRef, rackContainerRef, layoutSize, setLayoutSize,
         alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
-        clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId
+        clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
+        raModalState, setRaModalState, handleApplyRATemplate, setViewMode
     } = useRackPlanner();
 
     // Scale Logic
@@ -94,6 +95,13 @@ const AppContent = () => {
         setDeleteDeviceConfirm({ isOpen: false, deviceId: null });
         setSelectedId(null);
     };
+    
+    const executeApplyRA = () => {
+        handleApplyRATemplate(raModalState.type);
+        setRaModalState({ isOpen: false, type: '' });
+        setViewMode('overview'); // Switch to overview to see the new layout
+        setSelectedId(null);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans select-none">
@@ -102,8 +110,11 @@ const AppContent = () => {
                 <Sidebar />
                 <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#020617]">
                     <div 
-                        className={`relative flex ${viewMode === 'overview' ? 'justify-start min-w-full w-max' : 'justify-center w-full'}`}
-                        style={{ width: isFitToScreen && viewMode !== 'single' ? `${layoutSize.w * scaleFactor}px` : undefined }}
+                        className={`relative flex ${viewMode === 'overview' ? (isFitToScreen ? 'justify-center items-center w-full h-full' : 'justify-start min-w-full w-max') : 'justify-center w-full'}`}
+                        style={{ 
+                            width: isFitToScreen && viewMode !== 'single' ? `${layoutSize.w * scaleFactor}px` : undefined,
+                            height: isFitToScreen && viewMode !== 'single' ? `${layoutSize.h * scaleFactor}px` : undefined
+                        }}
                     >
                         <div 
                             ref={rackContainerRef} 
@@ -188,6 +199,33 @@ const AppContent = () => {
                         <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
                             <button onClick={() => setDeleteDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
                             <button onClick={executeDeleteDevice} className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-600/30">確定刪除</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {raModalState.isOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700">
+                            <h3 className="text-lg font-bold text-blue-400 flex items-center gap-2">
+                                <LayoutTemplate className="w-5 h-5" /> 套用建議配置
+                            </h3>
+                        </div>
+                        <div className="p-6 text-slate-300">
+                            <p>確定要套用 <span className="text-blue-400 font-bold">{raModalState.type === 'GB200_NVL72' ? 'GB200 NVL72' : 'H100 HGX'}</span> 配置嗎？</p>
+                            <p className="text-sm text-slate-500 mt-4 bg-slate-950/50 p-3 rounded border border-slate-800 italic">
+                                ※ 注意：此操作將會清空目前「所有」機櫃中的設備，並根據 NVIDIA 建議架構自動重新配置。建議先匯出目前的專案檔。
+                            </p>
+                        </div>
+                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setRaModalState({ isOpen: false, type: '' })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
+                            <button 
+                                onClick={executeApplyRA} 
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-600/30"
+                            >
+                                確定套用
+                            </button>
                         </div>
                     </div>
                 </div>

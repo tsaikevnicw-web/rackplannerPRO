@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const CablesOverlay = () => {
-    const { devices, drawing, setDrawing, showCables, handleConnectionChange } = useRackPlanner();
+    const { devices, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
@@ -18,11 +18,13 @@ const CablesOverlay = () => {
                 const newCoords = {};
                 let changed = false;
 
+                const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
+
                 ports.forEach(port => {
                     const id = port.getAttribute('data-port-id');
                     const rect = port.getBoundingClientRect();
-                    const x = rect.left + rect.width / 2 - containerRect.left;
-                    const y = rect.top + rect.height / 2 - containerRect.top;
+                    const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
+                    const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
                     newCoords[id] = { x, y };
                 });
 
@@ -52,8 +54,9 @@ const CablesOverlay = () => {
                 
                 const containerRect = rackContainer.getBoundingClientRect();
 
-                const currentX = e.clientX - containerRect.left;
-                const currentY = e.clientY - containerRect.top;
+                const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
+                const currentX = (e.clientX - containerRect.left) / currentScale;
+                const currentY = (e.clientY - containerRect.top) / currentScale;
 
                 setDrawing(prev => ({ ...prev, currentX, currentY }));
             }
@@ -130,19 +133,12 @@ const CablesOverlay = () => {
 
     return (
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
-            <defs>
-                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-            </defs>
-            
             {connectionPaths.map(conn => (
                 <g key={conn.id}>
                     {/* Shadow line */}
                     <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.3"/>
-                    {/* Colored glow line */}
-                    <path d={conn.path} className={`${conn.colorClass}`} strokeWidth="2" fill="none" opacity="0.5" filter="url(#glow)"/>
+                    {/* Colored line, filter removed for html2canvas compatibility */}
+                    <path d={conn.path} className={`${conn.colorClass}`} strokeWidth="2" fill="none" opacity="0.8" />
                 </g>
             ))}
 

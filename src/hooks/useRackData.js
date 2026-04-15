@@ -178,6 +178,58 @@ export function useRackData(alertModalRef) {
         });
     };
 
+    const handleApplyRATemplate = (type) => {
+        if (type === 'GB200_NVL72') {
+            const rackId = 'rack-template-1';
+            setRacks([
+                { id: rackId, name: 'NV-GB200-NVL72', type: 'ORv3', uCount: 44 }
+            ]);
+            
+            const newDevs = [];
+            newDevs.push({ id: generateId(), rackId, type: 'CDU4U', customName: 'Liquid CDU', size: 4, startU: 1, theme: 'cyan', power: 2500, coolingCapacity: 100000 });
+            newDevs.push({ id: generateId(), rackId, type: 'Blank', customName: 'Power Shelf 1', size: 2, startU: 5, theme: 'slate', power: 0 });
+            
+            for (let i = 0; i < 9; i++) {
+                newDevs.push({ 
+                    id: generateId(), rackId, type: 'Switch800G', 
+                    customName: `NVLink Switch ${i+1}`, size: 2, startU: 7 + (i * 2), 
+                    theme: 'purple', power: 600, networkRole: 'Spine', topologyGroup: 'NVLink'
+                });
+            }
+            
+            const computeStartU = 25;
+            for (let i = 0; i < 18; i++) {
+                if (computeStartU + i > 44) break;
+                newDevs.push({ 
+                    id: generateId(), rackId, type: 'Server1U', 
+                    customName: `GB200 Compute Tray ${i+1}`, size: 1, startU: computeStartU + i, 
+                    theme: 'blue', power: 1200 
+                });
+            }
+            setDevices(newDevs);
+        } else if (type === 'H100_HGX') {
+            const rackId = 'rack-template-2';
+            setRacks([
+                { id: rackId, name: 'NV-H100-HGX-A01', type: 'General', uCount: 48 }
+            ]);
+            
+            const newDevs = [];
+            for (let i = 0; i < 4; i++) {
+                newDevs.push({ 
+                    id: generateId(), rackId, type: 'Server5U',
+                    customName: `H100 HGX Node ${i+1}`, size: 8, startU: 1 + (i * 10), 
+                    theme: 'blue', power: 10000 
+                });
+            }
+            
+            newDevs.push({ id: generateId(), rackId, type: 'Switch400G', customName: 'IB Spine SW 01', size: 2, startU: 41, theme: 'purple', power: 400, networkRole: 'Spine' });
+            newDevs.push({ id: generateId(), rackId, type: 'Switch400G', customName: 'IB Spine SW 02', size: 2, startU: 43, theme: 'purple', power: 400, networkRole: 'Spine' });
+            newDevs.push({ id: generateId(), rackId, type: 'Router', customName: 'Management Router', size: 1, startU: 45, theme: 'violet', power: 100 });
+            
+            setDevices(newDevs);
+        }
+    };
+
     return {
         racks, setRacks,
         devices, setDevices,
@@ -189,6 +241,7 @@ export function useRackData(alertModalRef) {
         handleDisconnectPort,
         handleHardwareSpecChange,
         handleAutoConnectGroup,
-        handleHAAutoConnect
+        handleHAAutoConnect,
+        handleApplyRATemplate
     };
 }
