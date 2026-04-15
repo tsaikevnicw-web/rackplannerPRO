@@ -88,7 +88,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-col gap-1 items-center justify-center">
                                 {Array.from({ length: portLayout.rows }).map((_, rowIndex) => (
-                                    <div key={rowIndex} className="flex gap-1 justify-center flex-wrap">
+                                    <div key={rowIndex} className="flex gap-1 justify-center flex-nowrap">
                                         {Array.from({ length: portLayout.cols }).map((_, colIndex) => {
                                             const portNum = rowIndex * portLayout.cols + colIndex + 1;
                                             if (portNum > portCount) return null;
