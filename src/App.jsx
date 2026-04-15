@@ -11,6 +11,7 @@ import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTem
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
+import example2Data from './data/example2Data.json';
 
 const AppContent = () => {
     const { 
@@ -409,6 +410,62 @@ const AppContent = () => {
                                         </ul>
                                     </div>
                                 </>
+                            ) : raModalState.type === '2台' ? (
+                                <>
+                                    <p className="text-sm text-slate-300">若您基於早期開發或測試需求，實務上僅建置 2 台伺服器，依照單一節點的硬體規格推算，並為了維持 RA 架構的高可用性 (HA) 精神，您所需的設備清單與規劃如下：</p>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-blue-500 rounded-full"></div> 一、運算節點硬體 (Compute Nodes)</h4>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">伺服器本體 (2 台)：</span>基於 HGX B300 平台的伺服器。</li>
+                                            <li><span className="font-bold text-slate-100">GPU (共 16 張)：</span>每台配置 8 張 B300 SXM GPU，提供運算核心能力。</li>
+                                            <li><span className="font-bold text-slate-100">CPU (共 4 顆)：</span>每台配置 2 顆 CPU。</li>
+                                            <li><span className="font-bold text-slate-100">運算網路卡 (共 16 張)：</span>每台內建 8 張 ConnectX-8 SuperNIC，負責 GPU 間的高速運算通訊。</li>
+                                            <li><span className="font-bold text-slate-100">融合網路卡 (共 2 張)：</span>每台配置 1 張 BlueField-3 B3240 DPU，負責儲存與對外網路通訊。</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div> 二、網路交換器與基礎架構 (Networking Infrastructure)</h4>
+                                        <p className="mb-3 text-slate-400">即使只有 2 台運算節點，若要建構符合 NVIDIA 規範的獨立平面與高可用性網路，您仍需採用與 4 台 (1 個 SU) 相同的最少交換器數量 (連接埠會有大量閒置)：</p>
+                                        <ul className="list-none space-y-3">
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-emerald-400 mb-1">運算網路交換器 (Compute / East-West Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">單平面 (Single Plane) 架構：</span>最少需 2 台 NVIDIA SN5600 交換器。</div>
+                                                    <div><span className="text-slate-400">雙平面 (Dual Plane) 架構：</span>最少需 4 台 NVIDIA SN5600 交換器。</div>
+                                                </div>
+                                            </li>
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-yellow-400 mb-1">融合網路交換器 (Converged / North-South Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">配置：</span>需 2 台 NVIDIA SN5600 交換器，處理節點對外與儲存連線。</div>
+                                                </div>
+                                            </li>
+                                            <li className="bg-slate-900 p-3 rounded border border-slate-800">
+                                                <div className="font-bold text-purple-400 mb-1">頻外管理交換器 (OOB Management Fabric)</div>
+                                                <div className="pl-2 space-y-1">
+                                                    <div><span className="text-slate-400">配置：</span>需 2 台 NVIDIA SN2201 交換器，提供底層硬體管理通道。</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-orange-500 rounded-full"></div> 三、控制平面與輔助伺服器 (Control Plane / Support Servers)</h4>
+                                        <p className="mb-2 text-slate-400">為了部署 OS 與管理這 2 台伺服器，您依然需要建置獨立的控制平面。</p>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">建議配置：</span>2 台 Base Command Manager 節點 (具備 HA)，以及負責工作排程的伺服器 (如 2 台 Slurm 或 3 台 K8s 節點)。</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                        <h4 className="text-blue-300 font-bold mb-3 text-base flex items-center gap-2"><div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div> 四、核心軟體堆疊 (Software Stack)</h4>
+                                        <ul className="list-disc pl-5 space-y-2 text-slate-300">
+                                            <li><span className="font-bold text-slate-100">NVIDIA AI Enterprise (NVAIE)：</span>軟體為逐 GPU 授權，2 台伺服器共需採購 16 個軟體授權。</li>
+                                        </ul>
+                                    </div>
+                                </>
                             ) : (
                                 <p className="text-slate-400 italic text-center py-10">此 {raModalState.type} 節點規模的詳細架構配置說明尚在建置中。</p>
                             )}
@@ -431,6 +488,13 @@ const AppContent = () => {
                             ) : raModalState.type === '4台' ? (
                                 <button
                                     onClick={() => handleLoadExample(example4Data)}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+                                >
+                                    <BookOpen className="w-4 h-4" /> 載入此範例專案
+                                </button>
+                            ) : raModalState.type === '2台' ? (
+                                <button
+                                    onClick={() => handleLoadExample(example2Data)}
                                     className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
                                 >
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
