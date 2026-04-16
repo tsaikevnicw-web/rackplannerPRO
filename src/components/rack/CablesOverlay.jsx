@@ -71,8 +71,31 @@ const CablesOverlay = () => {
             if (e.detail && e.detail.drawing) {
                 const { sourceId, sourcePortKey } = e.detail.drawing;
                 const { targetDevId, targetPortKey } = e.detail;
-                // Form key as deviceId-portKey
-                handleConnectionChange(sourceId, sourcePortKey, `${targetDevId}-${targetPortKey}`);
+
+                const sourceDevice = devices.find(d => d.id === sourceId);
+                const isServerOrStorage = sourceDevice &&
+                    ((sourceDevice.type || '').startsWith('Server') ||
+                     (sourceDevice.type || '').startsWith('Storage'));
+
+                if (isServerOrStorage) {
+                    const MAX_CONN = 8;
+                    const existing = sourceDevice.connections?.[sourcePortKey];
+                    if (!existing) {
+                        // 第一 slot 尚空
+                        handleConnectionChange(sourceId, sourcePortKey, `${targetDevId}-${targetPortKey}`);
+                    } else {
+                        // 從 __2 找到第一個空間
+                        let useKey = null;
+                        for (let i = 2; i <= MAX_CONN; i++) {
+                            const slotKey = `${sourcePortKey}__${i}`;
+                            if (!sourceDevice.connections?.[slotKey]) { useKey = slotKey; break; }
+                        }
+                        if (useKey) handleConnectionChange(sourceId, useKey, `${targetDevId}-${targetPortKey}`);
+                        // 超過 8 條則不作用
+                    }
+                } else {
+                    handleConnectionChange(sourceId, sourcePortKey, `${targetDevId}-${targetPortKey}`);
+                }
             }
         };
 
@@ -90,10 +113,11 @@ const CablesOverlay = () => {
     if (!showCables && !selectedId) return null;
 
     const getLineColor = (portKey) => {
-        if (portKey.startsWith('cx8-')) return 'stroke-green-500';
-        if (portKey.startsWith('ns_nic_')) return 'stroke-yellow-400';
-        if (portKey === 'bmc') return 'stroke-blue-500';
-        if (portKey.startsWith('port-')) return 'stroke-purple-500';
+        const base = portKey.replace('__2', '');
+        if (base.startsWith('cx8-')) return 'stroke-green-500';
+        if (base.startsWith('ns_nic_')) return 'stroke-yellow-400';
+        if (base === 'bmc' || base.startsWith('bmc')) return 'stroke-blue-500';
+        if (base.startsWith('port-')) return 'stroke-purple-500';
         return 'stroke-slate-500';
     };
 
@@ -118,7 +142,8 @@ const CablesOverlay = () => {
                     const shouldDraw = showCables || isHighlighted;
                     
                     if (shouldDraw) {
-                        const localFullId = `${dev.id}-${localKey}`;
+                        const baseLocalKey = localKey.replace(/__\d+$/, '');
+                        const localFullId = `${dev.id}-${baseLocalKey}`;
                         const targetFullId = targetKey;
                         const startCoord = localCoords[localFullId];
                         const endCoord = localCoords[targetFullId];

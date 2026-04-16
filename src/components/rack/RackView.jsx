@@ -14,6 +14,14 @@ const RackView = ({ racksToRender }) => {
     const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
+        // 計算此 port 目前的連線總數（1 + __2 ~ __8）
+        let connCount = 0;
+        if (isConnected) {
+            connCount = 1;
+            for (let i = 2; i <= 8; i++) {
+                if (dev.connections?.[`${portKey}__${i}`] !== undefined) connCount++;
+            }
+        }
         
         const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
         const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
@@ -55,7 +63,11 @@ const RackView = ({ racksToRender }) => {
                 onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
                 onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
             >
-                {isConnected && !colorOverride && <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>}
+                {isConnected && !colorOverride && (
+                    connCount > 1
+                        ? <div className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-slate-900 leading-none">{connCount}</div>
+                        : <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>
+                )}
             </div>
         );
     };
@@ -135,13 +147,13 @@ const RackView = ({ racksToRender }) => {
                                         <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-black/60 to-transparent pointer-events-none"></div>
 
                                         {/* 左側：Icon 與名稱 */}
-                                        <div className="flex items-center flex-1 w-1/3 min-w-0 h-full relative z-10 overflow-hidden pl-3 pr-2">
+                                        <div className="flex items-center flex-1 min-w-0 h-full relative z-10 overflow-hidden pl-3 pr-2">
                                             <Icon className={`w-4 h-4 mr-2 opacity-90 shrink-0 drop-shadow-md ${tStyle.text}`} />
                                             <div className="font-bold text-sm tracking-wide truncate drop-shadow-md">{dev.customName}</div>
                                         </div>
 
                                         {/* 右側：Ports 區域 */}
-                                        <div className="relative z-30 flex items-center justify-end shrink-0 w-2/3 max-w-[66%] h-full pr-2">
+                                        <div className="relative z-30 flex items-center justify-end shrink-0 h-full pr-2">
                                             {((dev.type || '').startsWith('Server') && dev.type !== 'Server5U' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (
                                                 <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
                                                     {((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (

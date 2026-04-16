@@ -47,12 +47,19 @@ export function useRackData(alertModalRef) {
             
             if (fullPortId.startsWith(dev.id + '-')) {
                 const portKey = fullPortId.replace(dev.id + '-', '');
+                // 移除主要 slot
                 if (newConns[portKey]) {
                     delete newConns[portKey];
                     modified = true;
                 }
+                // 一併移除 __2 ~ __8 所有 twin slot
+                for (let i = 2; i <= 8; i++) {
+                    const slotKey = `${portKey}__${i}`;
+                    if (newConns[slotKey]) { delete newConns[slotKey]; modified = true; }
+                }
             }
             
+            // 移除其他設備連向此 port 的引用
             Object.keys(newConns).forEach(k => {
                 if (newConns[k] === fullPortId) {
                     delete newConns[k];

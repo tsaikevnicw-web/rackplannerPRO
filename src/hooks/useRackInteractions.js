@@ -24,7 +24,7 @@ export function useRackInteractions() {
                     return;
                 }
                 if (!deviceData.id || isClone) {
-                    const newDev = { ...deviceData, id: generateId(), rackId, startU: 1, connections: {}, hardwareSpecs: {} };
+                    const newDev = { ...deviceData, id: generateId(), rackId, startU: 1, connections: {} };
                     setDevices(prev => [...prev, newDev]);
                 } else {
                     setDevices(prev => prev.map(dev => dev.id === deviceData.id ? { ...dev, rackId, startU: 1 } : dev));
@@ -51,7 +51,7 @@ export function useRackInteractions() {
             }
 
             if (!deviceData.id || isClone) {
-                const newDev = { ...deviceData, id: generateId(), rackId, startU: targetU, connections: {}, hardwareSpecs: {} };
+                const newDev = { ...deviceData, id: generateId(), rackId, startU: targetU, connections: {} };
                 setDevices(prev => [...prev, newDev]);
             } else {
                 setDevices(prev => prev.map(dev => dev.id === deviceData.id ? { ...dev, rackId, startU: targetU } : dev));

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { RackPlannerProvider, useRackPlanner } from './context/RackPlannerContext';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
@@ -19,6 +19,8 @@ const AppContent = () => {
         mainAreaRef, rackContainerRef, layoutSize, setLayoutSize,
         alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
+        selectedId,
+        generateId, showAlert,
         raModalState, setRaModalState, handleApplyRATemplate, setViewMode
     } = useRackPlanner();
 
@@ -51,6 +53,68 @@ const AppContent = () => {
         resizeObserver.observe(mainAreaRef.current);
         return () => resizeObserver.disconnect();
     }, [viewMode, racks.length, isFitToScreen]);
+
+    // 若視圖模式切換 setViewMode ─ clipboardRef 用于儲存被複製的設備
+    const clipboardRef = useRef(null);
+
+    // 鍵盤快捷鍵：del / ctrl+c / ctrl+v
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // 若焦點在表單元素上，不攔截任何按鍵
+            const tag = document.activeElement?.tagName;
+            const inForm = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+            // ── Del：刪除選中設備 ──
+            if (e.key === 'Delete' && !inForm) {
+                const selectedDevice = devices.find(d => d.id === selectedId);
+                if (!selectedDevice) return;
+                setDeleteDeviceConfirm({ isOpen: true, deviceId: selectedId });
+                return;
+            }
+
+            // ── Ctrl+C：複製選中設備 ──
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !inForm) {
+                const selectedDevice = devices.find(d => d.id === selectedId);
+                if (!selectedDevice) return;
+                clipboardRef.current = selectedDevice;
+                return;
+            }
+
+            // ── Ctrl+V：貧上複製的設備 ──
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !inForm) {
+                e.preventDefault();
+                const src = clipboardRef.current;
+                if (!src) return;
+
+                const targetRack = racks.find(r => r.id === activeRackId);
+                if (!targetRack) { showAlert('請先選取一個目標機櫃。', '提示', 'info'); return; }
+
+                const rackMaxU = targetRack.uCount || 48;
+                const devSize = src.size || 1;
+                const rackDevices = devices.filter(d => d.rackId === activeRackId && d.type !== 'SideCDU');
+
+                // 從 U1 開始找第一個可用的連續空間
+                let foundU = null;
+                for (let u = 1; u <= rackMaxU - devSize + 1; u++) {
+                    const overlaps = rackDevices.some(
+                        d => !(u + devSize - 1 < d.startU || u > d.startU + d.size - 1)
+                    );
+                    if (!overlaps) { foundU = u; break; }
+                }
+
+                if (foundU === null) {
+                    showAlert('機櫃空間不足，無法貳上設備！', '錯誤', 'error');
+                    return;
+                }
+
+                const newDev = { ...src, id: generateId(), rackId: activeRackId, startU: foundU, connections: {} };
+                setDevices(prev => [...prev, newDev]);
+                return;
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedId, devices, racks, activeRackId, generateId, showAlert, setDeleteDeviceConfirm, setDevices]);
 
     const handleLoadExample = (dataToLoad) => {
         if (dataToLoad && dataToLoad.racks && dataToLoad.devices) {
@@ -113,11 +177,11 @@ const AppContent = () => {
 
 
     return (
-        <div className="flex flex-col h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans select-none">
+        <div className="flex flex-col h-screen bg-[#060c16] text-slate-200 overflow-hidden font-sans select-none">
             <Header />
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
-                <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#020617] flex flex-col">
+                <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#060c16] flex flex-col">
                     <div 
                         className={`relative flex ${viewMode === 'overview' ? 'min-h-full' : (isFitToScreen && viewMode !== 'single' ? 'justify-start' : 'justify-center w-full')}`}
                         style={{ 
@@ -150,83 +214,83 @@ const AppContent = () => {
 
             {/* Modals */}
             {alertModal.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-2">
-                            {alertModal.type === 'error' && <X className="w-5 h-5 text-red-500" />}
-                            {alertModal.type === 'warning' && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                            {alertModal.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                            {alertModal.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
-                            <h3 className="text-lg font-bold text-slate-200">{alertModal.title}</h3>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700/50 flex items-center gap-2.5 bg-[#111e2e]">
+                            {alertModal.type === 'error' && <X className="w-5 h-5 text-rose-400" />}
+                            {alertModal.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400" />}
+                            {alertModal.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                            {alertModal.type === 'info' && <Info className="w-5 h-5 text-sky-400" />}
+                            <h3 className="text-base font-bold text-slate-100">{alertModal.title}</h3>
                         </div>
                         <div className="p-6 text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{alertModal.message}</div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end">
-                            <button onClick={() => setAlertModal({ ...alertModal, isOpen: false })} className="px-6 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-600/30">了解</button>
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-end">
+                            <button onClick={() => setAlertModal({ ...alertModal, isOpen: false })} className="px-6 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-600/25">了解</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {clearConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-700"><h3 className="text-lg font-bold text-red-400 flex items-center gap-2"><Eraser className="w-5 h-5" /> 警告：一鍵清除</h3></div>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Eraser className="w-5 h-5" /> 警告：一鍵清除</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要清除{clearConfirm.type === 'single' ? '「當前機櫃」' : '「所有機櫃」'} 中的所有設備嗎？</p><p className="text-sm text-slate-500 mt-2">此操作無法復原，請確認您已經匯出存檔！</p></div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
-                            <button onClick={() => setClearConfirm({ isOpen: false, type: '' })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
-                            <button onClick={executeClear} className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-600/30">確定清除</button>
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setClearConfirm({ isOpen: false, type: '' })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-700/60 transition-colors">取消</button>
+                            <button onClick={executeClear} className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors shadow-lg shadow-rose-600/25">確定清除</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {deleteRackConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-700"><h3 className="text-lg font-bold text-red-400 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除機櫃</h3></div>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除機櫃</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要刪除這個機櫃嗎？</p><p className="text-sm text-slate-500 mt-2">此機櫃內的所有設備將被一併移除，且與其相關的網路線也會被清除。此操作無法復原！</p></div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
-                            <button onClick={() => setDeleteRackConfirm({ isOpen: false, rackId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
-                            <button onClick={executeDeleteRack} className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-600/30">確定刪除</button>
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setDeleteRackConfirm({ isOpen: false, rackId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-700/60 transition-colors">取消</button>
+                            <button onClick={executeDeleteRack} className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors shadow-lg shadow-rose-600/25">確定刪除</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {clearDeviceConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-700"><h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2"><Unplug className="w-5 h-5" /> 警告：清除設備連線</h3></div>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-amber-400 flex items-center gap-2"><Unplug className="w-5 h-5" /> 警告：清除設備連線</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要清除此設備的所有網路連線嗎？</p><p className="text-sm text-slate-500 mt-2">包含此設備主動連出的線路，以及其他設備連向此設備的線路都會被一併徹底移除。</p></div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
-                            <button onClick={() => setClearDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
-                            <button onClick={executeClearDeviceConnections} className="px-4 py-2 rounded-lg text-sm font-medium bg-yellow-600 hover:bg-yellow-500 text-white transition-colors shadow-lg shadow-yellow-600/30">確定清除</button>
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setClearDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-700/60 transition-colors">取消</button>
+                            <button onClick={executeClearDeviceConnections} className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white transition-colors shadow-lg shadow-amber-600/25">確定清除</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {deleteDeviceConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-700"><h3 className="text-lg font-bold text-red-500 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除設備</h3></div>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除設備</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要從機櫃中完全刪除這台設備嗎？</p><p className="text-sm text-slate-500 mt-2">此設備以及所有相連的網路線都將被移除，且此操作無法復原！</p></div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-end gap-3">
-                            <button onClick={() => setDeleteDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">取消</button>
-                            <button onClick={executeDeleteDevice} className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-600/30">確定刪除</button>
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-end gap-3">
+                            <button onClick={() => setDeleteDeviceConfirm({ isOpen: false, deviceId: null })} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-700/60 transition-colors">取消</button>
+                            <button onClick={executeDeleteDevice} className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors shadow-lg shadow-rose-600/25">確定刪除</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {raModalState.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 mt-10 mb-10 max-h-[90vh]">
-                        <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800">
-                            <h3 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                                <LayoutTemplate className="w-6 h-6" /> NVIDIA HGX B300 RA 建議配置 ({raModalState.type})
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+                    <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 mt-10 mb-10 max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-slate-700/50 flex justify-between items-center bg-[#111e2e]">
+                            <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2">
+                                <LayoutTemplate className="w-5 h-5" /> NVIDIA HGX B300 RA 建議配置 ({raModalState.type})
                             </h3>
-                            <button onClick={() => setRaModalState({ isOpen: false, type: '' })} className="text-slate-400 hover:text-white"><X className="w-6 h-6" /></button>
+                            <button onClick={() => setRaModalState({ isOpen: false, type: '' })} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700/60 transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="p-6 text-slate-300 overflow-y-auto space-y-6 text-sm custom-scrollbar">
                             {raModalState.type === '20台' ? (
@@ -470,33 +534,21 @@ const AppContent = () => {
                                 <p className="text-slate-400 italic text-center py-10">此 {raModalState.type} 節點規模的詳細架構配置說明尚在建置中。</p>
                             )}
                         </div>
-                        <div className="bg-slate-800 px-6 py-4 flex justify-between items-center">
+                        <div className="bg-[#0d1b2e] border-t border-slate-700/50 px-6 py-4 flex justify-between items-center">
                             {raModalState.type === '20台' ? (
-                                <button
-                                    onClick={() => handleLoadExample(exampleData)}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
-                                >
+                                <button onClick={() => handleLoadExample(exampleData)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25">
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
                                 </button>
                             ) : raModalState.type === '16台' ? (
-                                <button
-                                    onClick={() => handleLoadExample(example16Data)}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
-                                >
+                                <button onClick={() => handleLoadExample(example16Data)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25">
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
                                 </button>
                             ) : raModalState.type === '4台' ? (
-                                <button
-                                    onClick={() => handleLoadExample(example4Data)}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
-                                >
+                                <button onClick={() => handleLoadExample(example4Data)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25">
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
                                 </button>
                             ) : raModalState.type === '2台' ? (
-                                <button
-                                    onClick={() => handleLoadExample(example2Data)}
-                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
-                                >
+                                <button onClick={() => handleLoadExample(example2Data)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25">
                                     <BookOpen className="w-4 h-4" /> 載入此範例專案
                                 </button>
                             ) : (
@@ -504,7 +556,7 @@ const AppContent = () => {
                             )}
                             <button 
                                 onClick={() => setRaModalState({ isOpen: false, type: '' })} 
-                                className="px-6 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-600/30"
+                                className="px-6 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-600/25"
                             >
                                 了解
                             </button>

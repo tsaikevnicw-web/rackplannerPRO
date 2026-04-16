@@ -30,33 +30,37 @@ const Header = () => {
     };
 
     return (
-        <header className="bg-slate-900 border-b border-slate-700/80 flex flex-col shrink-0 relative z-30 shadow-md">
-            {/* Top Row: Logo (left) and File / Screenshot (right) */}
-            <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/40">
-                <div className="flex items-center gap-2">
-                    <Server className="w-5 h-5 text-blue-500" />
+        <header className="bg-[#0b1523] border-b border-slate-700/40 flex flex-col shrink-0 relative z-30 shadow-2xl">
+            {/* Top Row: Logo + File Controls */}
+            <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/25">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 bg-indigo-500/15 rounded-lg border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]">
+                        <Server className="w-4 h-4 text-indigo-400" />
+                    </div>
                     <h1 className="text-xl font-bold text-slate-100 tracking-wide font-mono">
-                        RACK<span className="text-blue-500">PLANNER</span> <span className="text-[10px] text-slate-500 align-top">PRO</span>
+                        RACK<span className="text-indigo-400">PLANNER</span> <span className="text-[10px] text-slate-500 align-top">PRO</span>
                     </h1>
                 </div>
 
-                <div className="flex bg-slate-950/80 p-0.5 rounded-md border border-slate-700 shadow-inner gap-1">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={handleExportImage}
                         disabled={isExporting}
-                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded transition-all text-orange-400 hover:bg-slate-800 hover:text-orange-300 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 hover:border-orange-500/50 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <Monitor className="w-4 h-4" /> 截圖存檔
                     </button>
-                    
-                    <div className="h-4 w-px bg-slate-700 mx-1 self-center hidden sm:block"></div>
+
+                    <div className="w-px h-5 bg-slate-700/60"></div>
 
                     <div className="relative">
                         <button
                             onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
                             disabled={isExporting}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded transition-all ${
-                                isFileMenuOpen ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border ${
+                                isFileMenuOpen
+                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/25'
+                                    : 'border-slate-600/50 bg-slate-700/40 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500/60'
                             } ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <FileBox className="w-4 h-4" /> 檔案
@@ -65,23 +69,21 @@ const Header = () => {
                         {isFileMenuOpen && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsFileMenuOpen(false)}></div>
-                                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-800 rounded-xl shadow-2xl border border-slate-600 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                                    <div className="px-3 py-1.5 text-xs font-bold text-slate-500 tracking-wider">專案存檔</div>
-                                    <label className="flex items-center gap-3 px-4 py-2 hover:bg-blue-500/20 hover:text-blue-400 cursor-pointer text-sm text-slate-300 transition-colors">
+                                <div className="absolute right-0 top-full mt-2 w-58 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">專案存檔</div>
+                                    <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 cursor-pointer text-sm text-slate-300 transition-colors mx-1 rounded-lg">
                                         <DownloadCloud className="w-4 h-4" /> 讀取專案檔 (.json)
                                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
                                     </label>
-                                    <button onClick={handleSaveData} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-blue-500/20 hover:text-blue-400 text-sm text-slate-300 transition-colors">
+                                    <button onClick={handleSaveData} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Save className="w-4 h-4" /> 儲存目前專案 (.json)
                                     </button>
-                                    
-                                    <div className="h-px bg-slate-700 my-2"></div>
-                                    
-                                    <div className="px-3 py-1.5 text-xs font-bold text-slate-500 tracking-wider">報表與圖檔</div>
-                                    <button onClick={handleExportBOM} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-emerald-500/20 hover:text-emerald-400 text-sm text-slate-300 transition-colors">
+                                    <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">報表與圖檔</div>
+                                    <button onClick={handleExportBOM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-500/15 hover:text-emerald-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Download className="w-4 h-4" /> 匯出 BOM 表 (.csv)
                                     </button>
-                                    <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-purple-500/20 hover:text-purple-400 text-sm text-slate-300 transition-colors">
+                                    <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-500/15 hover:text-purple-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Share2 className="w-4 h-4" /> 匯出網路線路表 (.csv)
                                     </button>
                                 </div>
@@ -91,30 +93,32 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Bottom Row: Stats and Toolbar */}
-            <div className="h-12 w-full flex items-center justify-between px-6 bg-slate-900 border-b-2 border-slate-950">
+            {/* Bottom Row: Stats + Toolbar */}
+            <div className="h-12 w-full flex items-center justify-between px-6">
                 <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-3 bg-slate-950/80 p-1.5 rounded-lg border border-slate-700 shadow-inner">
-                        <div className="text-emerald-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-emerald-500/20">
-                            機房總空間：{totalSpace} U
+                    {/* Stats */}
+                    <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-700/40 shadow-inner">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 font-bold text-xs tracking-wide whitespace-nowrap">
+                            <span className="text-emerald-600 font-medium">空間</span>{totalSpace} U
                         </div>
-                        <div className="text-orange-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-orange-500/20">
-                            機房總功耗：{totalPower.toLocaleString()} W
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20 font-bold text-xs tracking-wide whitespace-nowrap">
+                            <span className="text-amber-600 font-medium">功耗</span>{totalPower.toLocaleString()} W
                         </div>
-                        <div className="text-blue-400 px-3 py-1 bg-slate-900 rounded font-bold text-xs tracking-wide shadow-inner whitespace-nowrap border border-blue-500/20">
-                            機房總價：{totalPrice.toLocaleString()} USD
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500/10 text-sky-400 rounded-lg border border-sky-500/20 font-bold text-xs tracking-wide whitespace-nowrap">
+                            <span className="text-sky-600 font-medium">報價</span>{totalPrice.toLocaleString()} USD
                         </div>
                     </div>
 
+                    {/* Rack selector */}
                     {(viewMode === 'single' || viewMode === 'overview') && (
-                        <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-lg border border-slate-700 shadow-inner">
+                        <div className="flex items-center gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-700/40">
                             {viewMode === 'single' && (
                                 <>
-                                    <span className="text-xs text-slate-400 font-bold px-2">當前機櫃</span>
+                                    <span className="text-xs text-slate-400 font-semibold px-2">當前機櫃</span>
                                     <select
                                         value={activeRackId}
                                         onChange={(e) => { setActiveRackId(e.target.value); setSelectedId(e.target.value); }}
-                                        className="bg-slate-800 border-none text-sm text-white focus:ring-0 cursor-pointer outline-none pl-2 pr-6 py-1 rounded"
+                                        className="bg-slate-800/80 border-none text-sm text-white focus:ring-0 cursor-pointer outline-none pl-2 pr-6 py-1 rounded-lg"
                                     >
                                         {racks.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
@@ -122,7 +126,7 @@ const Header = () => {
                             )}
                             <button
                                 onClick={handleAddRackClick}
-                                className="ml-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)] whitespace-nowrap"
+                                className="ml-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 whitespace-nowrap"
                             >
                                 + 新增機櫃
                             </button>
@@ -130,12 +134,15 @@ const Header = () => {
                     )}
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0 ml-auto">
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                    {/* RA 建議配置 */}
                     <div className="relative">
                         <button
                             onClick={() => setIsRaMenuOpen(!isRaMenuOpen)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all border ${
-                                isRaMenuOpen ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                                isRaMenuOpen
+                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/25'
+                                    : 'bg-slate-700/40 text-slate-300 border-slate-600/50 hover:bg-slate-700/60 hover:text-white'
                             }`}
                             title="建議配置資訊"
                         >
@@ -145,90 +152,82 @@ const Header = () => {
                         {isRaMenuOpen && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsRaMenuOpen(false)}></div>
-                                <div className="absolute right-0 top-full mt-2 w-32 bg-slate-800 rounded-xl shadow-2xl border border-slate-600 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                                    <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: '20台' }); setIsRaMenuOpen(false); }}
-                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
-                                    >
-                                        20台
-                                    </button>
-                                    <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: '16台' }); setIsRaMenuOpen(false); }}
-                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
-                                    >
-                                        16台
-                                    </button>
-                                    <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: '4台' }); setIsRaMenuOpen(false); }}
-                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
-                                    >
-                                        4台
-                                    </button>
-                                    <button 
-                                        onClick={() => { setRaModalState({ isOpen: true, type: '2台' }); setIsRaMenuOpen(false); }}
-                                        className="w-full text-left px-4 py-2 hover:bg-blue-500/20 transition-colors text-sm font-bold text-slate-200 hover:text-blue-400"
-                                    >
-                                        2台
-                                    </button>
+                                <div className="absolute right-0 top-full mt-2 w-32 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                                    {['20台', '16台', '4台', '2台'].map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => { setRaModalState({ isOpen: true, type: t }); setIsRaMenuOpen(false); }}
+                                            className="w-full text-left px-4 py-2.5 hover:bg-indigo-500/15 transition-colors text-sm font-semibold text-slate-200 hover:text-indigo-300 rounded-lg"
+                                        >
+                                            {t}
+                                        </button>
+                                    ))}
                                 </div>
                             </>
                         )}
                     </div>
 
+                    {/* 一鍵清除 */}
                     <button
                         onClick={handleClearAllClick}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-rose-500/10 text-rose-400 border border-rose-500/25 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40"
                         title="清空設備"
                     >
                         <Eraser className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">一鍵清除</span>
                     </button>
 
+                    {/* 顯示/隱藏線路 */}
                     <button
                         onClick={() => setShowCables(!showCables)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 mr-2 text-xs font-medium rounded transition-all border ${
-                            showCables ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-300'
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                            showCables
+                                ? 'bg-sky-500/15 text-sky-300 border-sky-500/35 shadow-[0_0_12px_rgba(14,165,233,0.15)]'
+                                : 'bg-slate-700/40 text-slate-500 border-slate-600/50 hover:text-slate-300 hover:bg-slate-700/60'
                         }`}
                     >
                         {showCables ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         <span className="whitespace-nowrap">{showCables ? '顯示線路' : '隱藏線路'}</span>
                     </button>
 
-                    <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-700 shadow-inner items-center">
+                    {/* 視圖切換 Segmented Control */}
+                    <div className="flex bg-[#060c16] rounded-xl p-1 border border-slate-700/50 shadow-inner items-center">
                         {(viewMode === 'overview' || viewMode === 'network') && (
                             <>
                                 <button
                                     onClick={() => setIsFitToScreen(!isFitToScreen)}
-                                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all border ${
-                                        isFitToScreen ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-transparent text-slate-400 hover:text-slate-200'
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                                        isFitToScreen
+                                            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
+                                            : 'border-transparent text-slate-500 hover:text-slate-200'
                                     }`}
                                     title={isFitToScreen ? "恢復原始比例" : "自適應縮放至符合螢幕大小"}
                                 >
                                     {isFitToScreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
                                     <span className="whitespace-nowrap">{isFitToScreen ? '原始比例' : '自適應'}</span>
                                 </button>
-                                <div className="h-4 w-px bg-slate-700 mx-1"></div>
+                                <div className="h-4 w-px bg-slate-700/60 mx-1"></div>
                             </>
                         )}
                         <button
                             onClick={() => setViewMode('single')}
-                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded transition-all ${
-                                viewMode === 'single' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                                viewMode === 'single' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
                             <Monitor className="w-3.5 h-3.5" /> 單櫃
                         </button>
                         <button
                             onClick={() => { setViewMode('overview'); setSelectedId(null); }}
-                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded transition-all ${
-                                viewMode === 'overview' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                                viewMode === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
                             <LayoutDashboard className="w-3.5 h-3.5" /> 總覽
                         </button>
                         <button
                             onClick={() => { setViewMode('network'); setSelectedId(null); }}
-                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded transition-all ${
-                                viewMode === 'network' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                                viewMode === 'network' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-200'
                             }`}
                         >
                             <Share2 className="w-3.5 h-3.5" /> 網路拓撲

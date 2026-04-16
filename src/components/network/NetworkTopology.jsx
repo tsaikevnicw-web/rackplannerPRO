@@ -152,7 +152,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                         <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 min-w-[220px]">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: !isOpen }); }}
-                                className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 tracking-wider bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors w-full justify-center shadow-sm"
+                                className="flex items-center gap-1.5 text-[16px] font-bold text-slate-400 tracking-wider bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors w-full justify-center shadow-sm"
                             >
                                 {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                                 {group.name} ({group.devs.length})
@@ -169,29 +169,97 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
         );
     };
 
+    const renderNSSection = () => {
+        const groups = getGroupedDevices(nsDevs, racks);
+        if (groups.length === 0) return <div className="text-slate-500 text-sm py-4 italic border border-dashed border-slate-700/50 rounded-lg w-full text-center">無設備</div>;
+
+        const bgClass = 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]';
+        const labelPrefix = 'NS';
+
+        // 分離 1G Switch 群組 vs 其他群組
+        const switch1GGroups = groups.filter(g => g.devs.every(d => d.type === 'Switch1G'));
+        const otherGroups = groups.filter(g => !g.devs.every(d => d.type === 'Switch1G'));
+
+        const renderGroupBtn = (group) => {
+            const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
+            return (
+                <button
+                    onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: !isOpen }); }}
+                    className="flex items-center gap-1.5 text-[16px] font-bold text-slate-400 tracking-wider bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors w-full justify-center shadow-sm"
+                >
+                    {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    {group.name} ({group.devs.length})
+                </button>
+            );
+        };
+
+        return (
+            <div className="flex flex-col gap-6 w-full">
+                {/* 上排：前兩個非 1G Switch 群組，左右並列 */}
+                {otherGroups.length > 0 && (
+                    <div className="flex flex-row gap-6 w-full">
+                        {otherGroups.slice(0, 2).map((group) => {
+                            const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
+                            return (
+                                <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 flex-1 min-w-0">
+                                    {renderGroupBtn(group)}
+                                    {isOpen && (
+                                        <div className="flex flex-col items-center gap-4 pt-2 w-full">
+                                            {group.devs.map(d => renderCompactLogicalDeviceCard(d, bgClass))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {/* 只有 1 個群組時補空白保持對稱 */}
+                        {otherGroups.length === 1 && <div className="flex-1" />}
+                    </div>
+                )}
+
+                {/* 下排：1G Switch 群組，設備水平排列 */}
+                {switch1GGroups.map((group) => {
+                    const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
+                    return (
+                        <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 w-full">
+                            {renderGroupBtn(group)}
+                            {isOpen && (
+                                <div className="flex flex-row flex-wrap justify-center gap-4 pt-2 w-full">
+                                    {group.devs.map(d => renderCompactLogicalDeviceCard(d, bgClass))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     return (
         <div className="flex flex-col gap-12 w-full items-center pt-8 pb-32 z-10 min-w-max">
             <div className="flex flex-row items-stretch justify-center gap-8 w-full px-8">
-                <div className="flex-1 w-1/2 flex flex-col items-center gap-6 bg-slate-800/20 p-8 rounded-3xl border border-slate-700/50 shadow-xl min-w-0">
-                    <div className="text-sm font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">NORTH-SOUTH FABRIC</div>
+                <div className="flex-1 w-1/2 flex flex-col items-center gap-6 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">
+                    <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-cyan-500/0 via-cyan-500/60 to-cyan-500/0 rounded-full"></div>
+                    <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">NORTH-SOUTH FABRIC</div>
                     <div className="flex flex-col justify-center h-full w-full gap-8">
-                        {renderTreeSection(nsDevs, 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]', 'NS')}
+                        {renderNSSection()}
                     </div>
                 </div>
-                <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-slate-800/20 p-8 rounded-3xl border border-slate-700/50 shadow-xl min-w-0">
-                    <div className="text-sm font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">EAST-WEST FABRIC</div>
+                <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">
+                    <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-purple-500/0 via-purple-500/60 to-purple-500/0 rounded-full"></div>
+                    <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">EAST-WEST FABRIC</div>
                     <div className="flex flex-col items-center w-full gap-4">
-                        <div className="text-xs font-bold text-slate-500 tracking-widest bg-slate-900/50 px-4 py-1 rounded-full">SPINE LAYER</div>
+                        <div className="flex items-center gap-2 text-[18px] font-bold text-purple-300 tracking-widest bg-purple-500/10 border border-purple-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
                         {renderTreeSection(ewSpineDevs, 'bg-purple-500 shadow-[0_0_8px_#a855f7]', 'Spine')}
                     </div>
                     <div className="flex flex-col items-center w-full gap-4">
-                        <div className="text-xs font-bold text-slate-500 tracking-widest bg-slate-900/50 px-4 py-1 rounded-full">LEAF LAYER</div>
+                        <div className="flex items-center gap-2 text-[18px] font-bold text-emerald-300 tracking-widest bg-emerald-500/10 border border-emerald-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
                         {renderTreeSection(ewLeafDevs, 'bg-emerald-500 shadow-[0_0_8px_#10b981]', 'Leaf')}
                     </div>
                 </div>
             </div>
-            <div className="flex flex-col items-center w-full gap-6 px-8 mt-6">
-                <div className="text-sm font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 mb-2 w-1/3 text-center">ENDPOINT LAYER</div>
+            <div className="flex flex-col items-center w-full gap-6 px-8 mt-6 bg-[#0d1b2e]/60 py-8 rounded-3xl border border-slate-700/40 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-6 right-6 h-[3px] bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500/0 rounded-full"></div>
+                <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 mb-2 w-1/3 text-center">ENDPOINT LAYER</div>
                 {renderTreeSection(epDevs, 'bg-blue-500 shadow-[0_0_8px_#3b82f6]', 'EP')}
             </div>
         </div>
