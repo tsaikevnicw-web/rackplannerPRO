@@ -78,6 +78,7 @@ const RightPanel = () => {
 
     const nic1Count = getNicCount(selectedDevice, 'ns_nic_1');
     const nic2Count = getNicCount(selectedDevice, 'ns_nic_2');
+    const superNicMgtCount = getNicCount(selectedDevice, 'super_nic_mgt');
     const cx8NetworkType = selectedDevice.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
 
     const handleDragStartClone = (e) => {
@@ -221,6 +222,17 @@ const RightPanel = () => {
                                         <label className="block text-[10px] text-slate-500 mb-1">NS-NIC-2</label>
                                         <input type="number" value={nic2Count} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ns_nic_2', 'qty', parseInt(e.target.value) || 0)}
                                             className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-[10px] text-slate-500 mb-1">Super NIC Mgt <span className="text-slate-600">(最多 2)</span></label>
+                                        <input
+                                            type="number" min={0} max={2}
+                                            value={superNicMgtCount}
+                                            onChange={(e) => {
+                                                const v = Math.min(2, Math.max(0, parseInt(e.target.value) || 0));
+                                                handleHardwareSpecChange(selectedDevice.id, 'super_nic_mgt', 'qty', v);
+                                            }}
+                                            className="w-full bg-slate-900/80 border border-violet-700/60 rounded-lg px-2 py-1.5 text-xs text-violet-300 focus:border-violet-500/60 focus:outline-none" />
                                     </div>
                                 </div>
                             </div>

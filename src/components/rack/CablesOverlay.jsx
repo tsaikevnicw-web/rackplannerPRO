@@ -112,12 +112,31 @@ const CablesOverlay = () => {
 
     if (!showCables && !selectedId) return null;
 
-    const getLineColor = (portKey) => {
-        const base = portKey.replace('__2', '');
-        if (base.startsWith('cx8-')) return 'stroke-green-500';
-        if (base.startsWith('ns_nic_')) return 'stroke-yellow-400';
-        if (base === 'bmc' || base.startsWith('bmc')) return 'stroke-blue-500';
-        if (base.startsWith('port-')) return 'stroke-purple-500';
+    // 依互連設備的 type 決定線色；fallback 依 portKey 前綴
+    // portKey = 來源端 portKey，targetPortKey = 目標端 portKey
+    const getLineColor = (portKey, devAId, devBId, targetPortKey = '') => {
+        // ── 最高優先：任一端為 BMC 錨點 → 藍色 ──
+        const srcBase = portKey.replace(/__\d+$/, '');
+        const tgtBase = targetPortKey.replace(/__\d+$/, '');
+        const isBMC = srcBase === 'bmc' || srcBase.startsWith('bmc')
+                   || tgtBase === 'bmc' || tgtBase.startsWith('bmc');
+        if (isBMC) return 'stroke-blue-400';
+
+        const devA = devices.find(d => d.id === devAId);
+        const devB = devices.find(d => d.id === devBId);
+        const types = [devA?.type, devB?.type].filter(Boolean);
+
+        // 優先順序：Router > Switch800G > Switch400G (含 400G1U) > Switch10G > Switch1G
+        if (types.some(t => t === 'Router'))           return 'stroke-red-500';
+        if (types.some(t => t === 'Switch800G'))        return 'stroke-emerald-400';
+        if (types.some(t => t === 'Switch400G' || t === 'Switch400G1U')) return 'stroke-yellow-400';
+        if (types.some(t => t === 'Switch10G'))         return 'stroke-orange-400';
+        if (types.some(t => t === 'Switch1G'))          return 'stroke-blue-400';
+
+        // Fallback: 依 portKey 前綴判斷
+        if (srcBase.startsWith('cx8-'))    return 'stroke-green-500';
+        if (srcBase.startsWith('ns_nic_')) return 'stroke-yellow-400';
+        if (srcBase.startsWith('port-'))   return 'stroke-purple-500';
         return 'stroke-slate-500';
     };
 
@@ -147,12 +166,14 @@ const CablesOverlay = () => {
                         const targetFullId = targetKey;
                         const startCoord = localCoords[localFullId];
                         const endCoord = localCoords[targetFullId];
+                        // 取得目標端 portKey（targetKey 格式為 "devId-portKey"，devId 到第一個 '-' 為止）
+                        const targetPortKey = targetKey.substring(targetDevId.length + 1);
 
                         if (startCoord && endCoord) {
                             connectionPaths.push({
                                 id: `${localFullId}-to-${targetFullId}`,
                                 path: generatePath(startCoord.x, startCoord.y, endCoord.x, endCoord.y),
-                                colorClass: getLineColor(localKey),
+                                colorClass: getLineColor(localKey, dev.id, targetDevId, targetPortKey),
                                 isHighlighted
                             });
                         }

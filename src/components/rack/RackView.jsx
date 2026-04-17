@@ -124,6 +124,7 @@ const RackView = ({ racksToRender }) => {
 
                             const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
                             const cx8ActiveColor = cx8NetworkType === 'Ethernet' ? 'bg-green-500 border-green-300 shadow-[0_0_8px_#22c55e]' : 'bg-orange-500 border-orange-300 shadow-[0_0_8px_#f97316]';
+                            const superNicMgtCount = getNicCount(dev, 'super_nic_mgt');
 
                             return (
                                 <div
@@ -176,6 +177,14 @@ const RackView = ({ racksToRender }) => {
                                                             )}
                                                         </>
                                                     )}
+                                                    {superNicMgtCount > 0 && ((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                                            <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
+                                                                {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50'))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center gap-1.5">
                                                         <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
@@ -215,6 +224,14 @@ const RackView = ({ racksToRender }) => {
                                                             {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
                                                     </div>
+                                                    {superNicMgtCount > 0 && (
+                                                        <div className="flex items-center justify-end gap-2 w-full">
+                                                            <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                                            <div className="flex gap-0.5">
+                                                                {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50', 'w-2.5 h-2.5 shrink-0', null))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
