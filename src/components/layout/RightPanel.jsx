@@ -200,6 +200,69 @@ const RightPanel = () => {
                                 </div>
                             )}
 
+                            {['Server5U', 'Server1U', 'Server2U'].includes(selectedDevice.type) && (() => {
+                                const hostCooling = selectedDevice.hardwareSpecs?.cooling?.host || 'AC';
+                                const gpuCooling  = selectedDevice.hardwareSpecs?.cooling?.gpu  || 'AC';
+                                const is5U = selectedDevice.type === 'Server5U';
+                                const setCooling = (field, value) => {
+                                    handleUpdateDevice(selectedDevice.id, {
+                                        hardwareSpecs: {
+                                            ...(selectedDevice.hardwareSpecs || {}),
+                                            cooling: {
+                                                ...(selectedDevice.hardwareSpecs?.cooling || {}),
+                                                [field]: value
+                                            }
+                                        }
+                                    });
+                                };
+                                return (
+                                    <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                        <label className="block text-[11px] font-bold text-cyan-400 mb-3 flex items-center gap-1.5">
+                                            <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+                                            Cooling Configuration
+                                        </label>
+                                        <div className={`grid ${is5U ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                                            <div>
+                                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">Host Cooling</label>
+                                                <select
+                                                    value={hostCooling}
+                                                    onChange={(e) => setCooling('host', e.target.value)}
+                                                    className={`${selectCls} ${hostCooling === 'LC' ? 'border-blue-500/60 text-blue-300 focus:border-blue-400/80' : ''}`}
+                                                >
+                                                    <option value="AC">AC (Air Cooling)</option>
+                                                    <option value="LC">LC (Liquid Cooling)</option>
+                                                </select>
+                                                {hostCooling === 'LC' && (
+                                                    <p className="text-[10px] text-blue-400/80 mt-1 flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block"></span>
+                                                        Water loop anchors active
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {is5U && (
+                                                <div>
+                                                    <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">GPU Cooling</label>
+                                                    <select
+                                                        value={gpuCooling}
+                                                        onChange={(e) => setCooling('gpu', e.target.value)}
+                                                        className={`${selectCls} ${gpuCooling === 'LC' ? 'border-blue-500/60 text-blue-300 focus:border-blue-400/80' : ''}`}
+                                                    >
+                                                        <option value="AC">AC (Air Cooling)</option>
+                                                        <option value="LC">LC (Liquid Cooling)</option>
+                                                    </select>
+                                                    {gpuCooling === 'LC' && (
+                                                        <p className="text-[10px] text-blue-400/80 mt-1 flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block"></span>
+                                                            Water loop anchors active
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             <div className="col-span-2 pt-2 border-t border-slate-800/50">
                                 <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
                                 <div className="grid grid-cols-2 gap-3">

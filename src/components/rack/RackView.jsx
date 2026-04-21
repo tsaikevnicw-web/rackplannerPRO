@@ -22,17 +22,31 @@ const RackView = ({ racksToRender }) => {
                 if (dev.connections?.[`${portKey}__${i}`] !== undefined) connCount++;
             }
         }
+
+        // Water cooling port color logic
+        let waterConnectedColor = null;
+        if (portKey === 'water_cold' || portKey === 'host_water_cold') {
+            waterConnectedColor = isConnected
+                ? 'bg-blue-400 shadow-[0_0_10px_#60a5fa] border-blue-300'
+                : 'bg-slate-700 border-blue-700/50 opacity-70';
+        } else if (portKey === 'water_hot' || portKey === 'host_water_hot') {
+            waterConnectedColor = isConnected
+                ? 'bg-red-400 shadow-[0_0_10px_#f87171] border-red-300'
+                : 'bg-slate-700 border-red-700/50 opacity-70';
+        }
         
         const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
         const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+        const borderClass = waterConnectedColor ? '' : defaultBorder;
 
-        const bgClass = colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
+        const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60'));
+        const shapeClass = (portKey === 'water_cold' || portKey === 'water_hot') ? 'rounded-full' : 'rounded-[2px]';
 
         return (
             <div
                 key={portKey}
                 data-port-id={fullId}
-                className={`rounded-[2px] ${sizeClass} border ${defaultBorder} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
+                className={`${shapeClass} ${sizeClass} border ${borderClass} transition-all duration-200 cursor-crosshair shrink-0 relative group z-50 hover:brightness-150 hover:scale-150 ${hoverClass} ${bgClass}`}
                 title={label}
                 onDoubleClick={(e) => {
                     e.stopPropagation();
@@ -63,7 +77,7 @@ const RackView = ({ racksToRender }) => {
                 onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
                 onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
             >
-                {isConnected && !colorOverride && (
+                {isConnected && !colorOverride && !waterConnectedColor && (
                     connCount > 1
                         ? <div className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-slate-900 leading-none">{connCount}</div>
                         : <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>
@@ -155,85 +169,194 @@ const RackView = ({ racksToRender }) => {
 
                                         {/* 右側：Ports 區域 */}
                                         <div className="relative z-30 flex items-center justify-end shrink-0 h-full pr-2">
-                                            {((dev.type || '').startsWith('Server') && dev.type !== 'Server5U' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (
-                                                <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
-                                                    {((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
-                                                        <>
-                                                            {nic1Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
-                                                                    <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
-                                                                        {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {nic2Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
-                                                                    <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
-                                                                        {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                    {superNicMgtCount > 0 && ((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
-                                                            <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
-                                                                {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50'))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                                        <div className="flex gap-0.5">
-                                                            {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            {((dev.type || '').startsWith('Server') && dev.type !== 'Server5U' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (() => {
+                                                const is2U = dev.type === 'Server2U';
+                                                const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
+                                                const hasLC = hostCooling === 'LC';
 
-                                            {dev.type === 'Server5U' && (
-                                                <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full w-full">
-                                                    <div className="flex items-center justify-end gap-2 w-full">
-                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">CX8</div>
-                                                        <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
-                                                            {Array.from({ length: getNicCount(dev, 'cx8p') || (dev.type === 'Server5U' ? 8 : 0) }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
+                                                const renderWaterAnchors = (label = 'Host') => (
+                                                    <div className="flex items-center gap-0.5">
+                                                        <div className="text-[9px] font-bold font-mono text-cyan-400/70 leading-normal mr-0.5">{label}</div>
+                                                        <div className="text-[9px] font-bold font-mono text-blue-300/80 leading-normal ml-0.5">C</div>
+                                                        {renderPortAnchor(dev, 'host_water_cold', `${label} Cold Water Inlet`, 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                                        <div className="text-[9px] font-bold font-mono text-red-300/80 leading-normal ml-0.5">H</div>
+                                                        {renderPortAnchor(dev, 'host_water_hot', `${label} Hot Water Return`, 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                                    </div>
+                                                );
+
+                                                if (is2U) {
+                                                    return (
+                                                        <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full">
+                                                            {/* Row 1: NICs */}
+                                                            <div className="flex items-center justify-end gap-2 w-full">
+                                                                {nic1Count > 0 && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
+                                                                        <div className="flex gap-0.5">
+                                                                            {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {nic2Count > 0 && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                                        <div className="flex gap-0.5">
+                                                                            {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {/* Row 2: BMC, S-NIC-M, Water */}
+                                                            <div className="flex items-center justify-end gap-2 w-full">
+                                                                {superNicMgtCount > 0 && (
+                                                                    <>
+                                                                        <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                                                        <div className="flex gap-0.5">
+                                                                            {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50', 'w-2.5 h-2.5 shrink-0', null))}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                                <div className="flex gap-0.5">
+                                                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                                </div>
+                                                                {hasLC && (
+                                                                    <div className="ml-1 pl-1 border-l border-cyan-900/50">
+                                                                        {renderWaterAnchors()}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                // Default (1U, Storage, CDU) layout
+                                                return (
+                                                    <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
+                                                        {((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
+                                                            <>
+                                                                {nic1Count > 0 && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
+                                                                        <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
+                                                                            {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {nic2Count > 0 && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                                        <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
+                                                                            {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        {superNicMgtCount > 0 && ((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                                                <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
+                                                                    {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50'))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {dev.type === 'CDU4U' && (
+                                                            <>
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="text-[10px] font-bold font-mono text-blue-300/80 leading-normal pb-0.5">Cold</div>
+                                                                    {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="text-[10px] font-bold font-mono text-red-300/80 leading-normal pb-0.5">Hot</div>
+                                                                    {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        {dev.type !== 'CDU4U' && hasLC && (
+                                                            <div className="border-l border-cyan-900/50 pl-2">
+                                                                {renderWaterAnchors()}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="flex gap-0.5">
+                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    {nic1Count > 0 && (
+                                                );
+                                            })()}
+
+                                            {dev.type === 'Server5U' && (() => {
+                                                const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
+                                                const gpuCooling  = dev.hardwareSpecs?.cooling?.gpu  || 'AC';
+                                                const hasLC = hostCooling === 'LC' || gpuCooling === 'LC';
+                                                return (
+                                                    <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full w-full">
                                                         <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
-                                                            <div className="flex gap-0.5">
-                                                                {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">CX8</div>
+                                                            <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
+                                                                {Array.from({ length: getNicCount(dev, 'cx8p') || 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
                                                             </div>
                                                         </div>
-                                                    )}
-                                                    {nic2Count > 0 && (
+                                                        {nic1Count > 0 && (
+                                                            <div className="flex items-center justify-end gap-2 w-full">
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-1</div>
+                                                                <div className="flex gap-0.5">
+                                                                    {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {nic2Count > 0 && (
+                                                            <div className="flex items-center justify-end gap-2 w-full">
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                                <div className="flex gap-0.5">
+                                                                    {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {/* BMC + S-NIC-M on same row */}
                                                         <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">NS-NIC-2</div>
+                                                            {superNicMgtCount > 0 && (
+                                                                <>
+                                                                    <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                                                    <div className="flex gap-0.5">
+                                                                        {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50', 'w-2.5 h-2.5 shrink-0', null))}
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                             <div className="flex gap-0.5">
-                                                                {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
                                                             </div>
                                                         </div>
-                                                    )}
-                                                    <div className="flex items-center justify-end gap-2 w-full">
-                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                                        <div className="flex gap-0.5">
-                                                            {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
-                                                        </div>
+                                                        {/* Water cooling anchors — GPU and/or Host, always one row */}
+                                                        {hasLC && (
+                                                            <div className="flex items-center justify-end gap-2 w-full border-t border-cyan-900/50 pt-1 mt-0.5">
+                                                                {gpuCooling === 'LC' && (
+                                                                    <div className="flex items-center gap-0.5">
+                                                                        <div className="text-[9px] font-bold font-mono text-cyan-400/70 leading-normal">GPU</div>
+                                                                        <div className="text-[9px] font-bold font-mono text-blue-300/80 leading-normal ml-0.5">C</div>
+                                                                        {renderPortAnchor(dev, 'water_cold', 'GPU Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                                                        <div className="text-[9px] font-bold font-mono text-red-300/80 leading-normal ml-0.5">H</div>
+                                                                        {renderPortAnchor(dev, 'water_hot', 'GPU Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                                                    </div>
+                                                                )}
+                                                                {hostCooling === 'LC' && (
+                                                                    <div className="flex items-center gap-0.5">
+                                                                        <div className="text-[9px] font-bold font-mono text-cyan-400/70 leading-normal">Host</div>
+                                                                        <div className="text-[9px] font-bold font-mono text-blue-300/80 leading-normal ml-0.5">C</div>
+                                                                        {renderPortAnchor(dev, 'host_water_cold', 'Host Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                                                        <div className="text-[9px] font-bold font-mono text-red-300/80 leading-normal ml-0.5">H</div>
+                                                                        {renderPortAnchor(dev, 'host_water_hot', 'Host Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {superNicMgtCount > 0 && (
-                                                        <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
-                                                            <div className="flex gap-0.5">
-                                                                {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50', 'w-2.5 h-2.5 shrink-0', null))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
 
                                             {((dev.type || '').startsWith('Switch') || dev.type === 'Router') && (
                                                 <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
@@ -306,9 +429,32 @@ const RackView = ({ racksToRender }) => {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-auto mb-6 flex flex-col items-center gap-2 z-20 bg-slate-900/80 p-3 rounded-lg border border-slate-700 shadow-xl">
-                                    <div className="text-[10px] font-mono text-white/80">BMC</div>
-                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                <div className="mt-auto mb-4 flex flex-col items-center gap-3 z-20 w-full px-4">
+                                    {/* Water Cooling Anchors */}
+                                    <div className="w-full bg-slate-900/90 rounded-xl border border-cyan-800/60 shadow-[0_0_20px_rgba(34,211,238,0.1)] p-3 flex flex-col gap-2.5">
+                                        <div className="text-[9px] font-mono text-cyan-400/70 text-center tracking-widest uppercase mb-1">Water Loop</div>
+                                        {/* Cold Port */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_#60a5fa]"></div>
+                                                <span className="text-[10px] font-bold font-mono text-blue-300 tracking-wide">Cold</span>
+                                            </div>
+                                            {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3.5 h-3.5 shrink-0')}
+                                        </div>
+                                        {/* Hot Port */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_6px_#f87171]"></div>
+                                                <span className="text-[10px] font-bold font-mono text-red-300 tracking-wide">Hot</span>
+                                            </div>
+                                            {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3.5 h-3.5 shrink-0')}
+                                        </div>
+                                    </div>
+                                    {/* BMC Anchor */}
+                                    <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700 shadow-xl flex flex-col items-center gap-1.5">
+                                        <div className="text-[10px] font-mono text-white/80">BMC</div>
+                                        {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                    </div>
                                 </div>
                             </div>
                             <div className="bg-slate-800 w-full h-8 rounded-b-md border-b-4 border-x-4 border-slate-600 shadow-[0_10px_20px_rgba(0,0,0,0.8)] relative flex justify-center items-start"></div>

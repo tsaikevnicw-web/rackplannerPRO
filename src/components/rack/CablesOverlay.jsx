@@ -115,9 +115,16 @@ const CablesOverlay = () => {
     // 依互連設備的 type 決定線色；fallback 依 portKey 前綴
     // portKey = 來源端 portKey，targetPortKey = 目標端 portKey
     const getLineColor = (portKey, devAId, devBId, targetPortKey = '') => {
-        // ── 最高優先：任一端為 BMC 錨點 → 藍色 ──
         const srcBase = portKey.replace(/__\d+$/, '');
         const tgtBase = targetPortKey.replace(/__\d+$/, '');
+
+        // ── 水冷管優先判斷（GPU water_cold/hot 和 Host host_water_cold/hot） ──
+        if (srcBase === 'water_cold' || tgtBase === 'water_cold' ||
+            srcBase === 'host_water_cold' || tgtBase === 'host_water_cold') return 'stroke-blue-400';
+        if (srcBase === 'water_hot'  || tgtBase === 'water_hot' ||
+            srcBase === 'host_water_hot'  || tgtBase === 'host_water_hot')  return 'stroke-red-400';
+
+        // ── BMC 鈔點 → 藍色 ──
         const isBMC = srcBase === 'bmc' || srcBase.startsWith('bmc')
                    || tgtBase === 'bmc' || tgtBase.startsWith('bmc');
         if (isBMC) return 'stroke-blue-400';
