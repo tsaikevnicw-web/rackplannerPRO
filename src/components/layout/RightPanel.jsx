@@ -200,7 +200,7 @@ const RightPanel = () => {
                                 </div>
                             )}
 
-                            {['Server5U', 'Server1U', 'Server2U'].includes(selectedDevice.type) && (() => {
+                            {['Server5U', 'Server1U', 'Server2U', 'Storage1U', 'Storage2U'].includes(selectedDevice.type) && (() => {
                                 const hostCooling = selectedDevice.hardwareSpecs?.cooling?.host || 'AC';
                                 const gpuCooling  = selectedDevice.hardwareSpecs?.cooling?.gpu  || 'AC';
                                 const is5U = selectedDevice.type === 'Server5U';

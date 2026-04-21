@@ -170,7 +170,7 @@ const RackView = ({ racksToRender }) => {
                                         {/* 右側：Ports 區域 */}
                                         <div className="relative z-30 flex items-center justify-end shrink-0 h-full pr-2">
                                             {((dev.type || '').startsWith('Server') && dev.type !== 'Server5U' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (() => {
-                                                const is2U = dev.type === 'Server2U';
+                                                const is2U = dev.type === 'Server2U' || dev.type === 'Storage2U';
                                                 const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
                                                 const hasLC = hostCooling === 'LC';
 
