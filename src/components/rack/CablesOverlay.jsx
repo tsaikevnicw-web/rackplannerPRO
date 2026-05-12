@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
+import { getDeviceLayerPrefix, getDeviceGroupName } from '../../utils/helpers';
 
 const CablesOverlay = () => {
-    const { devices, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId } = useRackPlanner();
+    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
@@ -12,6 +13,7 @@ const CablesOverlay = () => {
             const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
             if (rackContainer) {
                 const ports = document.querySelectorAll('[data-port-id]');
+                const groups = document.querySelectorAll('[data-group-anchor]');
                 const containerRect = rackContainer.getBoundingClientRect();
 
                 const newCoords = {};
@@ -25,6 +27,24 @@ const CablesOverlay = () => {
                     const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
                     const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
                     newCoords[id] = { x, y };
+                });
+
+                groups.forEach(group => {
+                    const id = group.getAttribute('data-group-anchor');
+                    const rect = group.getBoundingClientRect();
+                    const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
+                    const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
+                    newCoords[id] = { 
+                        id,
+                        x, y, 
+                        isGroup: true,
+                        rect: {
+                            top: (rect.top - containerRect.top) / currentScale,
+                            bottom: (rect.bottom - containerRect.top) / currentScale,
+                            left: (rect.left - containerRect.left) / currentScale,
+                            right: (rect.right - containerRect.left) / currentScale
+                        }
+                    };
                 });
 
                 setLocalCoords(prev => {
@@ -108,13 +128,33 @@ const CablesOverlay = () => {
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('rackplanner-connect', handleConnectEvent);
         };
-    }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode]);
+    }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode, devices]);
 
     if (!showCables && !selectedId) return null;
 
+    const GROUP_COLORS = [
+        'stroke-green-500', 'stroke-red-500', 'stroke-blue-500', 
+        'stroke-yellow-400', 'stroke-purple-500', 'stroke-pink-500', 
+        'stroke-cyan-400', 'stroke-orange-500'
+    ];
+
     // 依互連設備的 type 決定線色；fallback 依 portKey 前綴
     // portKey = 來源端 portKey，targetPortKey = 目標端 portKey
-    const getLineColor = (portKey, devAId, devBId, targetPortKey = '') => {
+    const getLineColor = (portKey, devAId, devBId, targetPortKey = '', localAnchor = null, targetAnchor = null) => {
+        if (localAnchor && targetAnchor && (localAnchor.isGroup || targetAnchor.isGroup)) {
+            let leafId = null;
+            if (localAnchor.id.includes('Leaf')) leafId = localAnchor.id;
+            else if (targetAnchor.id.includes('Leaf')) leafId = targetAnchor.id;
+            
+            if (leafId) {
+                const leafGroupIds = Object.keys(localCoords)
+                    .filter(k => k.includes('Leaf') && localCoords[k].isGroup)
+                    .sort();
+                const index = leafGroupIds.indexOf(leafId);
+                return GROUP_COLORS[index >= 0 ? index % GROUP_COLORS.length : 0];
+            }
+        }
+
         const srcBase = portKey.replace(/__\d+$/, '');
         const tgtBase = targetPortKey.replace(/__\d+$/, '');
 
@@ -151,18 +191,79 @@ const CablesOverlay = () => {
         return 'stroke-slate-500';
     };
 
-    const generatePath = (x1, y1, x2, y2) => {
+    const generatePath = (startCoord, endCoord) => {
+        let x1 = startCoord.x;
+        let y1 = startCoord.y;
+        let x2 = endCoord.x;
+        let y2 = endCoord.y;
+
+        if (startCoord.isGroup && startCoord.rect) {
+            x1 = startCoord.x; // fixed horizontal center
+            if (startCoord.id.includes('EP')) y1 = startCoord.rect.top;
+            else if (startCoord.id.includes('Spine')) y1 = startCoord.rect.bottom;
+            else if (startCoord.id.includes('Leaf')) {
+                if (endCoord.id && endCoord.id.includes('Spine')) y1 = startCoord.rect.top;
+                else y1 = startCoord.rect.bottom;
+            }
+        }
+
+        if (endCoord.isGroup && endCoord.rect) {
+            x2 = endCoord.x; // fixed horizontal center
+            if (endCoord.id.includes('EP')) y2 = endCoord.rect.top;
+            else if (endCoord.id.includes('Spine')) y2 = endCoord.rect.bottom;
+            else if (endCoord.id.includes('Leaf')) {
+                if (startCoord.id && startCoord.id.includes('Spine')) y2 = endCoord.rect.top;
+                else y2 = endCoord.rect.bottom;
+            }
+        }
+
         const dx = Math.abs(x2 - x1);
         const dy = y2 - y1;
-        // Adjusted curved logic for side-routing rack aesthetic
-        let controlPointOffset = Math.max(dx * 0.5, 100);
-        if (dx < 50 && Math.abs(dy) > 100) controlPointOffset = 200;
 
-        return `M ${x1} ${y1} C ${x1 + controlPointOffset} ${y1}, ${x2 - controlPointOffset} ${y2}, ${x2} ${y2}`;
+        let cx1 = x1;
+        let cy1 = y1;
+        let cx2 = x2;
+        let cy2 = y2;
+
+        let yOff = Math.max(Math.abs(dy) * 0.5, 50);
+        let xOff = Math.max(Math.abs(x2 - x1) * 0.5, 100);
+        if (dx < 50 && Math.abs(dy) > 100) xOff = 200;
+
+        if (startCoord.isGroup) {
+            cy1 = y1 + (y2 > y1 ? yOff : -yOff);
+        } else {
+            cx1 = x1 + xOff;
+        }
+
+        if (endCoord.isGroup) {
+            cy2 = y2 + (y1 > y2 ? yOff : -yOff);
+        } else {
+            cx2 = x2 - xOff;
+        }
+
+        return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+    };
+
+    const getDeviceAnchor = (devId, portKey) => {
+        const dev = devices.find(d => d.id === devId);
+        if (!dev) return null;
+        if (viewMode === 'network') {
+            const prefix = getDeviceLayerPrefix(dev);
+            if (prefix) {
+                const groupName = getDeviceGroupName(dev, racks);
+                const groupKey = `${prefix}-${groupName}`;
+                if (expandedNetGroups && expandedNetGroups[groupKey] === false) {
+                    return { id: groupKey, isGroup: true };
+                }
+            }
+        }
+        return { id: `${devId}-${portKey}`, isGroup: false };
     };
 
     // Gather all established connections
     const connectionPaths = [];
+    const drawnSet = new Set();
+
     devices.forEach(dev => {
         if (dev.connections) {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
@@ -173,20 +274,30 @@ const CablesOverlay = () => {
                     
                     if (shouldDraw) {
                         const baseLocalKey = localKey.replace(/__\d+$/, '');
-                        const localFullId = `${dev.id}-${baseLocalKey}`;
-                        const targetFullId = targetKey;
-                        const startCoord = localCoords[localFullId];
-                        const endCoord = localCoords[targetFullId];
-                        // 取得目標端 portKey（targetKey 格式為 "devId-portKey"，devId 到第一個 '-' 為止）
                         const targetPortKey = targetKey.substring(targetDevId.length + 1);
 
-                        if (startCoord && endCoord) {
-                            connectionPaths.push({
-                                id: `${localFullId}-to-${targetFullId}`,
-                                path: generatePath(startCoord.x, startCoord.y, endCoord.x, endCoord.y),
-                                colorClass: getLineColor(localKey, dev.id, targetDevId, targetPortKey),
-                                isHighlighted
-                            });
+                        const localAnchor = getDeviceAnchor(dev.id, baseLocalKey);
+                        const targetAnchor = getDeviceAnchor(targetDevId, targetPortKey);
+
+                        if (localAnchor && targetAnchor && localAnchor.id !== targetAnchor.id) {
+                            const dedupKey = [localAnchor.id, targetAnchor.id].sort().join('--');
+                            const isGroupConnection = localAnchor.isGroup || targetAnchor.isGroup;
+                            
+                            if (!isGroupConnection || !drawnSet.has(dedupKey)) {
+                                const startCoord = localCoords[localAnchor.id];
+                                const endCoord = localCoords[targetAnchor.id];
+
+                                if (startCoord && endCoord) {
+                                    connectionPaths.push({
+                                        id: `${dev.id}-${localKey}-to-${targetKey}`,
+                                        path: generatePath(startCoord, endCoord),
+                                        colorClass: getLineColor(localKey, dev.id, targetDevId, targetPortKey, localAnchor, targetAnchor),
+                                        isHighlighted,
+                                        isGroupConnection
+                                    });
+                                    if (isGroupConnection) drawnSet.add(dedupKey);
+                                }
+                            }
                         }
                     }
                 }
@@ -198,12 +309,12 @@ const CablesOverlay = () => {
         <svg xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
             {connectionPaths.map(conn => {
                 const opacityClass = conn.isHighlighted ? "opacity-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]" : (selectedId ? "opacity-[0.03]" : "opacity-80");
-                const thickness = conn.isHighlighted ? "3" : "2";
+                const thickness = conn.isHighlighted ? (conn.isGroupConnection ? "6" : "3") : (conn.isGroupConnection ? "4" : "2");
                 
                 return (
                     <g key={conn.id} className={`transition-all duration-300 ${opacityClass} ${conn.isHighlighted ? 'z-50' : 'z-10'}`}>
                         {/* Shadow line */}
-                        <path d={conn.path} className="stroke-slate-950" strokeWidth="4" fill="none" opacity="0.3"/>
+                        <path d={conn.path} className="stroke-slate-950" strokeWidth={conn.isGroupConnection ? "8" : "4"} fill="none" opacity="0.3"/>
                         {/* Colored line, filter removed for html2canvas compatibility */}
                         <path d={conn.path} className={`${conn.colorClass}`} strokeWidth={thickness} fill="none" />
                     </g>
@@ -213,12 +324,12 @@ const CablesOverlay = () => {
             {drawing && drawing.startX !== drawing.currentX && (
                 <g>
                     <path 
-                        d={generatePath(drawing.startX, drawing.startY, drawing.currentX, drawing.currentY)} 
+                        d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
                         className="stroke-slate-950" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.25"
                     />
                     <path 
-                        d={generatePath(drawing.startX, drawing.startY, drawing.currentX, drawing.currentY)} 
-                        className={`${getLineColor(drawing.sourcePortKey)} opacity-40`} 
+                        d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
+                        className={`${getLineColor(drawing.sourcePortKey, drawing.sourceId, null, '', null, null)} opacity-40`} 
                         strokeWidth="2" fill="none" strokeDasharray="8 4"
                     />
                 </g>

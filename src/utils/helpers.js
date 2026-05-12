@@ -53,9 +53,25 @@ export const getSwitchPortLayout = (portCount, size = 1) => {
 export const getGroupedDevices = (devList, racks) => {
     const groups = {};
     devList.forEach(d => {
-        const gName = d.topologyGroup || racks.find(r => r.id === d.rackId)?.name || '未分類群組';
+        const gName = getDeviceGroupName(d, racks);
         if (!groups[gName]) groups[gName] = [];
         groups[gName].push(d);
     });
     return Object.entries(groups).map(([name, devs]) => ({ name, devs }));
+};
+
+export const getDeviceGroupName = (dev, racks) => {
+    return dev.topologyGroup || racks.find(r => r.id === dev.rackId)?.name || '未分類群組';
+};
+
+export const getDeviceLayerPrefix = (dev) => {
+    const isSwitchOrRouter = (dev.type || '').startsWith('Switch') || dev.type === 'Router';
+    if (!isSwitchOrRouter) {
+        if (dev.type === 'Blank' || dev.type === 'UPS' || dev.type === 'SideCDU') return null;
+        return 'EP';
+    }
+    const fabric = getFabricGroup(dev);
+    const isSpine = dev.networkRole === 'Spine';
+    if (fabric === 'North-South') return isSpine ? 'NS-Spine' : 'NS-Leaf';
+    return isSpine ? 'Spine' : 'Leaf';
 };

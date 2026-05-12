@@ -2,10 +2,40 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
 import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout } from '../../utils/helpers';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
     const { racks, devices, selectedId, setSelectedId, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
+
+    const getGroupKeys = (devs, prefix) => getGroupedDevices(devs, racks).map(g => `${prefix}-${g.name}`);
+
+    const isSectionCollapsed = (prefixes) => {
+        const relevantGroups = [];
+        if (prefixes.includes('NS-Spine')) relevantGroups.push(...getGroupKeys(nsSpineDevs, 'NS-Spine'));
+        if (prefixes.includes('NS-Leaf')) relevantGroups.push(...getGroupKeys(nsLeafDevs, 'NS-Leaf'));
+        if (prefixes.includes('Spine')) relevantGroups.push(...getGroupKeys(ewSpineDevs, 'Spine'));
+        if (prefixes.includes('Leaf')) relevantGroups.push(...getGroupKeys(ewLeafDevs, 'Leaf'));
+        if (prefixes.includes('EP')) relevantGroups.push(...getGroupKeys(epDevs, 'EP'));
+        
+        if (relevantGroups.length === 0) return false;
+        return relevantGroups.every(g => expandedNetGroups[g] === false);
+    };
+
+    const toggleSection = (prefixes) => {
+        const relevantGroups = [];
+        if (prefixes.includes('NS-Spine')) relevantGroups.push(...getGroupKeys(nsSpineDevs, 'NS-Spine'));
+        if (prefixes.includes('NS-Leaf')) relevantGroups.push(...getGroupKeys(nsLeafDevs, 'NS-Leaf'));
+        if (prefixes.includes('Spine')) relevantGroups.push(...getGroupKeys(ewSpineDevs, 'Spine'));
+        if (prefixes.includes('Leaf')) relevantGroups.push(...getGroupKeys(ewLeafDevs, 'Leaf'));
+        if (prefixes.includes('EP')) relevantGroups.push(...getGroupKeys(epDevs, 'EP'));
+
+        const allCollapsed = isSectionCollapsed(prefixes);
+        const newState = { ...expandedNetGroups };
+        relevantGroups.forEach(g => {
+            newState[g] = allCollapsed ? true : false;
+        });
+        setExpandedNetGroups(newState);
+    };
 
     const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
         const fullId = `${dev.id}-${portKey}`;
@@ -74,6 +104,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
             else if (portLayout.cols > 12) cardWidthClass = "w-[340px]";
         } else if (dev.type === 'Server5U') {
             cardWidthClass = "w-[360px]"; // 5U servers might also need a bit more space for CX8 + NICs
+        } else if (dev.type === 'Server2U2N') {
+            cardWidthClass = "w-[380px]";
         }
 
         return (
@@ -114,7 +146,43 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 </div>
                             </div>
                         </div>
-                    ) : (dev.type === 'Server5U' ? (
+                    ) : dev.type === 'Server2U2N' ? (() => {
+                        const nic1N1Count = getNicCount(dev, 'ns_nic_1_n1');
+                        const nic2N1Count = getNicCount(dev, 'ns_nic_2_n1');
+                        const ocpN1Count = getNicCount(dev, 'ocp_n1');
+                        const nic1N2Count = getNicCount(dev, 'ns_nic_1_n2');
+                        const nic2N2Count = getNicCount(dev, 'ns_nic_2_n2');
+                        const ocpN2Count = getNicCount(dev, 'ocp_n2');
+                        const nic1N1Name = dev.hardwareSpecs?.ns_nic_1_n1?.model || 'NS-NIC-1';
+                        const nic2N1Name = dev.hardwareSpecs?.ns_nic_2_n1?.model || 'NS-NIC-2';
+                        const nic1N2Name = dev.hardwareSpecs?.ns_nic_1_n2?.model || 'NS-NIC-1';
+                        const nic2N2Name = dev.hardwareSpecs?.ns_nic_2_n2?.model || 'NS-NIC-2';
+
+                        return (
+                            <div className="flex flex-col gap-2 w-full px-2">
+                                {/* Top Row: N1 */}
+                                <div className="flex flex-wrap items-center justify-end gap-3 border-b border-slate-700/50 pb-2">
+                                    <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N1
+                                    </div>
+                                    {nic1N1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1N1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n1-${i + 1}`, `N1 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {nic2N1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2N1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n1-${i + 1}`, `N1 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {ocpN1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpN1Count }).map((_, i) => renderPortAnchor(dev, `ocp_n1-${i + 1}`, `N1 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc_n1', 'N1 BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                </div>
+                                {/* Bottom Row: N2 */}
+                                <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+                                    <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N2
+                                    </div>
+                                    {nic1N2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1N2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n2-${i + 1}`, `N2 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {nic2N2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2N2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n2-${i + 1}`, `N2 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {ocpN2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpN2Count }).map((_, i) => renderPortAnchor(dev, `ocp_n2-${i + 1}`, `N2 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc_n2', 'N2 BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                </div>
+                            </div>
+                        );
+                    })() : dev.type === 'Server5U' ? (
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-center">
                                 <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">CX8</span>
@@ -138,20 +206,37 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                             {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
                             <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         );
     };
 
-    const renderTreeSection = (devList, bgClass, labelPrefix) => {
+    const renderTreeSection = (devList, bgClass, labelPrefix, isRow = false) => {
         const groups = getGroupedDevices(devList, racks);
         if (groups.length === 0) return <div className="text-slate-500 text-sm py-4 italic border border-dashed border-slate-700/50 rounded-lg w-full text-center">無設備</div>;
 
         return (
-            <div className="flex flex-wrap justify-center gap-8 w-full z-10 p-4">
+            <div className={`flex ${isRow ? 'flex-nowrap justify-center min-w-max' : 'flex-wrap justify-center'} gap-8 w-full z-10 p-4 pb-6`}>
                 {groups.map(group => {
                     const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
+                    if (!isOpen) {
+                        return (
+                            <div 
+                                key={group.name} 
+                                data-group-anchor={`${labelPrefix}-${group.name}`}
+                                onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: true }); }}
+                                className={`relative cursor-pointer transition-all hover:scale-105 flex flex-col items-center justify-center bg-slate-800/80 p-6 rounded-2xl border-2 border-slate-600 shadow-xl min-w-[260px] min-h-[140px] group ${bgClass.split(' ')[0].replace('bg-', 'hover:border-')}`}
+                            >
+                                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Maximize2 className="w-5 h-5 text-slate-400 hover:text-white" />
+                                </div>
+                                <div className="text-2xl font-bold text-slate-200 tracking-wider text-center">{group.name}</div>
+                                <div className="text-sm text-slate-400 mt-2 font-mono">{group.devs.length} Devices</div>
+                                <div className={`absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-20 blur-md transition-opacity pointer-events-none ${bgClass.split(' ')[0]}`}></div>
+                            </div>
+                        );
+                    }
                     return (
                         <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 min-w-[220px]">
                             <button
@@ -177,35 +262,62 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
 
     return (
         <div className="flex flex-col gap-12 w-full items-center pt-8 pb-32 z-10 min-w-max">
-            <div className="flex flex-row items-stretch justify-center gap-8 w-full px-8">
-                <div className="flex-1 w-1/2 flex flex-col items-center gap-6 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">
+            <div className="flex flex-row items-stretch justify-center gap-8 w-full px-8 min-w-max">
+                <div className="flex-1 flex flex-col items-center gap-6 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-max relative overflow-hidden">
                     <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-cyan-500/0 via-cyan-500/60 to-cyan-500/0 rounded-full"></div>
-                    <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">NORTH-SOUTH FABRIC</div>
+                    <div className="border-b border-slate-700 pb-2 w-full flex items-center relative justify-center">
+                        <div className="text-[20px] font-bold text-slate-400 tracking-widest">NORTH-SOUTH FABRIC</div>
+                        <button 
+                            onClick={() => toggleSection(['NS-Spine', 'NS-Leaf'])} 
+                            className="absolute right-0 text-sm flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-600"
+                        >
+                            {isSectionCollapsed(['NS-Spine', 'NS-Leaf']) ? <Maximize2 className="w-4 h-4"/> : <Minimize2 className="w-4 h-4"/>} 
+                            {isSectionCollapsed(['NS-Spine', 'NS-Leaf']) ? '一鍵展開' : '一鍵收起'}
+                        </button>
+                    </div>
                     <div className="flex flex-col items-center w-full gap-4">
                         <div className="flex items-center gap-2 text-[18px] font-bold text-cyan-300 tracking-widest bg-cyan-500/10 border border-cyan-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
                         {renderTreeSection(nsSpineDevs, 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]', 'NS-Spine')}
                     </div>
-                    <div className="flex flex-col items-center w-full gap-4">
+                    <div className="flex flex-col items-center w-full gap-4 max-w-full">
                         <div className="flex items-center gap-2 text-[18px] font-bold text-sky-300 tracking-widest bg-sky-500/10 border border-sky-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
-                        {renderTreeSection(nsLeafDevs, 'bg-sky-500 shadow-[0_0_8px_#0ea5e9]', 'NS-Leaf')}
+                        {renderTreeSection(nsLeafDevs, 'bg-sky-500 shadow-[0_0_8px_#0ea5e9]', 'NS-Leaf', true)}
                     </div>
                 </div>
-                <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">
+                <div className="flex-1 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-max relative overflow-hidden">
                     <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-purple-500/0 via-purple-500/60 to-purple-500/0 rounded-full"></div>
-                    <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">EAST-WEST FABRIC</div>
+                    <div className="border-b border-slate-700 pb-2 w-full flex items-center relative justify-center">
+                        <div className="text-[20px] font-bold text-slate-400 tracking-widest">EAST-WEST FABRIC</div>
+                        <button 
+                            onClick={() => toggleSection(['Spine', 'Leaf'])} 
+                            className="absolute right-0 text-sm flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-600"
+                        >
+                            {isSectionCollapsed(['Spine', 'Leaf']) ? <Maximize2 className="w-4 h-4"/> : <Minimize2 className="w-4 h-4"/>} 
+                            {isSectionCollapsed(['Spine', 'Leaf']) ? '一鍵展開' : '一鍵收起'}
+                        </button>
+                    </div>
                     <div className="flex flex-col items-center w-full gap-4">
                         <div className="flex items-center gap-2 text-[18px] font-bold text-purple-300 tracking-widest bg-purple-500/10 border border-purple-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
                         {renderTreeSection(ewSpineDevs, 'bg-purple-500 shadow-[0_0_8px_#a855f7]', 'Spine')}
                     </div>
-                    <div className="flex flex-col items-center w-full gap-4">
+                    <div className="flex flex-col items-center w-full gap-4 max-w-full">
                         <div className="flex items-center gap-2 text-[18px] font-bold text-emerald-300 tracking-widest bg-emerald-500/10 border border-emerald-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
-                        {renderTreeSection(ewLeafDevs, 'bg-emerald-500 shadow-[0_0_8px_#10b981]', 'Leaf')}
+                        {renderTreeSection(ewLeafDevs, 'bg-emerald-500 shadow-[0_0_8px_#10b981]', 'Leaf', true)}
                     </div>
                 </div>
             </div>
-            <div className="flex flex-col items-center w-full gap-6 px-8 mt-6 bg-[#0d1b2e]/60 py-8 rounded-3xl border border-slate-700/40 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col items-center w-full gap-6 px-8 mt-6 bg-[#0d1b2e]/60 py-8 rounded-3xl border border-slate-700/40 shadow-2xl relative overflow-hidden min-w-max">
                 <div className="absolute top-0 left-6 right-6 h-[3px] bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500/0 rounded-full"></div>
-                <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 mb-2 w-1/3 text-center">ENDPOINT LAYER</div>
+                <div className="border-b border-slate-700 pb-2 mb-2 w-full max-w-2xl flex items-center relative justify-center">
+                        <div className="text-[20px] font-bold text-slate-400 tracking-widest">ENDPOINT LAYER</div>
+                        <button 
+                            onClick={() => toggleSection(['EP'])} 
+                            className="absolute right-0 text-sm flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-600"
+                        >
+                            {isSectionCollapsed(['EP']) ? <Maximize2 className="w-4 h-4"/> : <Minimize2 className="w-4 h-4"/>} 
+                            {isSectionCollapsed(['EP']) ? '一鍵展開' : '一鍵收起'}
+                        </button>
+                </div>
                 {renderTreeSection(epDevs, 'bg-blue-500 shadow-[0_0_8px_#3b82f6]', 'EP')}
             </div>
         </div>
