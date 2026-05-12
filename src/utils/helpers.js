@@ -32,14 +32,19 @@ export const getSwitchPortCount = (dev) => {
     if (dev.type === 'Switch400G1U' || dev.type === 'Switch400G') return 32;
     if (dev.type === 'Switch800G') return 64;
     if (dev.type === 'Router') return 24;
-    return 24;
+    return 48; // Default for Switch
 };
 
-export const getSwitchPortLayout = (portCount) => {
-    if (portCount === 48) return { rows: 2, cols: 24 };
-    if (portCount === 32) return { rows: 2, cols: 16 };
-    if (portCount === 64) return { rows: 4, cols: 16 };
-    if (portCount === 24) return { rows: 2, cols: 12 };
+export const getSwitchPortLayout = (portCount, size = 1) => {
+    if (size >= 2) {
+        if (portCount > 32) {
+            const cols = Math.ceil(portCount / 4);
+            return { rows: 4, cols: cols > 0 ? cols : 1 };
+        } else {
+            const cols = Math.ceil(portCount / 2);
+            return { rows: 2, cols: cols > 0 ? cols : 1 };
+        }
+    }
 
     const cols = Math.ceil(portCount / 2);
     return { rows: 2, cols: cols > 0 ? cols : 1 };

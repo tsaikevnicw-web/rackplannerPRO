@@ -66,49 +66,133 @@ const AppContent = () => {
 
             // ── Del：刪除選中設備 ──
             if (e.key === 'Delete' && !inForm) {
-                const selectedDevice = devices.find(d => d.id === selectedId);
+                const targetId = selectedId;
+                const selectedDevice = devices.find(d => d.id === targetId);
                 if (!selectedDevice) return;
-                setDeleteDeviceConfirm({ isOpen: true, deviceId: selectedId });
+                
+                // 直接刪除，不跳確認視窗
+                setDevices(prev => prev.map(dev => {
+                    if (dev.id === targetId) return null;
+                    const newConns = { ...(dev.connections || {}) };
+                    let modified = false;
+                    Object.keys(newConns).forEach(k => { 
+                        if (newConns[k] && newConns[k].startsWith(`${targetId}-`)) {
+                            delete newConns[k];
+                            modified = true;
+                        }
+                    });
+                    if (!modified) return dev;
+                    return { ...dev, connections: newConns };
+                }).filter(Boolean));
+                setSelectedId(null);
                 return;
             }
 
-            // ── Ctrl+C：複製選中設備 ──
+            // ── Ctrl+C：複製選中設備或機櫃 ──
             if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !inForm) {
                 const selectedDevice = devices.find(d => d.id === selectedId);
-                if (!selectedDevice) return;
-                clipboardRef.current = selectedDevice;
+                if (selectedDevice) {
+                    clipboardRef.current = { type: 'device', data: selectedDevice };
+                    return;
+                }
+                const selectedRack = racks.find(r => r.id === selectedId);
+                if (selectedRack) {
+                    clipboardRef.current = { 
+                        type: 'rack', 
+                        data: selectedRack, 
+                        devices: devices.filter(d => d.rackId === selectedRack.id) 
+                    };
+                    return;
+                }
                 return;
             }
 
-            // ── Ctrl+V：貧上複製的設備 ──
+            // ── Ctrl+V：貼上複製的設備或機櫃 ──
             if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !inForm) {
                 e.preventDefault();
-                const src = clipboardRef.current;
-                if (!src) return;
+                const clipboard = clipboardRef.current;
+                if (!clipboard) return;
 
-                const targetRack = racks.find(r => r.id === activeRackId);
-                if (!targetRack) { showAlert('請先選取一個目標機櫃。', '提示', 'info'); return; }
+                const getIncrementedName = (originalName, existingItems, fieldName = 'customName') => {
+                    if (!originalName) return originalName;
+                    const match = originalName.match(/^(.*?)(-?)(\d+)$/);
+                    if (!match) return `${originalName} (Copy)`;
+                    
+                    const base = match[1];
+                    const sep = match[2];
+                    const numStr = match[3];
+                    const numLen = numStr.length;
+                    
+                    let maxNum = parseInt(numStr, 10);
+                    
+                    existingItems.forEach(item => {
+                        const itemName = item[fieldName];
+                        if (itemName) {
+                            const itemMatch = itemName.match(/^(.*?)(-?)(\d+)$/);
+                            if (itemMatch && itemMatch[1] === base && itemMatch[2] === sep) {
+                                const itemNum = parseInt(itemMatch[3], 10);
+                                if (itemNum > maxNum) maxNum = itemNum;
+                            }
+                        }
+                    });
+                    
+                    const nextNum = maxNum + 1;
+                    let nextNumStr = nextNum.toString();
+                    if (numStr.startsWith('0')) {
+                        nextNumStr = nextNumStr.padStart(numLen, '0');
+                    }
+                    return `${base}${sep}${nextNumStr}`;
+                };
 
-                const rackMaxU = targetRack.uCount || 48;
-                const devSize = src.size || 1;
-                const rackDevices = devices.filter(d => d.rackId === activeRackId && d.type !== 'SideCDU');
+                if (clipboard.type === 'device') {
+                    const src = clipboard.data;
+                    const targetRackId = src.rackId;
+                    const targetRack = racks.find(r => r.id === targetRackId);
+                    if (!targetRack) { showAlert('目標機櫃不存在。', '提示', 'info'); return; }
 
-                // 從 U1 開始找第一個可用的連續空間
-                let foundU = null;
-                for (let u = 1; u <= rackMaxU - devSize + 1; u++) {
-                    const overlaps = rackDevices.some(
-                        d => !(u + devSize - 1 < d.startU || u > d.startU + d.size - 1)
-                    );
-                    if (!overlaps) { foundU = u; break; }
+                    const rackMaxU = targetRack.uCount || 48;
+                    const devSize = src.size || 1;
+                    const rackDevices = devices.filter(d => d.rackId === targetRackId && d.type !== 'SideCDU');
+
+                    let foundU = null;
+                    for (let u = 1; u <= rackMaxU - devSize + 1; u++) {
+                        const overlaps = rackDevices.some(
+                            d => !(u + devSize - 1 < d.startU || u > d.startU + d.size - 1)
+                        );
+                        if (!overlaps) { foundU = u; break; }
+                    }
+
+                    if (foundU === null) {
+                        showAlert('機櫃空間不足，無法貼上設備！', '錯誤', 'error');
+                        return;
+                    }
+
+                    const newName = getIncrementedName(src.customName, devices, 'customName');
+                    const newDev = { ...src, id: generateId(), rackId: targetRackId, startU: foundU, customName: newName, connections: {} };
+                    setDevices(prev => [...prev, newDev]);
+                } else if (clipboard.type === 'rack') {
+                    const srcRack = clipboard.data;
+                    const srcDevices = clipboard.devices;
+
+                    const newRackName = getIncrementedName(srcRack.name, racks, 'name');
+                    const newRackId = generateId();
+                    const newRack = { ...srcRack, id: newRackId, name: newRackName };
+                    
+                    setRacks(prev => [...prev, newRack]);
+                    
+                    setDevices(prev => {
+                        const currentDevices = [...prev];
+                        for (const dev of srcDevices) {
+                            const newDevName = getIncrementedName(dev.customName, currentDevices, 'customName');
+                            const newDev = { ...dev, id: generateId(), rackId: newRackId, customName: newDevName, connections: {} };
+                            currentDevices.push(newDev);
+                        }
+                        return currentDevices;
+                    });
+                    
+                    setActiveRackId(newRackId);
+                    showAlert(`成功複製機櫃為 ${newRackName}`, '提示', 'success');
                 }
-
-                if (foundU === null) {
-                    showAlert('機櫃空間不足，無法貳上設備！', '錯誤', 'error');
-                    return;
-                }
-
-                const newDev = { ...src, id: generateId(), rackId: activeRackId, startU: foundU, connections: {} };
-                setDevices(prev => [...prev, newDev]);
                 return;
             }
         };
@@ -128,7 +212,8 @@ const AppContent = () => {
 
     // Derived states
     const racksToRender = viewMode === 'single' ? racks.filter(r => r.id === activeRackId) : racks;
-    const nsDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South');
+    const nsSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole === 'Spine');
+    const nsLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole !== 'Spine');
     const ewSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'East-West' && d.networkRole === 'Spine');
     const ewLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'East-West' && d.networkRole !== 'Spine');
     const epDevs = devices.filter(d => !(d.type || '').startsWith('Switch') && d.type !== 'Router' && d.type !== 'Blank' && d.type !== 'UPS');
@@ -202,7 +287,7 @@ const AppContent = () => {
                         >
                              <CablesOverlay />
                              {viewMode === 'network' ? (
-                                 <NetworkTopology nsDevs={nsDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
+                                 <NetworkTopology nsSpineDevs={nsSpineDevs} nsLeafDevs={nsLeafDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
                              ) : (
                                  <RackView racksToRender={racksToRender} />
                              )}

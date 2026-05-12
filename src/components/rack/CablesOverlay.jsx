@@ -133,6 +133,10 @@ const CablesOverlay = () => {
         const devB = devices.find(d => d.id === devBId);
         const types = [devA?.type, devB?.type].filter(Boolean);
 
+        // ── 2U2N 專屬 Node 1 / Node 2 網路線顏色區分 (OPA/NIC) ──
+        if (srcBase.includes('_n1-') || tgtBase.includes('_n1-')) return 'stroke-yellow-400';
+        if (srcBase.includes('_n2-') || tgtBase.includes('_n2-')) return 'stroke-red-500';
+
         // 優先順序：Router > Switch800G > Switch400G (含 400G1U) > Switch10G > Switch1G
         if (types.some(t => t === 'Router'))           return 'stroke-red-500';
         if (types.some(t => t === 'Switch800G'))        return 'stroke-emerald-400';

@@ -4,7 +4,7 @@ import { THEME_STYLES } from '../../utils/constants';
 import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout } from '../../utils/helpers';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
-const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
+const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
     const { racks, devices, selectedId, setSelectedId, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
 
     const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
@@ -61,8 +61,10 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
         const Icon = getIconByType(dev.type);
         const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
         
-        const nic1Count = getNicCount(dev, 'ns_nic_1');
-        const nic2Count = getNicCount(dev, 'ns_nic_2');
+        const is2U2N = dev.type === 'Server2U2N';
+        const nic1Count = is2U2N ? (getNicCount(dev, 'ns_nic_1_n1') + getNicCount(dev, 'ns_nic_1_n2')) : getNicCount(dev, 'ns_nic_1');
+        const nic2Count = is2U2N ? (getNicCount(dev, 'ns_nic_2_n1') + getNicCount(dev, 'ns_nic_2_n2')) : getNicCount(dev, 'ns_nic_2');
+        const ocpCount = is2U2N ? (getNicCount(dev, 'ocp_n1') + getNicCount(dev, 'ocp_n2')) : getNicCount(dev, 'ocp');
         const portCount = getSwitchPortCount(dev);
         const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
 
@@ -120,18 +122,20 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                                     {Array.from({ length: getNicCount(dev, 'cx8p') || 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
                                 </div>
                             </div>
-                            {(nic1Count > 0 || nic2Count > 0 || true) && (
+                            {(nic1Count > 0 || nic2Count > 0 || ocpCount > 0 || true) && (
                                 <div className="flex flex-wrap justify-center gap-4 border-t border-slate-700 pt-2 mt-1">
-                                    {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-1</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-2</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
                                     <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <div className="flex flex-wrap justify-center gap-4">
-                            {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-1</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                            {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">NS-NIC-2</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                            {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                            {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                            {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
                             <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                         </div>
                     ))}
@@ -169,70 +173,7 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
         );
     };
 
-    const renderNSSection = () => {
-        const groups = getGroupedDevices(nsDevs, racks);
-        if (groups.length === 0) return <div className="text-slate-500 text-sm py-4 italic border border-dashed border-slate-700/50 rounded-lg w-full text-center">無設備</div>;
-
-        const bgClass = 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]';
-        const labelPrefix = 'NS';
-
-        // 分離 1G Switch 群組 vs 其他群組
-        const switch1GGroups = groups.filter(g => g.devs.every(d => d.type === 'Switch1G'));
-        const otherGroups = groups.filter(g => !g.devs.every(d => d.type === 'Switch1G'));
-
-        const renderGroupBtn = (group) => {
-            const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
-            return (
-                <button
-                    onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: !isOpen }); }}
-                    className="flex items-center gap-1.5 text-[16px] font-bold text-slate-400 tracking-wider bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors w-full justify-center shadow-sm"
-                >
-                    {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                    {group.name} ({group.devs.length})
-                </button>
-            );
-        };
-
-        return (
-            <div className="flex flex-col gap-6 w-full">
-                {/* 上排：前兩個非 1G Switch 群組，左右並列 */}
-                {otherGroups.length > 0 && (
-                    <div className="flex flex-row gap-6 w-full">
-                        {otherGroups.slice(0, 2).map((group) => {
-                            const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
-                            return (
-                                <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 flex-1 min-w-0">
-                                    {renderGroupBtn(group)}
-                                    {isOpen && (
-                                        <div className="flex flex-col items-center gap-4 pt-2 w-full">
-                                            {group.devs.map(d => renderCompactLogicalDeviceCard(d, bgClass))}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {/* 只有 1 個群組時補空白保持對稱 */}
-                        {otherGroups.length === 1 && <div className="flex-1" />}
-                    </div>
-                )}
-
-                {/* 下排：1G Switch 群組，設備水平排列 */}
-                {switch1GGroups.map((group) => {
-                    const isOpen = expandedNetGroups[`${labelPrefix}-${group.name}`] ?? true;
-                    return (
-                        <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 w-full">
-                            {renderGroupBtn(group)}
-                            {isOpen && (
-                                <div className="flex flex-row flex-wrap justify-center gap-4 pt-2 w-full">
-                                    {group.devs.map(d => renderCompactLogicalDeviceCard(d, bgClass))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
+    // renderNSSection is removed as we now use renderTreeSection for NS Spine/Leaf
 
     return (
         <div className="flex flex-col gap-12 w-full items-center pt-8 pb-32 z-10 min-w-max">
@@ -240,8 +181,13 @@ const NetworkTopology = ({ nsDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
                 <div className="flex-1 w-1/2 flex flex-col items-center gap-6 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">
                     <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-cyan-500/0 via-cyan-500/60 to-cyan-500/0 rounded-full"></div>
                     <div className="text-[20px] font-bold text-slate-400 tracking-widest border-b border-slate-700 pb-2 w-full text-center">NORTH-SOUTH FABRIC</div>
-                    <div className="flex flex-col justify-center h-full w-full gap-8">
-                        {renderNSSection()}
+                    <div className="flex flex-col items-center w-full gap-4">
+                        <div className="flex items-center gap-2 text-[18px] font-bold text-cyan-300 tracking-widest bg-cyan-500/10 border border-cyan-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
+                        {renderTreeSection(nsSpineDevs, 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]', 'NS-Spine')}
+                    </div>
+                    <div className="flex flex-col items-center w-full gap-4">
+                        <div className="flex items-center gap-2 text-[18px] font-bold text-sky-300 tracking-widest bg-sky-500/10 border border-sky-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
+                        {renderTreeSection(nsLeafDevs, 'bg-sky-500 shadow-[0_0_8px_#0ea5e9]', 'NS-Leaf')}
                     </div>
                 </div>
                 <div className="flex-1 w-1/2 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-0 relative overflow-hidden">

@@ -18,6 +18,7 @@ export const HW_SPECS_CONFIG = [
     { key: 'dimm', label: 'DIMM' },
     { key: 'ns_nic_1', label: 'NS-NIC-1' },
     { key: 'ns_nic_2', label: 'NS-NIC-2' },
+    { key: 'ocp', label: 'OCP' },
     { key: 'gpu', label: 'GPU' },
     { key: 'm2', label: 'M.2' },
     { key: 'hdd', label: 'HDD' },
@@ -32,6 +33,7 @@ export const DEVICE_TEMPLATES = [
         subItems: [
             { type: 'Server1U', name: '1U 伺服器', size: 1, icon: Server, theme: 'blue', power: 300 },
             { type: 'Server2U', name: '2U 伺服器', size: 2, icon: Server, theme: 'blue', power: 500 },
+            { type: 'Server2U2N', name: '2U 2N 伺服器', size: 2, icon: Server, theme: 'blue', power: 800 },
             { type: 'Server5U', name: '5U 伺服器', size: 5, icon: Server, theme: 'blue', power: 1500 },
         ]
     },
@@ -52,11 +54,7 @@ export const DEVICE_TEMPLATES = [
     {
         isGroup: true, name: '網路設備', icon: Network, theme: 'purple',
         subItems: [
-            { type: 'Switch1G', name: '1U 1G 交換器', size: 1, icon: Network, theme: 'purple', power: 30 },
-            { type: 'Switch10G', name: '1U 10G 交換器', size: 1, icon: Network, theme: 'purple', power: 50 },
-            { type: 'Switch400G1U', name: '1U 400G 交換器', size: 1, icon: Network, theme: 'purple', power: 150 },
-            { type: 'Switch400G', name: '2U 400G 交換器', size: 2, icon: Network, theme: 'purple', power: 150 },
-            { type: 'Switch800G', name: '2U 800G 交換器', size: 2, icon: Network, theme: 'purple', power: 200 },
+            { type: 'Switch', name: '交換器', size: 1, icon: Network, theme: 'purple', power: 150 },
             { type: 'Router', name: '路由器', size: 1, icon: Cpu, theme: 'violet', power: 100 },
         ]
     },
