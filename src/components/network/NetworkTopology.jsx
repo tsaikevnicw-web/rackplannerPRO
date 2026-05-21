@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -91,10 +91,17 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
         const Icon = getIconByType(dev.type);
         const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
         
-        const is2U2N = dev.type === 'Server2U2N';
-        const nic1Count = is2U2N ? (getNicCount(dev, 'ns_nic_1_n1') + getNicCount(dev, 'ns_nic_1_n2')) : getNicCount(dev, 'ns_nic_1');
-        const nic2Count = is2U2N ? (getNicCount(dev, 'ns_nic_2_n1') + getNicCount(dev, 'ns_nic_2_n2')) : getNicCount(dev, 'ns_nic_2');
-        const ocpCount = is2U2N ? (getNicCount(dev, 'ocp_n1') + getNicCount(dev, 'ocp_n2')) : getNicCount(dev, 'ocp');
+        const isHighDensity = getServerCategory(dev) === 'HighDensity';
+        const hdNodes = isHighDensity ? getHighDensityNodes(dev) : [];
+        const nic1Count = isHighDensity 
+            ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ns_nic_1_${node}`), 0)
+            : getNicCount(dev, 'ns_nic_1');
+        const nic2Count = isHighDensity 
+            ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ns_nic_2_${node}`), 0)
+            : getNicCount(dev, 'ns_nic_2');
+        const ocpCount = isHighDensity 
+            ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ocp_${node}`), 0)
+            : getNicCount(dev, 'ocp');
         const portCount = getSwitchPortCount(dev);
         const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
 
@@ -102,9 +109,9 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
         if (portLayout) {
             if (portLayout.cols > 16) cardWidthClass = "w-[400px]";
             else if (portLayout.cols > 12) cardWidthClass = "w-[340px]";
-        } else if (dev.type === 'Server5U') {
-            cardWidthClass = "w-[360px]"; // 5U servers might also need a bit more space for CX8 + NICs
-        } else if (dev.type === 'Server2U2N') {
+        } else if (getServerCategory(dev) === 'AI') {
+            cardWidthClass = "w-[360px]"; // AI servers might also need a bit more space for CX8 + NICs
+        } else if (getServerCategory(dev) === 'HighDensity') {
             cardWidthClass = "w-[380px]";
         }
 
@@ -146,43 +153,34 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 </div>
                             </div>
                         </div>
-                    ) : dev.type === 'Server2U2N' ? (() => {
-                        const nic1N1Count = getNicCount(dev, 'ns_nic_1_n1');
-                        const nic2N1Count = getNicCount(dev, 'ns_nic_2_n1');
-                        const ocpN1Count = getNicCount(dev, 'ocp_n1');
-                        const nic1N2Count = getNicCount(dev, 'ns_nic_1_n2');
-                        const nic2N2Count = getNicCount(dev, 'ns_nic_2_n2');
-                        const ocpN2Count = getNicCount(dev, 'ocp_n2');
-                        const nic1N1Name = dev.hardwareSpecs?.ns_nic_1_n1?.model || 'NS-NIC-1';
-                        const nic2N1Name = dev.hardwareSpecs?.ns_nic_2_n1?.model || 'NS-NIC-2';
-                        const nic1N2Name = dev.hardwareSpecs?.ns_nic_1_n2?.model || 'NS-NIC-1';
-                        const nic2N2Name = dev.hardwareSpecs?.ns_nic_2_n2?.model || 'NS-NIC-2';
-
+                    ) : getServerCategory(dev) === 'HighDensity' ? (() => {
+                        const nodes = getHighDensityNodes(dev);
                         return (
                             <div className="flex flex-col gap-2 w-full px-2">
-                                {/* Top Row: N1 */}
-                                <div className="flex flex-wrap items-center justify-end gap-3 border-b border-slate-700/50 pb-2">
-                                    <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N1
-                                    </div>
-                                    {nic1N1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1N1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n1-${i + 1}`, `N1 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {nic2N1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2N1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n1-${i + 1}`, `N1 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {ocpN1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpN1Count }).map((_, i) => renderPortAnchor(dev, `ocp_n1-${i + 1}`, `N1 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
-                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc_n1', 'N1 BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
-                                </div>
-                                {/* Bottom Row: N2 */}
-                                <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
-                                    <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N2
-                                    </div>
-                                    {nic1N2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1N2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n2-${i + 1}`, `N2 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {nic2N2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2N2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n2-${i + 1}`, `N2 P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {ocpN2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpN2Count }).map((_, i) => renderPortAnchor(dev, `ocp_n2-${i + 1}`, `N2 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
-                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc_n2', 'N2 BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
-                                </div>
+                                {nodes.map((nodeKey, idx) => {
+                                    const nodeNum = idx + 1;
+                                    const nic1CountVal = getNicCount(dev, `ns_nic_1_${nodeKey}`);
+                                    const nic2CountVal = getNicCount(dev, `ns_nic_2_${nodeKey}`);
+                                    const ocpCountVal = getNicCount(dev, `ocp_${nodeKey}`);
+                                    const nic1Name = dev.hardwareSpecs?.[`ns_nic_1_${nodeKey}`]?.model || 'NS-NIC-1';
+                                    const nic2Name = dev.hardwareSpecs?.[`ns_nic_2_${nodeKey}`]?.model || 'NS-NIC-2';
+                                    const isLast = idx === nodes.length - 1;
+
+                                    return (
+                                        <div key={nodeKey} className={`flex flex-wrap items-center justify-end gap-3 ${!isLast ? 'border-b border-slate-700/50 pb-2' : 'pt-1'}`}>
+                                            <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N{nodeNum}
+                                            </div>
+                                            {nic1CountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1CountVal }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_${nodeKey}-${i + 1}`, `N${nodeNum} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                            {nic2CountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2CountVal }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_${nodeKey}-${i + 1}`, `N${nodeNum} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                            {ocpCountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpCountVal }).map((_, i) => renderPortAnchor(dev, `ocp_${nodeKey}-${i + 1}`, `N${nodeNum} OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                            <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC`, 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         );
-                    })() : dev.type === 'Server5U' ? (
+                    })() : getServerCategory(dev) === 'AI' ? (
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-center">
                                 <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">CX8</span>

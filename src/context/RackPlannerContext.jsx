@@ -23,7 +23,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [viewMode, setViewMode] = useState('single');
     const [selectedId, setSelectedId] = useState(null);
     const [draggedItem, setDraggedItem] = useState(null);
-    const [expandedGroups, setExpandedGroups] = useState({ '伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
+    const [expandedGroups, setExpandedGroups] = useState({ 'General Purpose': true, 'High Density': true, 'AI 伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
     const [expandedNetGroups, setExpandedNetGroups] = useState({});
 
     // Menu States

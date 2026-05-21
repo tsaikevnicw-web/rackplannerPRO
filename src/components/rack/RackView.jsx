@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 
 const RackView = ({ racksToRender }) => {
@@ -170,8 +170,8 @@ const RackView = ({ racksToRender }) => {
 
                                         {/* 右側：Ports 區域 */}
                                         <div className="relative z-30 flex items-center justify-end shrink-0 h-full pr-2">
-                                            {((dev.type || '').startsWith('Server') && dev.type !== 'Server5U' && dev.type !== 'Server2U2N' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (() => {
-                                                const is2U = dev.type === 'Server2U' || dev.type === 'Storage2U';
+                                            {(getServerCategory(dev) === 'General' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (() => {
+                                                const is2U = dev.size >= 2 || dev.type === 'Storage2U';
                                                 const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
                                                 const hasLC = hostCooling === 'LC';
 
@@ -305,7 +305,7 @@ const RackView = ({ racksToRender }) => {
                                                 );
                                             })()}
 
-                                            {dev.type === 'Server5U' && (() => {
+                                            {getServerCategory(dev) === 'AI' && (() => {
                                                 const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
                                                 const gpuCooling  = dev.hardwareSpecs?.cooling?.gpu  || 'AC';
                                                 const hasLC = hostCooling === 'LC' || gpuCooling === 'LC';
@@ -383,92 +383,64 @@ const RackView = ({ racksToRender }) => {
                                                 );
                                             })()}
 
-                                            {dev.type === 'Server2U2N' && (() => {
-                                                const nic1N1Count = getNicCount(dev, 'ns_nic_1_n1');
-                                                const nic2N1Count = getNicCount(dev, 'ns_nic_2_n1');
-                                                const ocpN1Count = getNicCount(dev, 'ocp_n1');
-                                                const nic1N2Count = getNicCount(dev, 'ns_nic_1_n2');
-                                                const nic2N2Count = getNicCount(dev, 'ns_nic_2_n2');
-                                                const ocpN2Count = getNicCount(dev, 'ocp_n2');
-                                                const nic1N1Name = dev.hardwareSpecs?.ns_nic_1_n1?.model || 'NS-NIC-1';
-                                                const nic2N1Name = dev.hardwareSpecs?.ns_nic_2_n1?.model || 'NS-NIC-2';
-                                                const nic1N2Name = dev.hardwareSpecs?.ns_nic_1_n2?.model || 'NS-NIC-1';
-                                                const nic2N2Name = dev.hardwareSpecs?.ns_nic_2_n2?.model || 'NS-NIC-2';
+                                            {getServerCategory(dev) === 'HighDensity' && (() => {
+                                                const nodes = getHighDensityNodes(dev);
+                                                const isTight = nodes.length / dev.size > 1.1;
+                                                const portSizeClass = isTight ? "w-2 h-2 shrink-0" : "w-2.5 h-2.5 shrink-0";
+                                                const labelClass = isTight ? "text-[9px]" : "text-[11px]";
+                                                const dotClass = isTight ? "w-1 h-1" : "w-1.5 h-1.5";
+                                                const portLabelClass = isTight ? "text-[8px]" : "text-[10px]";
+                                                const rowGapClass = isTight ? "gap-1.5 px-2" : "gap-3 px-3";
 
                                                 return (
                                                     <div className="flex flex-col justify-center border-l border-white/20 shrink-0 h-full w-full">
-                                                        {/* Top Row: N1 */}
-                                                        <div className="flex-1 flex items-center justify-end gap-3 w-full border-b border-white/10 px-3">
-                                                            <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N1
-                                                            </div>
-                                                            {nic1N1Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{nic1N1Name}</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: nic1N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n1-${i + 1}`, `N1 ${nic1N1Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                        {nodes.map((nodeKey, idx) => {
+                                                            const nic1Count = getNicCount(dev, `ns_nic_1_${nodeKey}`);
+                                                            const nic2Count = getNicCount(dev, `ns_nic_2_${nodeKey}`);
+                                                            const ocpCount = getNicCount(dev, `ocp_${nodeKey}`);
+                                                            const nic1Name = dev.hardwareSpecs?.[`ns_nic_1_${nodeKey}`]?.model || 'NS-NIC-1';
+                                                            const nic2Name = dev.hardwareSpecs?.[`ns_nic_2_${nodeKey}`]?.model || 'NS-NIC-2';
+                                                            const nodeNum = idx + 1;
+                                                            const isLast = idx === nodes.length - 1;
+
+                                                            return (
+                                                                <div key={nodeKey} className={`flex-1 flex items-center justify-end ${rowGapClass} w-full ${!isLast ? 'border-b border-white/10' : ''}`}>
+                                                                    <div className={`${labelClass} font-bold text-slate-400 mr-auto flex items-center gap-1`}>
+                                                                        <div className={`${dotClass} rounded-full bg-blue-500`}></div> N{nodeNum}
+                                                                    </div>
+                                                                    {nic1Count > 0 && (
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>{nic1Name}</div>
+                                                                            <div className="flex gap-0.5">
+                                                                                {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_${nodeKey}-${i + 1}`, `N${nodeNum} ${nic1Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', portSizeClass))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                    {nic2Count > 0 && (
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>{nic2Name}</div>
+                                                                            <div className="flex gap-0.5">
+                                                                                {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_${nodeKey}-${i + 1}`, `N${nodeNum} ${nic2Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', portSizeClass))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                    {ocpCount > 0 && (
+                                                                        <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
+                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>OCP</div>
+                                                                            <div className="flex gap-0.5">
+                                                                                {Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp_${nodeKey}-${i + 1}`, `N${nodeNum} OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50', portSizeClass))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
+                                                                        <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>BMC</div>
+                                                                        <div className="flex gap-0.5">
+                                                                            {renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC Port`, 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            )}
-                                                            {nic2N1Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{nic2N1Name}</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: nic2N1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n1-${i + 1}`, `N1 ${nic2N1Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {ocpN1Count > 0 && (
-                                                                <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">OCP</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: ocpN1Count }).map((_, i) => renderPortAnchor(dev, `ocp_n1-${i + 1}`, `N1 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                                                <div className="flex gap-0.5">
-                                                                    {renderPortAnchor(dev, 'bmc_n1', 'N1 BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        {/* Bottom Row: N2 */}
-                                                        <div className="flex-1 flex items-center justify-end gap-3 w-full px-3">
-                                                            <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N2
-                                                            </div>
-                                                            {nic1N2Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{nic1N2Name}</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: nic1N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_n2-${i + 1}`, `N2 ${nic1N2Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {nic2N2Count > 0 && (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{nic2N2Name}</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: nic2N2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_n2-${i + 1}`, `N2 ${nic2N2Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {ocpN2Count > 0 && (
-                                                                <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">OCP</div>
-                                                                    <div className="flex gap-0.5">
-                                                                        {Array.from({ length: ocpN2Count }).map((_, i) => renderPortAnchor(dev, `ocp_n2-${i + 1}`, `N2 OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                                                <div className="flex gap-0.5">
-                                                                    {renderPortAnchor(dev, 'bmc_n2', 'N2 BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 );
                                             })()}

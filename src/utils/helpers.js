@@ -75,3 +75,47 @@ export const getDeviceLayerPrefix = (dev) => {
     if (fabric === 'North-South') return isSpine ? 'NS-Spine' : 'NS-Leaf';
     return isSpine ? 'Spine' : 'Leaf';
 };
+
+export const getServerCategory = (dev) => {
+    if (!dev || !dev.type || !dev.type.startsWith('Server')) return null;
+    if (dev.type === 'ServerHighDensity' || dev.type === 'Server2U2N') return 'HighDensity';
+    if (dev.type === 'ServerAI' || dev.type === 'Server5U') return 'AI';
+    return 'General';
+};
+
+export const getServerConfig = (dev) => {
+    if (!dev) return null;
+    if (dev.serverConfig) return dev.serverConfig;
+    const cat = getServerCategory(dev);
+    if (cat === 'General') {
+        return `${dev.size || 1}U`;
+    } else if (cat === 'HighDensity') {
+        if (dev.type === 'Server2U2N') return '2U2N2';
+        return '1U1N';
+    } else if (cat === 'AI') {
+        return `${dev.size || 5}U`;
+    }
+    return null;
+};
+
+export const getHighDensityNodes = (dev) => {
+    const config = getServerConfig(dev);
+    if (config === '1U1N' || config === '2U1N') return ['n1'];
+    if (config === '1U2N' || config === '2U2N2') return ['n1', 'n2'];
+    if (config === '2U4N') return ['n1', 'n2', 'n3', 'n4'];
+    return ['n1', 'n2']; // Default fallback for Server2U2N
+};
+
+export const getHighDensitySize = (opt) => {
+    if (!opt) return 1;
+    if (opt.startsWith('1U')) return 1;
+    if (opt.startsWith('2U')) return 2;
+    return 1;
+};
+
+export const getAIServerSize = (opt) => {
+    if (!opt) return 5;
+    const val = parseInt(opt);
+    return isNaN(val) ? 5 : val;
+};
+
