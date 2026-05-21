@@ -90,8 +90,9 @@ const RackView = ({ racksToRender }) => {
         const rackMaxU = rack.uCount || DEFAULT_RACK_U_COUNT;
         const isRackSelected = selectedId === rack.id;
         const rackDevices = devices.filter(d => d.rackId === rack.id);
-        const totalRackPower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
-        const isPowerOverloaded = totalRackPower > (rack.powerLimit || 20000);
+        const limit = rack.powerLimit || 20000;
+        const isPowerOverloaded = totalRackPower > limit;
+        const isPowerWarning = totalRackPower >= limit * 0.9 && !isPowerOverloaded;
 
         return (
             <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">
@@ -107,9 +108,16 @@ const RackView = ({ racksToRender }) => {
                             className={`w-3 h-3 rounded-full relative z-10 border transition-all duration-300 ${
                                 isPowerOverloaded 
                                     ? 'bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444] border-red-200' 
-                                    : 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] border-green-200'
+                                    : isPowerWarning
+                                        ? 'bg-amber-500 animate-pulse shadow-[0_0_10px_#f59e0b] border-amber-200'
+                                        : 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] border-green-200'
                             }`}
-                            title={isPowerOverloaded ? `電力超載！目前功耗 ${totalRackPower}W 已超過限制 ${rack.powerLimit || 20000}W` : `電力狀態正常 (${totalRackPower}W / ${rack.powerLimit || 20000}W)`}
+                            title={isPowerOverloaded 
+                                ? `電力超載！目前功耗 ${totalRackPower}W 已超過限制 ${limit}W` 
+                                : isPowerWarning
+                                    ? `電力接近負載上限！目前功耗 ${totalRackPower}W 已達限制的 90% (${limit}W)`
+                                    : `電力狀態正常 (${totalRackPower}W / ${limit}W)`
+                            }
                         ></div>
                         <div className="text-sm font-mono text-slate-200 font-bold tracking-widest relative z-10 drop-shadow-md truncate max-w-[280px]">{rack.name}</div>
                         <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6] relative z-10 border border-blue-200"></div>

@@ -1,4 +1,5 @@
 import { useRackPlanner } from '../context/RackPlannerContext';
+import { getServerCategory } from '../utils/helpers';
 
 export function useRackInteractions() {
     const { devices, setDevices, generateId, showAlert } = useRackPlanner();
@@ -55,6 +56,16 @@ export function useRackInteractions() {
                 setDevices(prev => [...prev, newDev]);
             } else {
                 setDevices(prev => prev.map(dev => dev.id === deviceData.id ? { ...dev, rackId, startU: targetU } : dev));
+            }
+
+            // 重心安全提示：AI 伺服器放置在 30U 以上時彈出警告
+            const isAIServer = deviceData.type === 'ServerAI' || deviceData.type === 'Server5U' || getServerCategory(deviceData) === 'AI';
+            if (isAIServer && targetU >= 30) {
+                showAlert(
+                    `【安全警告】您將 AI 伺服器 (${deviceData.customName || deviceData.name}) 放置於第 ${targetU}U (30U 以上)。\nAI 伺服器重量極重，不建議放置於機櫃高位，以防造成機櫃重心過高、產生傾倒與工安危險！`,
+                    '機櫃重心安全警告',
+                    'warning'
+                );
             }
         } catch (error) {
             console.error('Drop error:', error);
