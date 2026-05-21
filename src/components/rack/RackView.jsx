@@ -90,6 +90,7 @@ const RackView = ({ racksToRender }) => {
         const rackMaxU = rack.uCount || DEFAULT_RACK_U_COUNT;
         const isRackSelected = selectedId === rack.id;
         const rackDevices = devices.filter(d => d.rackId === rack.id);
+        const totalRackPower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
         const limit = rack.powerLimit || 20000;
         const isPowerOverloaded = totalRackPower > limit;
         const isPowerWarning = totalRackPower >= limit * 0.9 && !isPowerOverloaded;
