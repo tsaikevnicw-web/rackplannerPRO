@@ -156,3 +156,29 @@ export const getPcieSlotInfo = (dev, slotIdx, nodeKey = null) => {
     return { model, qty };
 };
 
+export const getDeviceWeight = (dev) => {
+    if (dev.weight !== undefined && dev.weight !== null && !isNaN(Number(dev.weight))) {
+        return Number(dev.weight);
+    }
+    const type = dev.type || '';
+    const size = Number(dev.size || 1);
+    if (type.startsWith('ServerAI') || type === 'Server5U') return 80;
+    if (type === 'Server2U2N' || type === 'ServerHighDensity') return 35;
+    if (type === 'Server1U') return 15;
+    if (type === 'Server2U') return 25;
+    if (type.startsWith('Server')) return size * 15;
+    if (type.startsWith('Switch') || type === 'Router') return 10;
+    if (type.startsWith('UPS')) return 50;
+    if (type.startsWith('CDU')) return 60;
+    return size * 5; // Fallback
+};
+
+export const checkHighGravityWarning = (dev, rack) => {
+    if (!dev || !rack) return false;
+    const weight = getDeviceWeight(dev);
+    const startU = Number(dev.startU);
+    const uCount = Number(rack.uCount);
+    if (isNaN(weight) || isNaN(startU) || isNaN(uCount)) return false;
+    return weight >= 40 && startU > uCount / 2;
+};
+

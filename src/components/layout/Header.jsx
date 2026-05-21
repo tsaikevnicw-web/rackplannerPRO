@@ -1,18 +1,32 @@
-import React from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
     const { 
         devices,
         viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
+        setSelectedIds, selectedIds,
         isFitToScreen, setIsFitToScreen, showCables, setShowCables,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
         isUserManualOpen, setIsUserManualOpen,
         isExporting, fileInputRef,
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage,
-        setClearConfirm, setRaModalState, generateId, showAlert 
+        setClearConfirm, setRaModalState, generateId, showAlert,
+        undo, redo, canUndo, canRedo,
+        deviceSearchTerm, setDeviceSearchTerm
     } = useRackPlanner();
+
+    const handleSelectSearchDevice = (dev) => {
+        setActiveRackId(dev.rackId);
+        setSelectedIds([dev.id]);
+        setDeviceSearchTerm('');
+        setTimeout(() => {
+            const element = document.getElementById(`device-${dev.id}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    };
 
     const totalSpace = devices.filter(d => d.type !== 'SideCDU').reduce((sum, dev) => sum + (dev.size || 0), 0);
     const totalPower = devices.reduce((sum, dev) => sum + (dev.power || 0), 0);
@@ -141,6 +155,81 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 ml-auto">
+                    {/* 搜尋欄位 */}
+                    <div className="relative flex items-center">
+                        <input
+                            type="text"
+                            placeholder="搜尋設備名稱..."
+                            value={deviceSearchTerm}
+                            onChange={(e) => setDeviceSearchTerm(e.target.value)}
+                            className="bg-slate-800/80 border border-slate-700/50 text-xs text-white placeholder-slate-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none px-2.5 py-1.5 rounded-lg w-40 hover:border-slate-600 transition-all focus:w-48"
+                        />
+                        {deviceSearchTerm && (
+                            <button 
+                                onClick={() => setDeviceSearchTerm('')}
+                                className="absolute right-2 text-slate-400 hover:text-white text-xs font-bold"
+                            >
+                                ✕
+                            </button>
+                        )}
+                        {deviceSearchTerm && (
+                            <div className="absolute top-full right-0 mt-1 w-64 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-1.5 z-50 max-h-60 overflow-y-auto">
+                                {devices.filter(d => 
+                                    (d.customName || '').toLowerCase().includes(deviceSearchTerm.toLowerCase()) || 
+                                    (d.type || '').toLowerCase().includes(deviceSearchTerm.toLowerCase())
+                                ).length > 0 ? (
+                                    devices.filter(d => 
+                                        (d.customName || '').toLowerCase().includes(deviceSearchTerm.toLowerCase()) || 
+                                        (d.type || '').toLowerCase().includes(deviceSearchTerm.toLowerCase())
+                                    ).map(d => (
+                                        <button
+                                            key={d.id}
+                                            onClick={() => handleSelectSearchDevice(d)}
+                                            className="w-full text-left px-3 py-2 hover:bg-indigo-500/15 transition-colors text-xs font-medium text-slate-200 hover:text-indigo-300 rounded-lg flex justify-between items-center"
+                                        >
+                                            <span className="truncate">{d.customName || d.type}</span>
+                                            <span className="text-[10px] text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/50 shrink-0 ml-2">
+                                                {racks.find(r => r.id === d.rackId)?.name || '未指定'}
+                                            </span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="px-3 py-2 text-xs text-slate-400 text-center">無匹配的設備</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 復原/重做 */}
+                    <div className="flex bg-[#060c16] rounded-lg p-0.5 border border-slate-700/50 shadow-inner items-center gap-0.5">
+                        <button
+                            onClick={undo}
+                            disabled={!canUndo}
+                            className={`p-1.5 rounded-md transition-all ${
+                                canUndo 
+                                    ? 'text-slate-300 hover:bg-slate-700/60 hover:text-white' 
+                                    : 'text-slate-600 cursor-not-allowed opacity-50'
+                            }`}
+                            title="復原 (Ctrl+Z)"
+                        >
+                            <Undo className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            onClick={redo}
+                            disabled={!canRedo}
+                            className={`p-1.5 rounded-md transition-all ${
+                                canRedo 
+                                    ? 'text-slate-300 hover:bg-slate-700/60 hover:text-white' 
+                                    : 'text-slate-600 cursor-not-allowed opacity-50'
+                            }`}
+                            title="重做 (Ctrl+Y)"
+                        >
+                            <Redo className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    <div className="w-px h-5 bg-slate-700/60 mx-1"></div>
+
                     {/* RA 建議配置 */}
                     <div className="relative">
                         <button

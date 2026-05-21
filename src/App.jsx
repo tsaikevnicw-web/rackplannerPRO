@@ -20,7 +20,7 @@ const AppContent = () => {
         mainAreaRef, rackContainerRef, layoutSize, setLayoutSize,
         alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
-        selectedId,
+        selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
         raModalState, setRaModalState, handleApplyRATemplate, setViewMode
     } = useRackPlanner();
@@ -58,34 +58,48 @@ const AppContent = () => {
     // 若視圖模式切換 setViewMode ─ clipboardRef 用于儲存被複製的設備
     const clipboardRef = useRef(null);
 
-    // 鍵盤快捷鍵：del / ctrl+c / ctrl+v
+    // 鍵盤快捷鍵：del / ctrl+c / ctrl+v / ctrl+z / ctrl+y
     useEffect(() => {
         const handleKeyDown = (e) => {
             // 若焦點在表單元素上，不攔截任何按鍵
             const tag = document.activeElement?.tagName;
             const inForm = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
+            // ── Ctrl+Z：復原 ──
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !inForm) {
+                e.preventDefault();
+                undo();
+                return;
+            }
+
+            // ── Ctrl+Y：重做 ──
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y' && !inForm) {
+                e.preventDefault();
+                redo();
+                return;
+            }
+
             // ── Del：刪除選中設備 ──
             if (e.key === 'Delete' && !inForm) {
-                const targetId = selectedId;
-                const selectedDevice = devices.find(d => d.id === targetId);
-                if (!selectedDevice) return;
+                if (selectedIds.length === 0) return;
                 
-                // 直接刪除，不跳確認視窗
                 setDevices(prev => prev.map(dev => {
-                    if (dev.id === targetId) return null;
+                    if (selectedIds.includes(dev.id)) return null;
                     const newConns = { ...(dev.connections || {}) };
                     let modified = false;
                     Object.keys(newConns).forEach(k => { 
-                        if (newConns[k] && newConns[k].startsWith(`${targetId}-`)) {
-                            delete newConns[k];
-                            modified = true;
+                        if (newConns[k]) {
+                            const matchedId = selectedIds.find(id => newConns[k].startsWith(id + '-'));
+                            if (matchedId) {
+                                delete newConns[k];
+                                modified = true;
+                            }
                         }
                     });
                     if (!modified) return dev;
                     return { ...dev, connections: newConns };
                 }).filter(Boolean));
-                setSelectedId(null);
+                setSelectedIds([]);
                 return;
             }
 
@@ -199,7 +213,7 @@ const AppContent = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedId, devices, racks, activeRackId, generateId, showAlert, setDeleteDeviceConfirm, setDevices]);
+    }, [selectedId, selectedIds, devices, racks, activeRackId, generateId, showAlert, setDevices, setSelectedIds, undo, redo]);
 
     const handleLoadExample = (dataToLoad) => {
         if (dataToLoad && dataToLoad.racks && dataToLoad.devices) {

@@ -5,7 +5,7 @@ import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getS
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
-    const { racks, devices, selectedId, setSelectedId, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
+    const { racks, devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
 
     const getGroupKeys = (devs, prefix) => getGroupedDevices(devs, racks).map(g => `${prefix}-${g.name}`);
 
@@ -87,7 +87,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
     };
 
     const renderCompactLogicalDeviceCard = (dev, bgClass) => {
-        const isSelected = selectedId === dev.id;
+        const isSelected = selectedIds.includes(dev.id);
         const Icon = getIconByType(dev.type);
         const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
         
@@ -98,6 +98,28 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
             : getNicCount(dev, 'ocp');
         const portCount = getSwitchPortCount(dev);
         const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
+
+        // 計算 Switch 佔用埠數與總埠數
+        let usedPortsCount = 0;
+        let totalPortsCount = portCount;
+        if (portLayout) {
+            const occupiedPorts = new Set();
+            devices.forEach(d => {
+                if (d.connections) {
+                    Object.entries(d.connections).forEach(([key, tg]) => {
+                        if (tg && tg.startsWith(`${dev.id}-port-`)) {
+                            occupiedPorts.add(tg);
+                        }
+                    });
+                }
+            });
+            usedPortsCount = occupiedPorts.size;
+        }
+
+        const isSearchMatch = deviceSearchTerm && (
+            (dev.customName || '').toLowerCase().includes(deviceSearchTerm.toLowerCase()) || 
+            (dev.type || '').toLowerCase().includes(deviceSearchTerm.toLowerCase())
+        );
 
         let cardWidthClass = "w-[320px]";
         if (portLayout) {
@@ -112,8 +134,15 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
         return (
             <div
                 key={dev.id}
-                onClick={(e) => { e.stopPropagation(); setSelectedId(dev.id); }}
-                className={`relative rounded-xl border border-slate-700 cursor-pointer transition-all ${cardWidthClass} shrink-0 flex flex-col ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-110 z-20 shadow-md'} overflow-hidden group mx-auto`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (e.shiftKey || e.ctrlKey) {
+                        setSelectedIds(prev => prev.includes(dev.id) ? prev.filter(id => id !== dev.id) : [...prev, dev.id]);
+                    } else {
+                        setSelectedIds([dev.id]);
+                    }
+                }}
+                className={`relative rounded-xl border cursor-pointer transition-all ${cardWidthClass} shrink-0 flex flex-col ${tStyle.bg} ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-xl' : 'hover:brightness-110 z-20 shadow-md'} ${isSearchMatch ? 'ring-2 ring-yellow-400 animate-pulse border-yellow-400 shadow-[0_0_12px_#facc15] z-30' : 'border-slate-700'} overflow-hidden group mx-auto`}
             >
                 {/* Header Area */}
                 <div className={`p-2 flex items-center justify-center gap-2 relative bg-black/20 border-b border-slate-700`}>
@@ -121,7 +150,14 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                     <Icon className={`w-5 h-5 opacity-90 ${tStyle.text}`} />
                     <div className="min-w-0 flex flex-col items-center">
                         <div className="text-sm font-bold text-slate-200 truncate">{dev.customName}</div>
-                        <div className="text-[10px] text-slate-400 font-mono truncate">[{racks.find(r => r.id === dev.rackId)?.name}]</div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1.5 justify-center">
+                            <span>[{racks.find(r => r.id === dev.rackId)?.name}]</span>
+                            {portLayout && (
+                                <span className="px-1 py-0.5 rounded bg-slate-800 text-[9px] text-slate-300 font-semibold">
+                                    {usedPortsCount} / {totalPortsCount} 埠
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 

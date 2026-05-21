@@ -1,12 +1,12 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 
 const RackView = ({ racksToRender }) => {
     const { 
-        devices, selectedId, setSelectedId, showCables, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
+        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
     } = useRackPlanner();
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
@@ -89,6 +89,9 @@ const RackView = ({ racksToRender }) => {
     return racksToRender.map(rack => {
         const rackMaxU = rack.uCount || DEFAULT_RACK_U_COUNT;
         const isRackSelected = selectedId === rack.id;
+        const rackDevices = devices.filter(d => d.rackId === rack.id);
+        const totalRackPower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
+        const isPowerOverloaded = totalRackPower > (rack.powerLimit || 20000);
 
         return (
             <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">
@@ -100,13 +103,25 @@ const RackView = ({ racksToRender }) => {
                         className={`bg-gradient-to-b from-slate-700 to-slate-800 w-[420px] h-12 rounded-t-xl border-t-2 border-x-2 border-slate-500 flex justify-between items-center px-6 shadow-xl z-10 relative overflow-hidden cursor-pointer transition-all duration-200 ${isRackSelected ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950 brightness-125' : 'hover:brightness-110'}`}
                     >
                         <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,#000_4px,#000_8px)] mix-blend-overlay"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] relative z-10 border border-green-200"></div>
+                        <div 
+                            className={`w-3 h-3 rounded-full relative z-10 border transition-all duration-300 ${
+                                isPowerOverloaded 
+                                    ? 'bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444] border-red-200' 
+                                    : 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] border-green-200'
+                            }`}
+                            title={isPowerOverloaded ? `電力超載！目前功耗 ${totalRackPower}W 已超過限制 ${rack.powerLimit || 20000}W` : `電力狀態正常 (${totalRackPower}W / ${rack.powerLimit || 20000}W)`}
+                        ></div>
                         <div className="text-sm font-mono text-slate-200 font-bold tracking-widest relative z-10 drop-shadow-md truncate max-w-[280px]">{rack.name}</div>
                         <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6] relative z-10 border border-blue-200"></div>
                     </div>
 
                     {/* 機櫃主體 */}
-                    <div className="bg-[#050811] border-x-2 border-slate-700 w-[420px] relative shadow-[0_0_40px_rgba(0,0,0,0.8)]" style={{ height: rackMaxU * U_HEIGHT }}>
+                    <div 
+                        className={`bg-[#050811] border-x-2 border-slate-700 w-[420px] relative shadow-[0_0_40px_rgba(0,0,0,0.8)] transition-all duration-300 ${
+                            isPowerOverloaded ? 'ring-2 ring-red-500/80 shadow-[0_0_35px_rgba(239,68,68,0.4)]' : ''
+                        }`} 
+                        style={{ height: rackMaxU * U_HEIGHT }}
+                    >
                         {/* 擬真立柱 */}
                         <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-800 to-slate-900 border-r border-slate-950 flex flex-col justify-around py-1 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.6)]">
                             {Array.from({ length: rackMaxU * 3 }).map((_, i) => <div key={i} className="w-2.5 h-1.5 bg-black rounded-[2px] shadow-inner border-t border-b border-white/5 ml-3"></div>)}
@@ -129,7 +144,11 @@ const RackView = ({ racksToRender }) => {
 
                         {/* 設備實體繪製 */}
                         {devices.filter(dev => dev.rackId === rack.id && dev.type !== 'SideCDU').map((dev) => {
-                            const isSelected = selectedId === dev.id;
+                            const isSelected = selectedIds.includes(dev.id);
+                            const isSearchMatch = deviceSearchTerm && (
+                                (dev.customName || '').toLowerCase().includes(deviceSearchTerm.toLowerCase()) || 
+                                (dev.type || '').toLowerCase().includes(deviceSearchTerm.toLowerCase())
+                            );
                             const Icon = getIconByType(dev.type);
                             const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
                             const nic1Count = getNicCount(dev, 'ns_nic_1');
@@ -141,10 +160,27 @@ const RackView = ({ racksToRender }) => {
                             const cx8ActiveColor = cx8NetworkType === 'Ethernet' ? 'bg-green-500 border-green-300 shadow-[0_0_8px_#22c55e]' : 'bg-orange-500 border-orange-300 shadow-[0_0_8px_#f97316]';
                             const superNicMgtCount = getNicCount(dev, 'super_nic_mgt');
 
+                            const isHighGravity = checkHighGravityWarning(dev, rack);
+                            const devWeight = getDeviceWeight(dev);
+
                             return (
                                 <div
-                                    key={dev.id} draggable onDragStart={(e) => handleDragStart(e, dev, false)} onClick={(e) => { e.stopPropagation(); setSelectedId(dev.id); }}
-                                    className={`absolute left-[8px] right-[8px] cursor-grab active:cursor-grabbing rounded-sm transition-all duration-200 ${tStyle.bg} ${tStyle.border} border ${isSelected ? `ring-2 ring-white z-30 brightness-125 shadow-[0_0_25px_rgba(255,255,255,0.15)]` : `hover:brightness-125 z-20 shadow-xl ${tStyle.glow}`}`}
+                                    id={`device-${dev.id}`}
+                                    key={dev.id} 
+                                    draggable 
+                                    onDragStart={(e) => handleDragStart(e, dev, false)} 
+                                    onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                                            setSelectedIds(prev => prev.includes(dev.id) ? prev.filter(id => id !== dev.id) : [...prev, dev.id]);
+                                        } else {
+                                            setSelectedIds([dev.id]);
+                                        }
+                                    }}
+                                    className={`absolute left-[8px] right-[8px] cursor-grab active:cursor-grabbing rounded-sm transition-all duration-200 ${tStyle.bg} ${tStyle.border} border 
+                                        ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-[0_0_25px_rgba(255,255,255,0.15)]' : `hover:brightness-125 z-20 shadow-xl ${tStyle.glow}`}
+                                        ${isSearchMatch ? 'ring-4 ring-yellow-400 animate-pulse shadow-[0_0_30px_#facc15] z-30 brightness-125' : ''}
+                                    `}
                                     style={{ height: dev.size * U_HEIGHT - 2, bottom: (dev.startU - 1) * U_HEIGHT + 1 }}
                                 >
                                     {/* 金屬掛耳 */}
@@ -165,7 +201,17 @@ const RackView = ({ racksToRender }) => {
                                         {/* 左側：Icon 與名稱 */}
                                         <div className="flex items-center flex-1 min-w-0 h-full relative z-10 overflow-hidden pl-3 pr-2">
                                             <Icon className={`w-4 h-4 mr-2 opacity-90 shrink-0 drop-shadow-md ${tStyle.text}`} />
-                                            <div className="font-bold text-sm tracking-wide truncate drop-shadow-md">{dev.customName}</div>
+                                            <div className="font-bold text-sm tracking-wide truncate drop-shadow-md flex items-center gap-1.5">
+                                                <span>{dev.customName}</span>
+                                                {isHighGravity && (
+                                                    <span 
+                                                        className="text-amber-500 font-bold animate-bounce cursor-help shrink-0" 
+                                                        title={`警告：此設備過重 (${devWeight}kg) 且放置於機櫃上半部，可能導致重心不穩！`}
+                                                    >
+                                                        ⚠️
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* 右側：Ports 區域 */}

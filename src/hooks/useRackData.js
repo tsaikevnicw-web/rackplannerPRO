@@ -3,7 +3,7 @@ import { getNicCount, getSwitchPortCount, getFabricGroup } from '../utils/helper
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
 export function useRackData(alertModalRef) {
-    const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT }]);
+    const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 20000 }]);
     const [devices, setDevices] = useState([]);
     
     // Core references for calculations
@@ -72,13 +72,60 @@ export function useRackData(alertModalRef) {
     };
 
     const handleConnectionChange = (deviceId, portKey, targetConnection) => {
-        setDevices(prev => prev.map(dev => {
-            if (dev.id !== deviceId) return dev;
-            const newConnections = { ...(dev.connections || {}) };
-            if (targetConnection) newConnections[portKey] = targetConnection;
-            else delete newConnections[portKey];
-            return { ...dev, connections: newConnections };
-        }));
+        if (!targetConnection) {
+            setDevices(prev => prev.map(dev => {
+                if (dev.id !== deviceId) return dev;
+                const newConnections = { ...(dev.connections || {}) };
+                delete newConnections[portKey];
+                return { ...dev, connections: newConnections };
+            }));
+            return;
+        }
+
+        const parts = targetConnection.split('-port-');
+        if (parts.length < 2) return;
+        const targetSwitchId = parts[0];
+
+        setDevices(prev => {
+            const dev = prev.find(d => d.id === deviceId);
+            const targetSwitch = prev.find(d => d.id === targetSwitchId);
+            if (!dev || !targetSwitch) return prev;
+
+            const portMax = getSwitchPortCount(targetSwitch);
+            
+            const occupiedPorts = new Set();
+            prev.forEach(d => {
+                if (d.connections) {
+                    Object.entries(d.connections).forEach(([key, tg]) => {
+                        if (d.id === deviceId && key === portKey) return;
+                        if (tg && tg.startsWith(`${targetSwitchId}-port-`)) {
+                            occupiedPorts.add(tg);
+                        }
+                    });
+                }
+            });
+
+            if (occupiedPorts.size >= portMax) {
+                if (alertModalRef?.current) {
+                    alertModalRef.current(`警告：網路設備【${targetSwitch.customName || targetSwitch.type}】的連接埠已達上限 (${portMax} 埠)，無法新增連線！`, '連線失敗', 'error');
+                }
+                return prev;
+            }
+
+            if (occupiedPorts.has(targetConnection)) {
+                if (alertModalRef?.current) {
+                    alertModalRef.current(`警告：此連接埠 ${parts[1]} 已被佔用！`, '連線失敗', 'error');
+                }
+                return prev;
+            }
+
+            return prev.map(d => {
+                if (d.id !== deviceId) return d;
+                const newConnections = { ...(d.connections || {}) };
+                newConnections[portKey] = targetConnection;
+                return { ...d, connections: newConnections };
+            });
+        });
     };
 
     const handleHardwareSpecChange = (deviceId, specKey, field, value) => {
@@ -189,7 +236,7 @@ export function useRackData(alertModalRef) {
         if (type === 'GB200_NVL72') {
             const rackId = 'rack-template-1';
             setRacks([
-                { id: rackId, name: 'NV-GB200-NVL72', type: 'ORv3', uCount: 44 }
+                { id: rackId, name: 'NV-GB200-NVL72', type: 'ORv3', uCount: 44, powerLimit: 20000 }
             ]);
             
             const newDevs = [];
@@ -217,7 +264,7 @@ export function useRackData(alertModalRef) {
         } else if (type === 'H100_HGX') {
             const rackId = 'rack-template-2';
             setRacks([
-                { id: rackId, name: 'NV-H100-HGX-A01', type: 'General', uCount: 48 }
+                { id: rackId, name: 'NV-H100-HGX-A01', type: 'General', uCount: 48, powerLimit: 20000 }
             ]);
             
             const newDevs = [];

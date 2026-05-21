@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useRackData } from '../hooks/useRackData';
 import { useExport } from '../hooks/useExport';
 
@@ -21,7 +21,76 @@ export const RackPlannerProvider = ({ children }) => {
     // UI States
     const [activeRackId, setActiveRackId] = useState('rack-1');
     const [viewMode, setViewMode] = useState('single');
-    const [selectedId, setSelectedId] = useState(null);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const selectedId = selectedIds.length > 0 ? selectedIds[0] : null;
+    const setSelectedId = (id) => setSelectedIds(id ? [id] : []);
+    const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
+
+    // History (Undo / Redo) States
+    const [historyState, setHistoryState] = useState({ history: [], index: -1 });
+    const isUndoRedoAction = useRef(false);
+
+    useEffect(() => {
+        setHistoryState({
+            history: [{ racks, devices }],
+            index: 0
+        });
+    }, []);
+
+    useEffect(() => {
+        if (isUndoRedoAction.current) {
+            isUndoRedoAction.current = false;
+            return;
+        }
+
+        setHistoryState(prev => {
+            if (prev.index === -1) {
+                return {
+                    history: [{ racks, devices }],
+                    index: 0
+                };
+            }
+            const sliced = prev.history.slice(0, prev.index + 1);
+            const last = sliced[sliced.length - 1];
+            if (last && last.racks === racks && last.devices === devices) {
+                return prev;
+            }
+            const newHistory = [...sliced, { racks, devices }];
+            if (newHistory.length > 50) {
+                newHistory.shift();
+            }
+            return {
+                history: newHistory,
+                index: newHistory.length - 1
+            };
+        });
+    }, [racks, devices]);
+
+    const undo = useCallback(() => {
+        if (historyState.index > 0) {
+            isUndoRedoAction.current = true;
+            const nextIdx = historyState.index - 1;
+            const snapshot = historyState.history[nextIdx];
+            setRacks(snapshot.racks);
+            setDevices(snapshot.devices);
+            setHistoryState(prev => ({ ...prev, index: nextIdx }));
+        }
+    }, [historyState, setRacks, setDevices]);
+
+    const redo = useCallback(() => {
+        if (historyState.index < historyState.history.length - 1) {
+            isUndoRedoAction.current = true;
+            const nextIdx = historyState.index + 1;
+            const snapshot = historyState.history[nextIdx];
+            setRacks(snapshot.racks);
+            setDevices(snapshot.devices);
+            setHistoryState(prev => ({ ...prev, index: nextIdx }));
+        }
+    }, [historyState, setRacks, setDevices]);
+
+    const canUndo = historyState.index > 0;
+    const canRedo = historyState.index < historyState.history.length - 1;
+
     const [draggedItem, setDraggedItem] = useState(null);
     const [expandedGroups, setExpandedGroups] = useState({ '伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
     const [expandedNetGroups, setExpandedNetGroups] = useState({});
@@ -72,6 +141,8 @@ export const RackPlannerProvider = ({ children }) => {
     return (
         <RackPlannerContext.Provider value={{
             racks, setRacks, devices, setDevices, activeRackId, setActiveRackId, viewMode, setViewMode, selectedId, setSelectedId,
+            selectedIds, setSelectedIds, deviceSearchTerm, setDeviceSearchTerm,
+            undo, redo, canUndo, canRedo,
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
             showCables, setShowCables, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,

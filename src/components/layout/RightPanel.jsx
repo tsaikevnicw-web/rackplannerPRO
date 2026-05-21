@@ -6,7 +6,7 @@ import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Se
 
 const RightPanel = () => {
     const { 
-        racks, devices, selectedId, setSelectedId, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
+        racks, devices, setDevices, selectedId, setSelectedId, selectedIds, setSelectedIds, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
         handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert
     } = useRackPlanner();
 
@@ -22,12 +22,188 @@ const RightPanel = () => {
             return { ...sw, rackName: swRack ? swRack.name : 'UnknownRack', portCount: getSwitchPortCount(sw) };
         });
 
-    if (!selectedRack && !selectedDevice) return null;
-
     /* ── Input / Select shared style ── */
     const inputCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner placeholder:text-slate-600";
     const selectCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner";
     const sectionCls = "space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50";
+
+    // ── 批次編輯面板 ──
+    if (selectedIds.length > 1) {
+        const selectedDevices = devices.filter(d => selectedIds.includes(d.id));
+        
+        const handleBatchUpdate = (fields) => {
+            selectedDevices.forEach(dev => {
+                handleUpdateDevice(dev.id, fields);
+            });
+        };
+
+        const handleBatchCoolingUpdate = (field, value) => {
+            selectedDevices.forEach(dev => {
+                handleUpdateDevice(dev.id, {
+                    hardwareSpecs: {
+                        ...(dev.hardwareSpecs || {}),
+                        cooling: {
+                            ...(dev.hardwareSpecs?.cooling || {}),
+                            [field]: value
+                        }
+                    }
+                });
+            });
+        };
+
+        return (
+            <aside className="w-[360px] bg-[#0b1523]/95 border-l border-slate-700/40 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
+                <div className="flex justify-between items-center mb-5">
+                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2.5">
+                        <div className="p-1 bg-indigo-500/15 rounded-lg border border-indigo-500/30">
+                            <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
+                        </div>
+                        批次編輯 ({selectedIds.length} 個設備)
+                    </h2>
+                    <button onClick={() => setSelectedIds([])} className="text-slate-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-700/60" title="關閉面板">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="flex gap-3 mb-6">
+                    <button onClick={() => {
+                        if (confirm(`確定要刪除這 ${selectedIds.length} 個設備嗎？`)) {
+                            setDevices(prev => prev.filter(d => !selectedIds.includes(d.id)));
+                            setSelectedIds([]);
+                        }
+                    }} className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 py-2.5 rounded-xl transition-colors text-sm font-medium border border-rose-500/25 shadow-sm">
+                        <Trash2 className="w-4 h-4" /> 批次刪除設備
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    <div className={sectionCls}>
+                        <label className="block text-xs font-bold text-slate-400 mb-1.5">外觀主題 (Theme)</label>
+                        <select 
+                            value="" 
+                            onChange={(e) => {
+                                if (e.target.value) handleBatchUpdate({ theme: e.target.value });
+                            }} 
+                            className={selectCls}
+                        >
+                           <option value="">選擇主題...</option>
+                           <option value="slate">Slate (深灰)</option>
+                           <option value="indigo">Indigo (靛藍)</option>
+                           <option value="emerald">Emerald (翡翠綠)</option>
+                           <option value="amber">Amber (琥珀黃)</option>
+                           <option value="rose">Rose (玫瑰紅)</option>
+                           <option value="cyan">Cyan (青綠)</option>
+                           <option value="violet">Violet (紫羅蘭)</option>
+                        </select>
+                    </div>
+
+                    <div className={sectionCls}>
+                        <div>
+                            <label className="block text-xs font-bold text-emerald-400 mb-1.5">修改拓撲群組 (Topology Group)</label>
+                            <input 
+                                type="text" 
+                                placeholder="輸入群組名稱，按 Enter 套用..." 
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleBatchUpdate({ topologyGroup: e.target.value });
+                                        showAlert(`已批次修改拓撲群組為 "${e.target.value}"`, '成功', 'success');
+                                    }
+                                }} 
+                                className={inputCls} 
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1 font-medium">按 Enter 鍵確認變更</p>
+                        </div>
+                    </div>
+
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 功耗 W (Enter)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="功耗 W" 
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = parseFloat(e.target.value);
+                                            if (!isNaN(val)) {
+                                                handleBatchUpdate({ power: val });
+                                                showAlert(`已批次修改功耗為 ${val}W`, '成功', 'success');
+                                            }
+                                        }
+                                    }}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 報價 USD (Enter)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="報價 USD" 
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = parseFloat(e.target.value);
+                                            if (!isNaN(val)) {
+                                                handleBatchUpdate({ price: val });
+                                                showAlert(`已批次修改報價為 $${val}`, '成功', 'success');
+                                            }
+                                        }
+                                    }}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={sectionCls}>
+                        <label className="block text-[11px] font-bold text-cyan-400 mb-3 flex items-center gap-1.5">
+                            <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+                            散熱配置 (Cooling)
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">Host Cooling</label>
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBatchCoolingUpdate('host', e.target.value);
+                                            showAlert(`已批次修改 Host 散熱為 ${e.target.value}`, '成功', 'success');
+                                        }
+                                    }}
+                                    className={selectCls}
+                                >
+                                    <option value="">選擇...</option>
+                                    <option value="AC">AC (Air Cooling)</option>
+                                    <option value="LC">LC (Liquid Cooling)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">GPU Cooling</label>
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBatchCoolingUpdate('gpu', e.target.value);
+                                            showAlert(`已批次修改 GPU 散熱為 ${e.target.value}`, '成功', 'success');
+                                        }
+                                    }}
+                                    className={selectCls}
+                                >
+                                    <option value="">選擇...</option>
+                                    <option value="AC">AC (Air Cooling)</option>
+                                    <option value="LC">LC (Liquid Cooling)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        );
+    }
+
+    if (!selectedRack && !selectedDevice) {
+        return null;
+    }
 
     if (selectedRack && !selectedDevice) {
         return (
@@ -66,6 +242,18 @@ const RightPanel = () => {
                         <label className="block text-xs font-bold text-slate-400 mb-1.5">總 U 數 (Rack U)</label>
                         <input type="number" value={selectedRack.uCount || DEFAULT_RACK_U_COUNT} onChange={(e) => handleUpdateRack(selectedRack.id, { uCount: parseInt(e.target.value) || 1 })} disabled={selectedRack.type === 'ORv3'} className={`${inputCls} font-mono disabled:opacity-40 disabled:cursor-not-allowed`} />
                         {selectedRack.type === 'ORv3' && <p className="text-[10px] text-slate-500 mt-1">ORv3 規格固定為 44U</p>}
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                            <Zap className="w-3.5 h-3.5 text-amber-400" />
+                            機櫃電力限制 (Power Limit - W)
+                        </label>
+                        <input 
+                            type="number" 
+                            value={selectedRack.powerLimit !== undefined ? selectedRack.powerLimit : 20000} 
+                            onChange={(e) => handleUpdateRack(selectedRack.id, { powerLimit: parseInt(e.target.value) || 0 })} 
+                            className={`${inputCls} font-mono`} 
+                        />
                     </div>
                 </div>
             </aside>
@@ -363,44 +551,79 @@ const RightPanel = () => {
                 )}
 
                 {/* Switch Configuration */}
-                {((selectedDevice.type || '').startsWith('Switch')) && (
-                    <div className={sectionCls}>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 設備功耗 (W)</label>
-                                <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
-                            </div>
-                            <div>
-                                <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 設備報價 (USD)</label>
-                                <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
-                            </div>
-                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
-                                <label className="block text-[11px] font-bold text-purple-400 mb-1.5 flex items-center gap-1"><Network className="w-3 h-3"/> 交換器設定 (Switch Config)</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
-                                        <select value={selectedDevice.size || 1} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
-                                            <option value={1}>1U</option>
-                                            <option value={2}>2U</option>
-                                            <option value={3}>3U</option>
-                                            <option value={4}>4U</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-slate-400 mb-1">網路孔數 (Ports)</label>
-                                        <input type="number" value={getNicCount(selectedDevice, 'ports') || 48} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', parseInt(e.target.value) || 0)} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none" />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-[10px] text-slate-400 mb-1">傳輸速率 (Speed)</label>
-                                        <input type="text" placeholder="e.g. 400G, 800G" value={(selectedDevice.hardwareSpecs?.speed?.model) || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'speed', 'model', e.target.value)} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none" />
+                {((selectedDevice.type || '').startsWith('Switch')) && (() => {
+                    const occupiedPorts = new Set();
+                    devices.forEach(d => {
+                        if (d.connections) {
+                            Object.entries(d.connections).forEach(([key, tg]) => {
+                                if (tg && tg.startsWith(`${selectedDevice.id}-port-`)) {
+                                    occupiedPorts.add(tg);
+                                }
+                            });
+                        }
+                    });
+                    const usedPortsCount = occupiedPorts.size;
+                    const totalPortsCount = getSwitchPortCount(selectedDevice);
+
+                    return (
+                        <div className={sectionCls}>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 設備功耗 (W)</label>
+                                    <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
+                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 設備報價 (USD)</label>
+                                    <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
+                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
+                                </div>
+                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                    <label className="block text-[11px] font-bold text-purple-400 mb-1.5 flex items-center gap-1"><Network className="w-3 h-3"/> 交換器設定 (Switch Config)</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
+                                            <select value={selectedDevice.size || 1} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
+                                                <option value={1}>1U</option>
+                                                <option value={2}>2U</option>
+                                                <option value={3}>3U</option>
+                                                <option value={4}>4U</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] text-slate-400 mb-1">網路孔數 (Ports)</label>
+                                            <select 
+                                                value={getNicCount(selectedDevice, 'ports') || totalPortsCount} 
+                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', parseInt(e.target.value) || 48)} 
+                                                className={selectCls}
+                                            >
+                                                <option value={8}>8 埠</option>
+                                                <option value={12}>12 埠</option>
+                                                <option value={16}>16 埠</option>
+                                                <option value={24}>24 埠</option>
+                                                <option value={32}>32 埠</option>
+                                                <option value={48}>48 埠</option>
+                                                <option value={64}>64 埠</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-[10px] text-slate-400 mb-1">傳輸速率 (Speed)</label>
+                                            <input type="text" placeholder="e.g. 400G, 800G" value={(selectedDevice.hardwareSpecs?.speed?.model) || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'speed', 'model', e.target.value)} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none" />
+                                        </div>
+                                        <div className="col-span-2 pt-2">
+                                            <div className="w-full bg-slate-900/60 border border-slate-800/80 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                                                <span className="text-slate-400 font-medium">孔位使用率 (Port Usage)</span>
+                                                <span className="font-mono font-bold text-slate-200">
+                                                    {usedPortsCount} / {totalPortsCount} 埠 ({totalPortsCount - usedPortsCount} 空置)
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {/* Hardware Specs */}
                 {((selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage')) && (() => {
