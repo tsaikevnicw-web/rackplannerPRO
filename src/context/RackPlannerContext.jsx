@@ -23,7 +23,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [viewMode, setViewMode] = useState('single');
     const [selectedId, setSelectedId] = useState(null);
     const [draggedItem, setDraggedItem] = useState(null);
-    const [expandedGroups, setExpandedGroups] = useState({ 'General Purpose': true, 'High Density': true, 'AI 伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
+    const [expandedGroups, setExpandedGroups] = useState({ '伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
     const [expandedNetGroups, setExpandedNetGroups] = useState({});
 
     // Menu States
@@ -41,6 +41,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [clearDeviceConfirm, setClearDeviceConfirm] = useState({ isOpen: false, deviceId: null });
     const [deleteDeviceConfirm, setDeleteDeviceConfirm] = useState({ isOpen: false, deviceId: null });
     const [raModalState, setRaModalState] = useState({ isOpen: false, type: '' });
+    const [isUserManualOpen, setIsUserManualOpen] = useState(false);
 
     // Scaling
     const [isFitToScreen, setIsFitToScreen] = useState(false);
@@ -74,7 +75,9 @@ export const RackPlannerProvider = ({ children }) => {
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
             showCables, setShowCables, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
-            clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState, isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
+            clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
+            isUserManualOpen, setIsUserManualOpen,
+            isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
             isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
             rackContainerRef, mainAreaRef, fileInputRef,
             connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,

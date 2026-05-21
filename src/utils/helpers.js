@@ -20,6 +20,14 @@ export const getFabricGroup = (dev) => {
 };
 
 export const getNicCount = (dev, key) => {
+    if (key === 'ns_nic_1') {
+        const val = parseInt(dev.hardwareSpecs?.['pcie_slot_1']?.qty);
+        if (!isNaN(val)) return val;
+    }
+    if (key === 'ns_nic_2') {
+        const val = parseInt(dev.hardwareSpecs?.['pcie_slot_2']?.qty);
+        if (!isNaN(val)) return val;
+    }
     const val = parseInt(dev.hardwareSpecs?.[key]?.qty);
     if (!isNaN(val)) return val;
     return 0;
@@ -90,7 +98,7 @@ export const getServerConfig = (dev) => {
     if (cat === 'General') {
         return `${dev.size || 1}U`;
     } else if (cat === 'HighDensity') {
-        if (dev.type === 'Server2U2N') return '2U2N2';
+        if (dev.type === 'Server2U2N') return '2U2N';
         return '1U1N';
     } else if (cat === 'AI') {
         return `${dev.size || 5}U`;
@@ -101,7 +109,7 @@ export const getServerConfig = (dev) => {
 export const getHighDensityNodes = (dev) => {
     const config = getServerConfig(dev);
     if (config === '1U1N' || config === '2U1N') return ['n1'];
-    if (config === '1U2N' || config === '2U2N2') return ['n1', 'n2'];
+    if (config === '1U2N' || config === '2U2N') return ['n1', 'n2'];
     if (config === '2U4N') return ['n1', 'n2', 'n3', 'n4'];
     return ['n1', 'n2']; // Default fallback for Server2U2N
 };
@@ -117,5 +125,34 @@ export const getAIServerSize = (opt) => {
     if (!opt) return 5;
     const val = parseInt(opt);
     return isNaN(val) ? 5 : val;
+};
+
+export const getPcieSlotInfo = (dev, slotIdx, nodeKey = null) => {
+    const slotKey = nodeKey ? `pcie_slot_${slotIdx}_${nodeKey}` : `pcie_slot_${slotIdx}`;
+    const spec = dev.hardwareSpecs?.[slotKey];
+    let model = spec?.model || '';
+    let qty = parseInt(spec?.qty);
+    
+    // Fallback for legacy data (ns_nic_1 / ns_nic_2)
+    if (slotIdx <= 2) {
+        const legacyKey = nodeKey ? `ns_nic_${slotIdx}_${nodeKey}` : `ns_nic_${slotIdx}`;
+        const legacySpec = dev.hardwareSpecs?.[legacyKey];
+        if (!model && legacySpec?.model) {
+            model = legacySpec.model;
+        }
+        if (isNaN(qty)) {
+            qty = parseInt(legacySpec?.qty);
+        }
+    }
+    
+    // Default fallbacks if still not specified
+    if (!model) {
+        model = `PCIe Slot ${slotIdx}`;
+    }
+    if (isNaN(qty)) {
+        qty = slotIdx <= 2 ? 2 : 0;
+    }
+    
+    return { model, qty };
 };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -93,12 +93,6 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
         
         const isHighDensity = getServerCategory(dev) === 'HighDensity';
         const hdNodes = isHighDensity ? getHighDensityNodes(dev) : [];
-        const nic1Count = isHighDensity 
-            ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ns_nic_1_${node}`), 0)
-            : getNicCount(dev, 'ns_nic_1');
-        const nic2Count = isHighDensity 
-            ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ns_nic_2_${node}`), 0)
-            : getNicCount(dev, 'ns_nic_2');
         const ocpCount = isHighDensity 
             ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ocp_${node}`), 0)
             : getNicCount(dev, 'ocp');
@@ -155,24 +149,52 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                         </div>
                     ) : getServerCategory(dev) === 'HighDensity' ? (() => {
                         const nodes = getHighDensityNodes(dev);
+                        const config = getServerConfig(dev);
+                        const is2U4N = config === '2U4N';
                         return (
-                            <div className="flex flex-col gap-2 w-full px-2">
+                            <div className={is2U4N ? "grid grid-cols-2 gap-x-4 gap-y-2 w-full px-2" : "flex flex-col gap-2 w-full px-2"}>
                                 {nodes.map((nodeKey, idx) => {
                                     const nodeNum = idx + 1;
-                                    const nic1CountVal = getNicCount(dev, `ns_nic_1_${nodeKey}`);
-                                    const nic2CountVal = getNicCount(dev, `ns_nic_2_${nodeKey}`);
+                                    const pcieSlotQtyKey = `pcieSlotQty_${nodeKey}`;
+                                    const pcieSlotQty = dev.hardwareSpecs?.[pcieSlotQtyKey]?.qty || 2;
                                     const ocpCountVal = getNicCount(dev, `ocp_${nodeKey}`);
-                                    const nic1Name = dev.hardwareSpecs?.[`ns_nic_1_${nodeKey}`]?.model || 'NS-NIC-1';
-                                    const nic2Name = dev.hardwareSpecs?.[`ns_nic_2_${nodeKey}`]?.model || 'NS-NIC-2';
                                     const isLast = idx === nodes.length - 1;
 
+                                    let cellClass = "";
+                                    if (is2U4N) {
+                                        if (idx === 0) cellClass = "border-b border-r border-slate-700/50 pb-2 pr-4";
+                                        else if (idx === 1) cellClass = "border-b border-slate-700/50 pb-2 pl-4";
+                                        else if (idx === 2) cellClass = "border-r border-slate-700/50 pt-2 pr-4";
+                                        else if (idx === 3) cellClass = "pt-2 pl-4";
+                                    } else {
+                                        cellClass = !isLast ? 'border-b border-slate-700/50 pb-2' : 'pt-1';
+                                    }
+
                                     return (
-                                        <div key={nodeKey} className={`flex flex-wrap items-center justify-end gap-3 ${!isLast ? 'border-b border-slate-700/50 pb-2' : 'pt-1'}`}>
+                                        <div key={nodeKey} className={`flex flex-wrap items-center justify-end gap-3 ${cellClass}`}>
                                             <div className="text-[11px] font-bold text-slate-400 mr-auto flex items-center gap-1">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> N{nodeNum}
                                             </div>
-                                            {nic1CountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic1Name}</div><div className="flex gap-1.5">{Array.from({ length: nic1CountVal }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_${nodeKey}-${i + 1}`, `N${nodeNum} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                            {nic2CountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{nic2Name}</div><div className="flex gap-1.5">{Array.from({ length: nic2CountVal }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_${nodeKey}-${i + 1}`, `N${nodeNum} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                            {Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                const slotIdx = i + 1;
+                                                const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx, nodeKey);
+                                                if (slotPortCount <= 0) return null;
+                                                return (
+                                                    <div key={slotIdx} className="flex items-center gap-1.5">
+                                                        <div className="text-[10px] font-bold font-mono text-slate-400">{model}</div>
+                                                        <div className="flex gap-1.5">
+                                                            {Array.from({ length: slotPortCount }).map((_, pIdx) =>
+                                                                renderPortAnchor(
+                                                                    dev,
+                                                                    `pcie_slot_${slotIdx}_${nodeKey}-${pIdx + 1}`,
+                                                                    `N${nodeNum} ${model} P${pIdx + 1}`,
+                                                                    'hover:border-emerald-400 hover:bg-emerald-500/50'
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                             {ocpCountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpCountVal }).map((_, i) => renderPortAnchor(dev, `ocp_${nodeKey}-${i + 1}`, `N${nodeNum} OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
                                             <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC`, 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                         </div>
@@ -180,31 +202,60 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 })}
                             </div>
                         );
-                    })() : getServerCategory(dev) === 'AI' ? (
-                        <div className="flex flex-col gap-2">
-                            <div className="flex justify-center">
-                                <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">CX8</span>
-                                <div className="flex flex-wrap justify-center gap-1 max-w-[200px]">
-                                    {Array.from({ length: getNicCount(dev, 'cx8p') || 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
-                                </div>
-                            </div>
-                            {(nic1Count > 0 || nic2Count > 0 || ocpCount > 0 || true) && (
+                    })() : getServerCategory(dev) === 'AI' ? (() => {
+                        const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                        const ewNicCount = dev.hardwareSpecs?.cx8p?.qty !== undefined ? dev.hardwareSpecs.cx8p.qty : 8;
+                        return (
+                            <div className="flex flex-col gap-2">
+                                {ewNicCount > 0 && (
+                                    <div className="flex justify-center">
+                                        <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">EW NIC</span>
+                                        <div className="flex flex-wrap justify-center gap-1 max-w-[200px]">
+                                            {Array.from({ length: ewNicCount }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `EW NIC P${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex flex-wrap justify-center gap-4 border-t border-slate-700 pt-2 mt-1">
-                                    {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                                    {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
+                                    {Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                        const slotIdx = i + 1;
+                                        const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx);
+                                        if (slotPortCount <= 0) return null;
+                                        return (
+                                            <div key={slotIdx} className="flex items-center gap-1.5">
+                                                <div className="text-[10px] font-bold font-mono text-slate-400">{model}</div>
+                                                <div className="flex gap-1.5">
+                                                    {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}-${pIdx + 1}`, `P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                     {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
                                     <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                 </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-wrap justify-center gap-4">
-                            {nic1Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div><div className="flex gap-1.5">{Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                            {nic2Count > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div><div className="flex gap-1.5">{Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}</div></div>}
-                            {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
-                            <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })() : (() => {
+                        const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                        return (
+                            <div className="flex flex-wrap justify-center gap-4">
+                                {Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                    const slotIdx = i + 1;
+                                    const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx);
+                                    if (slotPortCount <= 0) return null;
+                                    return (
+                                        <div key={slotIdx} className="flex items-center gap-1.5">
+                                            <div className="text-[10px] font-bold font-mono text-slate-400">{model}</div>
+                                            <div className="flex gap-1.5">
+                                                {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}-${pIdx + 1}`, `P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
         );
@@ -213,6 +264,10 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
     const renderTreeSection = (devList, bgClass, labelPrefix, isRow = false) => {
         const groups = getGroupedDevices(devList, racks);
         if (groups.length === 0) return <div className="text-slate-500 text-sm py-4 italic border border-dashed border-slate-700/50 rounded-lg w-full text-center">無設備</div>;
+
+        const isEP = labelPrefix === 'EP';
+        const groupWidthClass = isEP ? 'w-[420px]' : 'min-w-[220px]';
+        const collapsedWidthClass = isEP ? 'w-[420px]' : 'min-w-[260px]';
 
         return (
             <div className={`flex ${isRow ? 'flex-nowrap justify-center min-w-max' : 'flex-wrap justify-center'} gap-8 w-full z-10 p-4 pb-6`}>
@@ -224,7 +279,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 key={group.name} 
                                 data-group-anchor={`${labelPrefix}-${group.name}`}
                                 onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: true }); }}
-                                className={`relative cursor-pointer transition-all hover:scale-105 flex flex-col items-center justify-center bg-slate-800/80 p-6 rounded-2xl border-2 border-slate-600 shadow-xl min-w-[260px] min-h-[140px] group ${bgClass.split(' ')[0].replace('bg-', 'hover:border-')}`}
+                                className={`relative cursor-pointer transition-all hover:scale-105 flex flex-col items-center justify-center bg-slate-800/80 p-6 rounded-2xl border-2 border-slate-600 shadow-xl ${collapsedWidthClass} min-h-[140px] group ${bgClass.split(' ')[0].replace('bg-', 'hover:border-')}`}
                             >
                                 <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Maximize2 className="w-5 h-5 text-slate-400 hover:text-white" />
@@ -236,7 +291,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                         );
                     }
                     return (
-                        <div key={group.name} className="flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 min-w-[220px]">
+                        <div key={group.name} className={`flex flex-col items-center gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 ${groupWidthClass}`}>
                             <button
                                 onClick={(e) => { e.stopPropagation(); setExpandedNetGroups({ ...expandedNetGroups, [`${labelPrefix}-${group.name}`]: !isOpen }); }}
                                 className="flex items-center gap-1.5 text-[16px] font-bold text-slate-400 tracking-wider bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700 transition-colors w-full justify-center shadow-sm"

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 
 const RackView = ({ racksToRender }) => {
@@ -188,24 +188,24 @@ const RackView = ({ racksToRender }) => {
                                                 if (is2U) {
                                                     return (
                                                         <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full">
-                                                            {/* Row 1: NICs */}
+                                                            {/* Row 1: PCIe slots & OCP */}
                                                             <div className="flex items-center justify-end gap-2 w-full">
-                                                                {nic1Count > 0 && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div>
-                                                                        <div className="flex gap-0.5">
-                                                                            {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                {nic2Count > 0 && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div>
-                                                                        <div className="flex gap-0.5">
-                                                                            {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
+                                                                {(() => {
+                                                                    const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                                    return Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                                        const slotIdx = i + 1;
+                                                                        const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx);
+                                                                        if (slotPortCount <= 0) return null;
+                                                                        return (
+                                                                            <div key={slotIdx} className="flex items-center gap-1.5">
+                                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{model}</div>
+                                                                                <div className="flex gap-0.5">
+                                                                                    {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}-${pIdx + 1}`, `P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    });
+                                                                })()}
                                                                 {ocpCount > 0 && (
                                                                     <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
                                                                         <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div>
@@ -244,22 +244,22 @@ const RackView = ({ racksToRender }) => {
                                                     <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
                                                         {((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
                                                             <>
-                                                                {nic1Count > 0 && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div>
-                                                                        <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
-                                                                            {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                {nic2Count > 0 && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div>
-                                                                        <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
-                                                                            {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
+                                                                {(() => {
+                                                                    const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                                    return Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                                        const slotIdx = i + 1;
+                                                                        const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx);
+                                                                        if (slotPortCount <= 0) return null;
+                                                                        return (
+                                                                            <div key={slotIdx} className="flex items-center gap-1.5">
+                                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{model}</div>
+                                                                                <div className="flex gap-0.5 flex-wrap max-w-[50px] justify-end">
+                                                                                    {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}-${pIdx + 1}`, `P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    });
+                                                                })()}
                                                                 {ocpCount > 0 && (
                                                                     <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
                                                                         <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div>
@@ -309,30 +309,33 @@ const RackView = ({ racksToRender }) => {
                                                 const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
                                                 const gpuCooling  = dev.hardwareSpecs?.cooling?.gpu  || 'AC';
                                                 const hasLC = hostCooling === 'LC' || gpuCooling === 'LC';
+                                                const ewNicCount = dev.hardwareSpecs?.cx8p?.qty !== undefined ? dev.hardwareSpecs.cx8p.qty : 8;
                                                 return (
                                                     <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full w-full">
-                                                        <div className="flex items-center justify-end gap-2 w-full">
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">CX8</div>
-                                                            <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
-                                                                {Array.from({ length: getNicCount(dev, 'cx8p') || 8 }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `CX8 Port ${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
-                                                            </div>
-                                                        </div>
-                                                        {nic1Count > 0 && (
+                                                        {ewNicCount > 0 && (
                                                             <div className="flex items-center justify-end gap-2 w-full">
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_1?.model || 'NS-NIC-1'}</div>
-                                                                <div className="flex gap-0.5">
-                                                                    {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">EW NIC</div>
+                                                                <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
+                                                                    {Array.from({ length: ewNicCount }).map((_, i) => renderPortAnchor(dev, `cx8-${i + 1}`, `EW NIC P${i + 1}`, 'hover:border-blue-400 hover:bg-blue-500/50'))}
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {nic2Count > 0 && (
-                                                            <div className="flex items-center justify-end gap-2 w-full">
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ns_nic_2?.model || 'NS-NIC-2'}</div>
-                                                                <div className="flex gap-0.5">
-                                                                    {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2-${i + 1}`, `P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                        {(() => {
+                                                            const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                            return Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                                const slotIdx = i + 1;
+                                                                const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx);
+                                                                if (slotPortCount <= 0) return null;
+                                                                return (
+                                                                    <div key={slotIdx} className="flex items-center justify-end gap-2 w-full">
+                                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{model}</div>
+                                                                        <div className="flex gap-0.5">
+                                                                            {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}-${pIdx + 1}`, `P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50'))}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
                                                         {ocpCount > 0 && (
                                                             <div className="flex items-center justify-end gap-2 w-full">
                                                                 <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div>
@@ -385,55 +388,140 @@ const RackView = ({ racksToRender }) => {
 
                                             {getServerCategory(dev) === 'HighDensity' && (() => {
                                                 const nodes = getHighDensityNodes(dev);
-                                                const isTight = nodes.length / dev.size > 1.1;
-                                                const portSizeClass = isTight ? "w-2 h-2 shrink-0" : "w-2.5 h-2.5 shrink-0";
-                                                const labelClass = isTight ? "text-[9px]" : "text-[11px]";
-                                                const dotClass = isTight ? "w-1 h-1" : "w-1.5 h-1.5";
-                                                const portLabelClass = isTight ? "text-[8px]" : "text-[10px]";
-                                                const rowGapClass = isTight ? "gap-1.5 px-2" : "gap-3 px-3";
+                                                const config = getServerConfig(dev);
+                                                const is2U4N = config === '2U4N';
+                                                
+                                                if (is2U4N) {
+                                                    return (
+                                                        <div className="grid grid-cols-2 grid-rows-2 border-l border-white/20 h-full w-full">
+                                                            {nodes.map((nodeKey, idx) => {
+                                                                const nodeNum = idx + 1;
+                                                                const pcieSlotQtyKey = `pcieSlotQty_${nodeKey}`;
+                                                                const pcieSlotQty = dev.hardwareSpecs?.[pcieSlotQtyKey]?.qty || 2;
+                                                                const ocpCount = getNicCount(dev, `ocp_${nodeKey}`);
+                                                                
+                                                                // Add borders between grid cells
+                                                                const borderClasses = `${idx < 2 ? 'border-b' : ''} ${idx % 2 === 0 ? 'border-r' : ''} border-white/10`;
+                                                                
+                                                                return (
+                                                                    <div key={nodeKey} className={`flex items-center justify-end gap-1 px-1.5 py-0.5 w-full ${borderClasses}`}>
+                                                                        {/* Node Label */}
+                                                                        <div className="text-[8px] font-bold text-slate-400 mr-auto flex items-center gap-0.5">
+                                                                            <div className="w-1 h-1 rounded-full bg-blue-500 shrink-0"></div>
+                                                                            <span>N{nodeNum}</span>
+                                                                        </div>
+                                                                        
+                                                                        {/* PCIe Slots */}
+                                                                        {Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                                            const slotIdx = i + 1;
+                                                                            const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx, nodeKey);
+                                                                            if (slotPortCount <= 0) return null;
+                                                                            return (
+                                                                                <div key={slotIdx} className="flex items-center gap-0.5 shrink-0">
+                                                                                    <span className="text-[7px] font-bold font-mono text-white/50 leading-none">S{slotIdx}</span>
+                                                                                    <div className="flex gap-0.5">
+                                                                                        {Array.from({ length: slotPortCount }).map((_, pIdx) => 
+                                                                                            renderPortAnchor(
+                                                                                                dev, 
+                                                                                                `pcie_slot_${slotIdx}_${nodeKey}-${pIdx + 1}`, 
+                                                                                                `N${nodeNum} ${model} P${pIdx + 1}`, 
+                                                                                                'hover:border-emerald-400 hover:bg-emerald-500/50', 
+                                                                                                'w-1.5 h-1.5 shrink-0'
+                                                                                            )
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                        
+                                                                        {/* OCP */}
+                                                                        {ocpCount > 0 && (
+                                                                            <div className="flex items-center gap-0.5 pl-0.5 border-l border-white/10 shrink-0">
+                                                                                <span className="text-[7px] font-bold font-mono text-white/50 leading-none">O</span>
+                                                                                <div className="flex gap-0.5">
+                                                                                    {Array.from({ length: ocpCount }).map((_, i) => 
+                                                                                        renderPortAnchor(
+                                                                                            dev, 
+                                                                                            `ocp_${nodeKey}-${i + 1}`, 
+                                                                                            `N${nodeNum} OCP P${i + 1}`, 
+                                                                                            'hover:border-amber-400 hover:bg-amber-500/50', 
+                                                                                            'w-1.5 h-1.5 shrink-0'
+                                                                                        )
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                        
+                                                                        {/* BMC */}
+                                                                        <div className="flex items-center gap-0.5 pl-0.5 border-l border-white/10 shrink-0">
+                                                                            <span className="text-[7px] font-bold font-mono text-white/50 leading-none">B</span>
+                                                                            <div className="flex gap-0.5">
+                                                                                {renderPortAnchor(
+                                                                                    dev, 
+                                                                                    `bmc_${nodeKey}`, 
+                                                                                    `N${nodeNum} BMC Port`, 
+                                                                                    'hover:border-red-400 hover:bg-red-500/50', 
+                                                                                    'w-1.5 h-1.5 shrink-0'
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                const is1U2N = config === '1U2N';
+                                                const isTight = (nodes.length / dev.size > 1.1) || is1U2N;
+                                                const portSizeClass = is1U2N ? "w-1.5 h-1.5 shrink-0" : (isTight ? "w-2 h-2 shrink-0" : "w-2.5 h-2.5 shrink-0");
+                                                const labelClass = is1U2N ? "text-[8px]" : (isTight ? "text-[9px]" : "text-[11px]");
+                                                const dotClass = is1U2N ? "w-1 h-1" : (isTight ? "w-1 h-1" : "w-1.5 h-1.5");
+                                                const portLabelClass = is1U2N ? "text-[7px]" : (isTight ? "text-[8px]" : "text-[10px]");
+                                                const rowGapClass = is1U2N ? "gap-1 px-1.5 py-0.5" : (isTight ? "gap-1.5 px-2" : "gap-3 px-3");
 
                                                 return (
-                                                    <div className="flex flex-col justify-center border-l border-white/20 shrink-0 h-full w-full">
+                                                    <div className={`flex ${is1U2N ? 'flex-row' : 'flex-col'} justify-center border-l border-white/20 shrink-0 h-full w-full`}>
                                                         {nodes.map((nodeKey, idx) => {
-                                                            const nic1Count = getNicCount(dev, `ns_nic_1_${nodeKey}`);
-                                                            const nic2Count = getNicCount(dev, `ns_nic_2_${nodeKey}`);
+                                                            const pcieSlotQtyKey = `pcieSlotQty_${nodeKey}`;
+                                                            const pcieSlotQty = dev.hardwareSpecs?.[pcieSlotQtyKey]?.qty || 2;
                                                             const ocpCount = getNicCount(dev, `ocp_${nodeKey}`);
-                                                            const nic1Name = dev.hardwareSpecs?.[`ns_nic_1_${nodeKey}`]?.model || 'NS-NIC-1';
-                                                            const nic2Name = dev.hardwareSpecs?.[`ns_nic_2_${nodeKey}`]?.model || 'NS-NIC-2';
                                                             const nodeNum = idx + 1;
                                                             const isLast = idx === nodes.length - 1;
+                                                            const layoutSizeClass = is1U2N ? 'h-full' : 'w-full';
+                                                            const borderClass = is1U2N
+                                                                ? (!isLast ? 'border-r border-white/10' : '')
+                                                                : (!isLast ? 'border-b border-white/10' : '');
 
                                                             return (
-                                                                <div key={nodeKey} className={`flex-1 flex items-center justify-end ${rowGapClass} w-full ${!isLast ? 'border-b border-white/10' : ''}`}>
-                                                                    <div className={`${labelClass} font-bold text-slate-400 mr-auto flex items-center gap-1`}>
-                                                                        <div className={`${dotClass} rounded-full bg-blue-500`}></div> N{nodeNum}
+                                                                <div key={nodeKey} className={`flex-1 flex items-center justify-end ${rowGapClass} ${layoutSizeClass} ${borderClass}`}>
+                                                                    <div className={`${labelClass} font-bold text-slate-400 mr-auto flex items-center gap-0.5`}>
+                                                                        <div className={`${dotClass} rounded-full bg-blue-500 shrink-0`}></div> N{nodeNum}
                                                                     </div>
-                                                                    {nic1Count > 0 && (
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>{nic1Name}</div>
-                                                                            <div className="flex gap-0.5">
-                                                                                {Array.from({ length: nic1Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_1_${nodeKey}-${i + 1}`, `N${nodeNum} ${nic1Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', portSizeClass))}
+                                                                    {Array.from({ length: pcieSlotQty }).map((_, i) => {
+                                                                        const slotIdx = i + 1;
+                                                                        const { model, qty: slotPortCount } = getPcieSlotInfo(dev, slotIdx, nodeKey);
+                                                                        if (slotPortCount <= 0) return null;
+                                                                        const slotLabel = is1U2N ? `S${slotIdx}` : model;
+                                                                        return (
+                                                                            <div key={slotIdx} className="flex items-center gap-1 shrink-0">
+                                                                                <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-none`}>{slotLabel}</div>
+                                                                                <div className="flex gap-0.5">
+                                                                                    {Array.from({ length: slotPortCount }).map((_, pIdx) => renderPortAnchor(dev, `pcie_slot_${slotIdx}_${nodeKey}-${pIdx + 1}`, `N${nodeNum} ${model} P${pIdx + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', portSizeClass))}
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    )}
-                                                                    {nic2Count > 0 && (
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>{nic2Name}</div>
-                                                                            <div className="flex gap-0.5">
-                                                                                {Array.from({ length: nic2Count }).map((_, i) => renderPortAnchor(dev, `ns_nic_2_${nodeKey}-${i + 1}`, `N${nodeNum} ${nic2Name} P${i + 1}`, 'hover:border-emerald-400 hover:bg-emerald-500/50', portSizeClass))}
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
+                                                                        );
+                                                                    })}
                                                                     {ocpCount > 0 && (
-                                                                        <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>OCP</div>
+                                                                        <div className="flex items-center gap-1 ml-0.5 pl-0.5 border-l border-white/10 shrink-0">
+                                                                            <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-none`}>{is1U2N ? 'O' : 'OCP'}</div>
                                                                             <div className="flex gap-0.5">
                                                                                 {Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp_${nodeKey}-${i + 1}`, `N${nodeNum} OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50', portSizeClass))}
                                                                             </div>
                                                                         </div>
                                                                     )}
-                                                                    <div className="flex items-center gap-1.5 ml-1 pl-1 border-l border-white/10">
-                                                                        <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-normal pb-0.5`}>BMC</div>
+                                                                    <div className="flex items-center gap-1 ml-0.5 pl-0.5 border-l border-white/10 shrink-0">
+                                                                        <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-none`}>{is1U2N ? 'B' : 'BMC'}</div>
                                                                         <div className="flex gap-0.5">
                                                                             {renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC Port`, 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
                                                                         </div>

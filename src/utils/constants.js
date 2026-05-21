@@ -29,21 +29,11 @@ export const HW_SPECS_CONFIG = [
 
 export const DEVICE_TEMPLATES = [
     {
-        isGroup: true, name: 'General Purpose', icon: Server, theme: 'blue',
+        isGroup: true, name: '伺服器', icon: Server, theme: 'blue',
         subItems: [
-            { type: 'ServerGeneral', name: 'General Purpose 伺服器', size: 1, icon: Server, theme: 'blue', power: 300, serverConfig: '1U' },
-        ]
-    },
-    {
-        isGroup: true, name: 'High Density', icon: Server, theme: 'blue',
-        subItems: [
-            { type: 'ServerHighDensity', name: 'High Density 伺服器', size: 1, icon: Server, theme: 'blue', power: 800, serverConfig: '1U1N' },
-        ]
-    },
-    {
-        isGroup: true, name: 'AI 伺服器', icon: Server, theme: 'blue',
-        subItems: [
-            { type: 'ServerAI', name: 'AI 伺服器', size: 5, icon: Server, theme: 'blue', power: 1500, serverConfig: '5U' },
+            { type: 'ServerGeneral', name: 'General Purpose', size: 1, icon: Server, theme: 'blue', power: 300, serverConfig: '1U' },
+            { type: 'ServerHighDensity', name: 'High Density', size: 1, icon: Server, theme: 'blue', power: 800, serverConfig: '1U1N' },
+            { type: 'ServerAI', name: 'AI Server', size: 5, icon: Server, theme: 'blue', power: 1500, serverConfig: '5U' },
         ]
     },
     {

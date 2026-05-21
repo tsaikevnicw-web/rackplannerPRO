@@ -186,7 +186,7 @@ const CablesOverlay = () => {
 
         // Fallback: 依 portKey 前綴判斷
         if (srcBase.startsWith('cx8-'))    return '#22c55e';
-        if (srcBase.startsWith('ns_nic_')) return '#facc15';
+        if (srcBase.startsWith('ns_nic_') || srcBase.startsWith('pcie_slot_')) return '#facc15';
         if (srcBase.startsWith('port-'))   return '#a855f7';
         return '#64748b';
     };

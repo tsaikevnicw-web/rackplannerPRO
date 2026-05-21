@@ -8,6 +8,7 @@ import NetworkTopology from './components/network/NetworkTopology';
 import CablesOverlay from './components/rack/CablesOverlay';
 import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
+import UserManualModal from './components/layout/UserManualModal';
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
@@ -649,6 +650,7 @@ const AppContent = () => {
                     </div>
                 </div>
             )}
+            <UserManualModal />
         </div>
     );
 };

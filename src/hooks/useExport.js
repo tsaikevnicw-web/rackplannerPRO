@@ -1,6 +1,68 @@
-import { getFabricGroup, getNicCount, getSwitchPortCount } from '../utils/helpers';
+import { getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 import { toCanvas } from 'html-to-image';
+
+const formatRemotePort = (portKey) => {
+    if (!portKey) return '-';
+    
+    // 1. PCIe slot with node: pcie_slot_1_n1-2 -> N1 Slot 1 P2
+    const pcieNodeMatch = portKey.match(/^pcie_slot_(\d+)_([nN]\d+)-(\d+)$/);
+    if (pcieNodeMatch) {
+        const [, slotIdx, nodeKey, portIdx] = pcieNodeMatch;
+        return `${nodeKey.toUpperCase()} Slot ${slotIdx} P${portIdx}`;
+    }
+    
+    // 2. PCIe slot standard: pcie_slot_1-2 -> Slot 1 P2
+    const pcieMatch = portKey.match(/^pcie_slot_(\d+)-(\d+)$/);
+    if (pcieMatch) {
+        const [, slotIdx, portIdx] = pcieMatch;
+        return `Slot ${slotIdx} P${portIdx}`;
+    }
+    
+    // 3. BMC with node: bmc_n1 -> N1 BMC
+    const bmcNodeMatch = portKey.match(/^bmc_([nN]\d+)$/);
+    if (bmcNodeMatch) {
+        const [, nodeKey] = bmcNodeMatch;
+        return `${nodeKey.toUpperCase()} BMC`;
+    }
+    
+    // 4. OCP with node: ocp_n1-1 -> N1 OCP P1
+    const ocpNodeMatch = portKey.match(/^ocp_([nN]\d+)-(\d+)$/);
+    if (ocpNodeMatch) {
+        const [, nodeKey, portIdx] = ocpNodeMatch;
+        return `${nodeKey.toUpperCase()} OCP P${portIdx}`;
+    }
+
+    // 5. Legacy NS-NIC with node: ns_nic_1_n1-2 -> N1 Slot 1 P2
+    const legacyNicNodeMatch = portKey.match(/^ns_nic_(\d+)_([nN]\d+)-(\d+)$/);
+    if (legacyNicNodeMatch) {
+        const [, slotIdx, nodeKey, portIdx] = legacyNicNodeMatch;
+        return `${nodeKey.toUpperCase()} Slot ${slotIdx} P${portIdx}`;
+    }
+
+    // 6. Legacy NS-NIC standard: ns_nic_1-2 -> Slot 1 P2
+    const legacyNicMatch = portKey.match(/^ns_nic_(\d+)-(\d+)$/);
+    if (legacyNicMatch) {
+        const [, slotIdx, portIdx] = legacyNicMatch;
+        return `Slot ${slotIdx} P${portIdx}`;
+    }
+
+    // 7. General formatting
+    if (portKey.startsWith('cx8-')) {
+        return portKey.replace('cx8-', 'EW NIC P');
+    }
+    if (portKey.startsWith('ocp-')) {
+        return portKey.replace('ocp-', 'OCP P');
+    }
+    if (portKey.startsWith('port-')) {
+        return portKey.replace('port-', 'Port ');
+    }
+    if (portKey === 'bmc') {
+        return 'BMC';
+    }
+    
+    return portKey;
+};
 
 export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert) {
     const handleSaveData = () => {
@@ -14,7 +76,7 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
 
     const handleExportBOM = () => {
         let csv = '\uFEFF';
-        csv += "機櫃名稱,位置,設備名稱,設備類型,功耗(W),解熱能力(W),報價(USD),CPU (型號*數量),DIMM (型號*數量),NS-NIC-1 (數量),NS-NIC-2 (數量),GPU (型號*數量),M.2 (型號*數量),HDD (型號*數量),54V PSU (型號*數量),12V PSU (型號*數量),Other (型號*數量)\n";
+        csv += "機櫃名稱,位置,設備名稱,設備類型,功耗(W),解熱能力(W),報價(USD),CPU (型號*數量),DIMM (型號*數量),PCIe Slot 1 (數量),PCIe Slot 2 (數量),GPU (型號*數量),M.2 (型號*數量),HDD (型號*數量),54V PSU (型號*數量),12V PSU (型號*數量),Other (型號*數量)\n";
 
         const sortedDevices = [...devices].sort((a, b) => {
             if (a.rackId !== b.rackId) return a.rackId.localeCompare(b.rackId);
@@ -27,16 +89,64 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
             const hw = dev.hardwareSpecs || {};
             const formatHw = (spec) => (spec && (spec.model || spec.qty)) ? `${spec.model || ''} *${spec.qty || 1}` : '';
 
+            const isHighDensity = getServerCategory(dev) === 'HighDensity';
+            const hdNodes = isHighDensity ? getHighDensityNodes(dev) : [];
+
+            let pcieSlot1Val = 0;
+            let pcieSlot2Val = 0;
+            const extraSlots = [];
+
+            if (isHighDensity) {
+                hdNodes.forEach(nodeKey => {
+                    const nodeNum = nodeKey.substring(1);
+                    const nodePcieSlotQty = dev.hardwareSpecs?.[`pcieSlotQty_${nodeKey}`]?.qty || 2;
+                    if (nodePcieSlotQty >= 1) {
+                        const info = getPcieSlotInfo(dev, 1, nodeKey);
+                        pcieSlot1Val += (info.qty || 0);
+                    }
+                    if (nodePcieSlotQty >= 2) {
+                        const info = getPcieSlotInfo(dev, 2, nodeKey);
+                        pcieSlot2Val += (info.qty || 0);
+                    }
+                    for (let s = 3; s <= nodePcieSlotQty; s++) {
+                        const info = getPcieSlotInfo(dev, s, nodeKey);
+                        if (info.qty > 0 || info.model) {
+                            extraSlots.push(`N${nodeNum} Slot ${s} (${info.model || `PCIe Slot ${s}`}) *${info.qty || 0}`);
+                        }
+                    }
+                });
+            } else if ((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) {
+                const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                if (pcieSlotQty >= 1) {
+                    pcieSlot1Val = getPcieSlotInfo(dev, 1).qty || 0;
+                }
+                if (pcieSlotQty >= 2) {
+                    pcieSlot2Val = getPcieSlotInfo(dev, 2).qty || 0;
+                }
+                for (let s = 3; s <= pcieSlotQty; s++) {
+                    const info = getPcieSlotInfo(dev, s);
+                    if (info.qty > 0 || info.model) {
+                        extraSlots.push(`Slot ${s} (${info.model || `PCIe Slot ${s}`}) *${info.qty || 0}`);
+                    }
+                }
+            }
+
+            const otherHw = formatHw(hw.other);
+            const otherParts = [];
+            if (otherHw) otherParts.push(otherHw);
+            if (extraSlots.length > 0) otherParts.push(...extraSlots);
+            const otherVal = otherParts.join('; ');
+
             const rowData = [
                 rackName, position, dev.customName || '', dev.type || '', dev.power || 0, dev.coolingCapacity || 0, dev.price || 0,
-                formatHw(hw.cpu), formatHw(hw.dimm), getNicCount(dev, 'ns_nic_1'), getNicCount(dev, 'ns_nic_2'), formatHw(hw.gpu), formatHw(hw.m2),
-                formatHw(hw.hdd), formatHw(hw.psu54v), formatHw(hw.psu12v), formatHw(hw.other)
+                formatHw(hw.cpu), formatHw(hw.dimm), pcieSlot1Val, pcieSlot2Val, formatHw(hw.gpu), formatHw(hw.m2),
+                formatHw(hw.hdd), formatHw(hw.psu54v), formatHw(hw.psu12v), otherVal
             ];
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
         });
 
         csv += "\n\n網路線材與光模組統計 (Cables & Transceivers)\n類型,總數量\n";
-        const bomCounts = { '1G NIC cable': 0, '10G/100G cable': 0, '400G cable': 0, '800G cable': 0, 'QSFP56 transceiver': 0, '2x400G Transceiver': 0, 'CX8 Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)': 0, 'CX8 Ethernet: MMA4Z00-NS Transceiver (SW端)': 0, 'CX8 Ethernet: MFP7E10-Nxxx Cable': 0, 'CX8 InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)': 0 };
+        const bomCounts = { '1G NIC cable': 0, '10G/100G cable': 0, '400G cable': 0, '800G cable': 0, 'QSFP56 transceiver': 0, '2x400G Transceiver': 0, 'EW NIC Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)': 0, 'EW NIC Ethernet: MMA4Z00-NS Transceiver (SW端)': 0, 'EW NIC Ethernet: MFP7E10-Nxxx Cable': 0, 'EW NIC InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)': 0 };
 
         devices.forEach(dev => {
             if (dev.connections) {
@@ -45,14 +155,14 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
                     const targetDeviceId = targetKey.split('-port-')[0];
                     const targetDevice = devices.find(d => d.id === targetDeviceId);
                     if (targetDevice) {
-                        if (dev.type === 'Server5U' && portKey.startsWith('cx8-')) {
+                        if (getServerCategory(dev) === 'AI' && portKey.startsWith('cx8-')) {
                             const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
                             if (cx8NetworkType === 'Ethernet') {
-                                bomCounts['CX8 Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)'] += 1;
-                                bomCounts['CX8 Ethernet: MMA4Z00-NS Transceiver (SW端)'] += 1;
-                                bomCounts['CX8 Ethernet: MFP7E10-Nxxx Cable'] += 2;
+                                bomCounts['EW NIC Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)'] += 1;
+                                bomCounts['EW NIC Ethernet: MMA4Z00-NS Transceiver (SW端)'] += 1;
+                                bomCounts['EW NIC Ethernet: MFP7E10-Nxxx Cable'] += 2;
                             } else if (cx8NetworkType === 'InfiniBand') {
-                                bomCounts['CX8 InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)'] += 0.5;
+                                bomCounts['EW NIC InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)'] += 0.5;
                             }
                         } else {
                             if (targetDevice.type === 'Switch1G') bomCounts['1G NIC cable']++;
@@ -117,15 +227,10 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
 
                     if (remoteDev) {
                         const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
-                        let formattedRemotePort = remoteInfo.portKey;
-                        if (formattedRemotePort.startsWith('cx8-')) formattedRemotePort = formattedRemotePort.replace('cx8-', 'CX8 P');
-                        else if (formattedRemotePort.startsWith('ns_nic_1-')) formattedRemotePort = formattedRemotePort.replace('ns_nic_1-', 'NS-NIC-1 P');
-                        else if (formattedRemotePort.startsWith('ns_nic_2-')) formattedRemotePort = formattedRemotePort.replace('ns_nic_2-', 'NS-NIC-2 P');
-                        else if (formattedRemotePort.startsWith('port-')) formattedRemotePort = formattedRemotePort.replace('port-', 'Port ');
-                        else if (formattedRemotePort === 'bmc') formattedRemotePort = 'BMC';
+                        const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
 
                         let transceiverNic = '-'; let transceiverSw = '-'; let cableModel = '-'; let cableCount = '-';
-                        if (remoteDev.type === 'Server5U' && remoteInfo.portKey.startsWith('cx8-')) {
+                        if (getServerCategory(remoteDev) === 'AI' && remoteInfo.portKey.startsWith('cx8-')) {
                             const cx8Type = remoteDev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
                             if (cx8Type === 'Ethernet') { transceiverNic = 'MMA4Z00-NS-FLT'; transceiverSw = 'MMA4Z00-NS'; cableModel = 'MFP7E10-Nxxx'; cableCount = '2'; }
                             else if (cx8Type === 'InfiniBand') { transceiverNic = '一體化 (2x 800G OSFP)'; transceiverSw = '一體化 (1.6TB)'; cableModel = 'MCA7K10'; cableCount = '0.5'; }
@@ -144,7 +249,7 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
                 const remoteDev = devices.find(d => d.id === remoteInfo.devId);
                 if (remoteDev) {
                     const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
-                    const formattedRemotePort = remoteInfo.portKey === 'bmc' ? 'BMC' : remoteInfo.portKey.replace('port-', 'Port ');
+                    const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
                     const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `BMC`, remoteRack, remoteDev.customName, formattedRemotePort, '-', '-', '-', '-'];
                     csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                     isFirstRowForSwitch = false;

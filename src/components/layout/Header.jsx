@@ -1,5 +1,5 @@
 import React from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
@@ -8,6 +8,7 @@ const Header = () => {
         viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
         isFitToScreen, setIsFitToScreen, showCables, setShowCables,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
+        isUserManualOpen, setIsUserManualOpen,
         isExporting, fileInputRef,
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage,
         setClearConfirm, setRaModalState, generateId, showAlert 
@@ -34,11 +35,11 @@ const Header = () => {
             {/* Top Row: Logo + File Controls */}
             <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/25">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-indigo-500/15 rounded-lg border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]">
-                        <Server className="w-4 h-4 text-indigo-400" />
+                    <div className="p-1.5 bg-white rounded-lg shadow-[0_0_12px_rgba(255,255,255,0.15)]">
+                        <Server className="w-4 h-4 text-[#D71422]" />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-100 tracking-wide font-mono">
-                        RACK<span className="text-indigo-400">PLANNER</span> <span className="text-[10px] text-slate-500 align-top">PRO</span>
+                    <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono">
+                        RACK<span className="text-[#D71422]">PLANNER</span> <span className="text-[10px] text-slate-400 align-top">PRO</span>
                     </h1>
                 </div>
 
@@ -85,6 +86,11 @@ const Header = () => {
                                     </button>
                                     <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-500/15 hover:text-purple-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Share2 className="w-4 h-4" /> 匯出網路線路表 (.csv)
+                                    </button>
+                                    <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
+                                    <button onClick={() => { setIsUserManualOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                        <BookOpen className="w-4 h-4" /> 系統使用手冊
                                     </button>
                                 </div>
                             </>
