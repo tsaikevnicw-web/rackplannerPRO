@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 import { toCanvas } from 'html-to-image';
@@ -64,7 +65,139 @@ const formatRemotePort = (portKey) => {
     return portKey;
 };
 
-export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert) {
+export function useExport(
+    racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert,
+    viewMode, setViewMode, activeRackId, setActiveRackId,
+    expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
+    scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen
+) {
+    const [rackScreenshots, setRackScreenshots] = useState({});
+    const [topoScreenshot, setTopoScreenshot] = useState(null);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [printTimestamp, setPrintTimestamp] = useState('');
+
+    const handlePrintPDF = async () => {
+        setIsGeneratingPDF(true);
+        setIsFileMenuOpen(false);
+
+        // Save original states
+        const originalViewMode = viewMode;
+        const originalActiveRackId = activeRackId;
+        const originalExpandedNetGroups = { ...expandedNetGroups };
+        const originalShowCables = showCables;
+        const originalScale = scaleFactor;
+        const originalFit = isFitToScreen;
+
+        // Set formatting for screenshotting
+        setIsFitToScreen(false);
+        setScaleFactor(1);
+        setShowCables(false);
+
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        const screenshots = {};
+        // 1. Capture each rack in single-view
+        for (const rack of racks) {
+            setViewMode('single');
+            setActiveRackId(rack.id);
+            await delay(350); // wait for render
+            
+            if (rackContainerRef.current) {
+                try {
+                    const element = rackContainerRef.current;
+                    const originalStyle = element.style.cssText;
+                    const originalTransform = element.style.transform;
+
+                    element.style.transform = 'none';
+                    element.style.backgroundColor = '#020617';
+                    void element.offsetWidth;
+
+                    const canvas = await toCanvas(element, {
+                        backgroundColor: '#020617',
+                        pixelRatio: 2,
+                    });
+
+                    element.style.cssText = originalStyle;
+                    element.style.transform = originalTransform;
+
+                    screenshots[rack.id] = canvas.toDataURL('image/png');
+                } catch (err) {
+                    console.error(`Error capturing rack ${rack.name}:`, err);
+                }
+            }
+        }
+        setRackScreenshots(screenshots);
+
+        // 2. Capture topology in network-view with all collapsed
+        setViewMode('network');
+        setShowCables(true);
+        
+        // Collapse all groups
+        const collapsedGroups = {};
+        devices.forEach(dev => {
+            const isSwitchOrRouter = (dev.type || '').startsWith('Switch') || dev.type === 'Router';
+            let prefix = null;
+            if (isSwitchOrRouter) {
+                const fabric = getFabricGroup(dev);
+                const isSpine = dev.networkRole === 'Spine';
+                prefix = fabric === 'North-South' ? (isSpine ? 'NS-Spine' : 'NS-Leaf') : (isSpine ? 'Spine' : 'Leaf');
+            } else if (dev.type !== 'Blank' && dev.type !== 'UPS' && dev.type !== 'SideCDU') {
+                prefix = 'EP';
+            }
+            if (prefix) {
+                const groupName = dev.topologyGroup || racks.find(r => r.id === dev.rackId)?.name || '未分類群組';
+                collapsedGroups[`${prefix}-${groupName}`] = false;
+            }
+        });
+        setExpandedNetGroups(collapsedGroups);
+        await delay(600); // wait for lines to redraw and render fully
+
+        let topologyImg = null;
+        if (rackContainerRef.current) {
+            try {
+                const element = rackContainerRef.current;
+                const originalStyle = element.style.cssText;
+                const originalTransform = element.style.transform;
+
+                element.style.transform = 'none';
+                element.style.backgroundColor = '#020617';
+                void element.offsetWidth;
+
+                const canvas = await toCanvas(element, {
+                    backgroundColor: '#020617',
+                    pixelRatio: 2,
+                });
+
+                element.style.cssText = originalStyle;
+                element.style.transform = originalTransform;
+
+                topologyImg = canvas.toDataURL('image/png');
+            } catch (err) {
+                console.error("Error capturing topology:", err);
+            }
+        }
+        setTopoScreenshot(topologyImg);
+
+        // Set print timestamp matching watermarks
+        const now = new Date();
+        const tsStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        setPrintTimestamp(tsStr);
+
+        // Restore original states
+        setViewMode(originalViewMode);
+        setActiveRackId(originalActiveRackId);
+        setExpandedNetGroups(originalExpandedNetGroups);
+        setShowCables(originalShowCables);
+        setScaleFactor(originalScale);
+        setIsFitToScreen(originalFit);
+
+        setIsGeneratingPDF(false);
+
+        // A small delay for React state updates and loading overlay closure
+        await delay(300);
+        window.print();
+    };
+
     const handleSaveData = () => {
         const dataToSave = { racks, devices, timestamp: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
@@ -325,5 +458,15 @@ export function useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rac
         }
     };
 
-    return { handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage };
+    return { 
+        handleSaveData, 
+        handleExportBOM, 
+        handleExportCableRouting, 
+        handleExportImage, 
+        handlePrintPDF,
+        rackScreenshots,
+        topoScreenshot,
+        isGeneratingPDF,
+        printTimestamp
+    };
 }

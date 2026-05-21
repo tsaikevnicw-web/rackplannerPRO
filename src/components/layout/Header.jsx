@@ -1,4 +1,4 @@
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
@@ -6,11 +6,11 @@ const Header = () => {
         devices,
         viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
         setSelectedIds, selectedIds,
-        isFitToScreen, setIsFitToScreen, showCables, setShowCables,
+        isFitToScreen, setIsFitToScreen, showCables, setShowCables, showHeatmap, setShowHeatmap,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
         isUserManualOpen, setIsUserManualOpen,
         isExporting, fileInputRef,
-        handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage,
+        handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
         undo, redo, canUndo, canRedo,
         deviceSearchTerm, setDeviceSearchTerm
@@ -100,6 +100,9 @@ const Header = () => {
                                     </button>
                                     <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-500/15 hover:text-purple-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Share2 className="w-4 h-4" /> 匯出網路線路表 (.csv)
+                                    </button>
+                                    <button onClick={handlePrintPDF} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-amber-500/15 hover:text-amber-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                        <Printer className="w-4 h-4 text-amber-500 animate-pulse" /> 列印 PDF 規格書
                                     </button>
                                     <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
                                     <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
@@ -284,6 +287,21 @@ const Header = () => {
                         <span className="whitespace-nowrap">{showCables ? '顯示線路' : '隱藏線路'}</span>
                     </button>
 
+                    {/* 熱圖模式 */}
+                    {viewMode !== 'network' && (
+                        <button
+                            onClick={() => setShowHeatmap(!showHeatmap)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                                showHeatmap
+                                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.2)] font-bold'
+                                    : 'bg-slate-700/40 text-slate-500 border-slate-600/50 hover:text-slate-300 hover:bg-slate-700/60'
+                            }`}
+                        >
+                            <Flame className={`w-3.5 h-3.5 ${showHeatmap ? 'animate-bounce text-amber-500' : ''}`} />
+                            <span className="whitespace-nowrap">熱圖模式</span>
+                        </button>
+                    )}
+
                     {/* 視圖切換 Segmented Control */}
                     <div className="flex bg-[#060c16] rounded-xl p-1 border border-slate-700/50 shadow-inner items-center">
                         {(viewMode === 'overview' || viewMode === 'network') && (
@@ -318,6 +336,14 @@ const Header = () => {
                             }`}
                         >
                             <LayoutDashboard className="w-3.5 h-3.5" /> 總覽
+                        </button>
+                        <button
+                            onClick={() => { setViewMode('3d'); setSelectedId(null); }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                                viewMode === '3d' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Box className="w-3.5 h-3.5" /> 3D 視圖
                         </button>
                         <button
                             onClick={() => { setViewMode('network'); setSelectedId(null); }}

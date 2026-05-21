@@ -6,7 +6,7 @@ import { useRackInteractions } from '../../hooks/useRackInteractions';
 
 const RackView = ({ racksToRender }) => {
     const { 
-        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
+        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, showHeatmap, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
     } = useRackPlanner();
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
@@ -172,6 +172,29 @@ const RackView = ({ racksToRender }) => {
                             const isHighGravity = checkHighGravityWarning(dev, rack);
                             const devWeight = getDeviceWeight(dev);
 
+                            // Heatmap thermal status logic
+                            let heatmapGlowClass = '';
+                            let heatmapBgClass = '';
+                            if (showHeatmap) {
+                                const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
+                                const gpuCooling  = dev.hardwareSpecs?.cooling?.gpu  || 'AC';
+                                const hasLC = dev.type === 'CDU4U' || dev.type === 'SideCDU' || hostCooling === 'LC' || gpuCooling === 'LC';
+                                
+                                if (hasLC) {
+                                    heatmapGlowClass = 'shadow-[0_0_22px_rgba(6,182,212,0.85)] ring-1 ring-cyan-400/80';
+                                    heatmapBgClass = 'bg-[#031d27]/90 border-cyan-500/80';
+                                } else if ((dev.power || 0) > 1000) {
+                                    heatmapGlowClass = 'shadow-[0_0_22px_rgba(239,68,68,0.85)] ring-1 ring-red-500/80 animate-pulse';
+                                    heatmapBgClass = 'bg-[#290a0a]/90 border-red-500/80';
+                                } else if ((dev.power || 0) >= 300) {
+                                    heatmapGlowClass = 'shadow-[0_0_22px_rgba(245,158,11,0.85)] ring-1 ring-amber-500/80';
+                                    heatmapBgClass = 'bg-[#281305]/90 border-amber-500/70';
+                                } else {
+                                    heatmapGlowClass = 'shadow-[0_0_16px_rgba(34,197,94,0.65)] ring-1 ring-emerald-500/60';
+                                    heatmapBgClass = 'bg-[#031c10]/90 border-emerald-500/50';
+                                }
+                            }
+
                             return (
                                 <div
                                     id={`device-${dev.id}`}
@@ -186,7 +209,8 @@ const RackView = ({ racksToRender }) => {
                                             setSelectedIds([dev.id]);
                                         }
                                     }}
-                                    className={`absolute left-[8px] right-[8px] cursor-grab active:cursor-grabbing rounded-sm transition-all duration-200 ${tStyle.bg} ${tStyle.border} border 
+                                    className={`absolute left-[8px] right-[8px] cursor-grab active:cursor-grabbing rounded-sm transition-all duration-200 
+                                        ${showHeatmap ? `${heatmapBgClass} ${heatmapGlowClass}` : `${tStyle.bg} ${tStyle.border}`} border 
                                         ${isSelected ? 'ring-2 ring-white z-30 brightness-125 shadow-[0_0_25px_rgba(255,255,255,0.15)]' : `hover:brightness-125 z-20 shadow-xl ${tStyle.glow}`}
                                         ${isSearchMatch ? 'ring-4 ring-yellow-400 animate-pulse shadow-[0_0_30px_#facc15] z-30 brightness-125' : ''}
                                     `}
@@ -645,7 +669,11 @@ const RackView = ({ racksToRender }) => {
                             <div className="bg-gradient-to-b from-cyan-900 to-slate-800 w-full h-12 rounded-t-xl border-t-2 border-x-2 border-cyan-700 flex justify-center items-center shadow-xl relative overflow-hidden">
                                 <div className="text-[10px] font-mono text-cyan-300 font-bold drop-shadow-md tracking-wider">LIQUID TO AIR CDU</div>
                             </div>
-                            <div className={`w-full relative shadow-[0_0_40px_rgba(0,0,0,0.8)] border-x-2 border-slate-700 ${tStyle.bg} flex flex-col items-center py-6`} style={{ height: rackMaxU * U_HEIGHT }}>
+                            <div className={`w-full relative border-x-2 border-slate-700 flex flex-col items-center py-6 transition-all duration-200 ${
+                                showHeatmap 
+                                    ? 'bg-[#031d27]/90 border-cyan-500/80 shadow-[0_0_25px_rgba(6,182,212,0.8)] ring-1 ring-cyan-400/80' 
+                                    : `${tStyle.bg} shadow-[0_0_40px_rgba(0,0,0,0.8)]`
+                            }`} style={{ height: rackMaxU * U_HEIGHT }}>
                                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(0deg,transparent,transparent_4px,#000_4px,#000_8px)] mix-blend-overlay"></div>
                                 <Icon className="w-14 h-14 text-cyan-400 opacity-90 mb-4 drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]" />
                                 <div className="text-cyan-100 font-bold text-center px-4 leading-relaxed z-10">{dev.customName}</div>

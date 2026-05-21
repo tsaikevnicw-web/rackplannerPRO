@@ -3,7 +3,7 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 import { getDeviceLayerPrefix, getDeviceGroupName } from '../../utils/helpers';
 
 const CablesOverlay = () => {
-    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups } = useRackPlanner();
+    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
@@ -130,7 +130,13 @@ const CablesOverlay = () => {
         };
     }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode, devices]);
 
-    if (!showCables && !selectedId) return null;
+    // During PDF generation, cables are driven strictly by showCables flag
+    // (ignore selectedId so rack screenshots are cable-free and topo is fully visible)
+    if (isGeneratingPDF) {
+        if (!showCables) return null;
+    } else {
+        if (!showCables && !selectedId) return null;
+    }
 
     const GROUP_COLORS = [
         '#22c55e', '#ef4444', '#3b82f6', 
@@ -269,7 +275,7 @@ const CablesOverlay = () => {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                 if (targetKey) {
                     const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
-                    const isHighlighted = selectedId && (dev.id === selectedId || targetDevId === selectedId);
+                    const isHighlighted = !isGeneratingPDF && selectedId && (dev.id === selectedId || targetDevId === selectedId);
                     const shouldDraw = showCables || isHighlighted;
                     
                     if (shouldDraw) {
@@ -308,7 +314,7 @@ const CablesOverlay = () => {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" className="absolute inset-0 pointer-events-none z-[100]" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
             {connectionPaths.map(conn => {
-                const opacityValue = conn.isHighlighted ? 1 : (selectedId ? 0.03 : 0.8);
+                const opacityValue = conn.isHighlighted ? 1 : (selectedId && !isGeneratingPDF ? 0.03 : 0.8);
                 const filterValue = conn.isHighlighted ? 'drop-shadow(0px 0px 5px rgba(255,255,255,0.7))' : 'none';
                 const thickness = conn.isHighlighted ? (conn.isGroupConnection ? "6" : "3") : (conn.isGroupConnection ? "4" : "2");
                 

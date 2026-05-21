@@ -102,6 +102,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [drawing, setDrawing] = useState(null);
     const [portCoords, setPortCoords] = useState({});
     const [showCables, setShowCables] = useState(true);
+    const [showHeatmap, setShowHeatmap] = useState(false);
 
     // Modals
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '', title: '提示', type: 'info' });
@@ -121,7 +122,15 @@ export const RackPlannerProvider = ({ children }) => {
     const showAlert = (message, title = '提示', type = 'info') => setAlertModal({ isOpen: true, message, title, type });
     alertModalRef.current = showAlert;
 
-    const { handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage } = useExport(racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert);
+    const { 
+        handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
+        rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp 
+    } = useExport(
+        racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert,
+        viewMode, setViewMode, activeRackId, setActiveRackId,
+        expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
+        scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen
+    );
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -145,7 +154,7 @@ export const RackPlannerProvider = ({ children }) => {
             undo, redo, canUndo, canRedo,
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
-            showCables, setShowCables, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
+            showCables, setShowCables, showHeatmap, setShowHeatmap, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
             clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
             isUserManualOpen, setIsUserManualOpen,
             isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
@@ -153,7 +162,8 @@ export const RackPlannerProvider = ({ children }) => {
             rackContainerRef, mainAreaRef, fileInputRef,
             connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
             handleApplyRATemplate,
-            showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange
+            showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
+            handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
         }}>
             {children}
         </RackPlannerContext.Provider>

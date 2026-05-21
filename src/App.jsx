@@ -4,8 +4,10 @@ import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import RightPanel from './components/layout/RightPanel';
 import RackView from './components/rack/RackView';
+import RackView3D from './components/rack/RackView3D';
 import NetworkTopology from './components/network/NetworkTopology';
 import CablesOverlay from './components/rack/CablesOverlay';
+import PrintLayout from './components/layout/PrintLayout';
 import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
 import UserManualModal from './components/layout/UserManualModal';
@@ -13,6 +15,7 @@ import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
 import example2Data from './data/example2Data.json';
+
 
 const AppContent = () => {
     const { 
@@ -22,12 +25,12 @@ const AppContent = () => {
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
-        raModalState, setRaModalState, handleApplyRATemplate, setViewMode
+        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF
     } = useRackPlanner();
 
     // Scale Logic
     useEffect(() => {
-        if (!isFitToScreen || viewMode === 'single' || !mainAreaRef.current || !rackContainerRef.current) {
+        if (!isFitToScreen || viewMode === 'single' || viewMode === '3d' || !mainAreaRef.current || !rackContainerRef.current) {
             setScaleFactor(1);
             return;
         }
@@ -277,8 +280,9 @@ const AppContent = () => {
 
 
     return (
-        <div className="flex flex-col h-screen bg-[#060c16] text-slate-200 overflow-hidden font-sans select-none">
-            <Header />
+        <>
+            <div className="screen-layout flex flex-col h-screen bg-[#060c16] text-slate-200 overflow-hidden font-sans select-none">
+                <Header />
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
                 <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#060c16] flex flex-col">
@@ -300,9 +304,11 @@ const AppContent = () => {
                                 height: viewMode !== 'single' ? 'max-content' : undefined
                             }}
                         >
-                             <CablesOverlay />
+                             {viewMode !== '3d' && <CablesOverlay />}
                              {viewMode === 'network' ? (
                                  <NetworkTopology nsSpineDevs={nsSpineDevs} nsLeafDevs={nsLeafDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
+                             ) : viewMode === '3d' ? (
+                                 <RackView3D racksToRender={racksToRender} />
                              ) : (
                                  <RackView racksToRender={racksToRender} />
                              )}
@@ -665,7 +671,18 @@ const AppContent = () => {
                 </div>
             )}
             <UserManualModal />
-        </div>
+            {isGeneratingPDF && (
+                <div className="fixed inset-0 bg-[#020617]/85 backdrop-blur-md z-[10000] flex flex-col items-center justify-center text-white select-none">
+                    <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/60 border border-slate-700/50 shadow-2xl">
+                        <div className="w-12 h-12 border-4 border-[#D71422] border-t-transparent rounded-full animate-spin"></div>
+                        <div className="text-lg font-bold tracking-wider mt-2">正在產生 PDF 規格書</div>
+                        <div className="text-xs text-slate-400">正在自動擷取機櫃與網路拓撲圖，請稍候...</div>
+                    </div>
+                </div>
+            )}
+            </div>
+            <PrintLayout />
+        </>
     );
 };
 
