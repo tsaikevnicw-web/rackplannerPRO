@@ -89,17 +89,38 @@ const CablesOverlay = () => {
 
         const handleConnectEvent = (e) => {
             if (e.detail && e.detail.drawing) {
-                const { sourceId, sourcePortKey } = e.detail.drawing;
-                const { targetDevId, targetPortKey } = e.detail;
+                let { sourceId, sourcePortKey } = e.detail.drawing;
+                let { targetDevId, targetPortKey } = e.detail;
 
                 const sourceDevice = devices.find(d => d.id === sourceId);
-                const isServerOrStorage = sourceDevice &&
-                    ((sourceDevice.type || '').startsWith('Server') ||
-                     (sourceDevice.type || '').startsWith('Storage'));
+                const targetDevice = devices.find(d => d.id === targetDevId);
+
+                if (sourceDevice && targetDevice) {
+                    const isSourceCDU = sourceDevice.type === 'CDU4U' || sourceDevice.type === 'SideCDU';
+                    const isTargetCDU = targetDevice.type === 'CDU4U' || targetDevice.type === 'SideCDU';
+                    const isWaterPort = (port) => ['water_cold', 'water_hot', 'host_water_cold', 'host_water_hot'].includes(port);
+
+                    if ((isSourceCDU || isTargetCDU) && isWaterPort(sourcePortKey) && isWaterPort(targetPortKey)) {
+                        // If the source is a CDU and target is not, swap so the server is the source.
+                        if (isSourceCDU && !isTargetCDU) {
+                            const tempId = sourceId;
+                            const tempPort = sourcePortKey;
+                            sourceId = targetDevId;
+                            sourcePortKey = targetPortKey;
+                            targetDevId = tempId;
+                            targetPortKey = tempPort;
+                        }
+                    }
+                }
+
+                const finalSourceDevice = devices.find(d => d.id === sourceId);
+                const isServerOrStorage = finalSourceDevice &&
+                    ((finalSourceDevice.type || '').startsWith('Server') ||
+                     (finalSourceDevice.type || '').startsWith('Storage'));
 
                 if (isServerOrStorage) {
                     const MAX_CONN = 8;
-                    const existing = sourceDevice.connections?.[sourcePortKey];
+                    const existing = finalSourceDevice.connections?.[sourcePortKey];
                     if (!existing) {
                         // 第一 slot 尚空
                         handleConnectionChange(sourceId, sourcePortKey, `${targetDevId}-${targetPortKey}`);
@@ -108,7 +129,7 @@ const CablesOverlay = () => {
                         let useKey = null;
                         for (let i = 2; i <= MAX_CONN; i++) {
                             const slotKey = `${sourcePortKey}__${i}`;
-                            if (!sourceDevice.connections?.[slotKey]) { useKey = slotKey; break; }
+                            if (!finalSourceDevice.connections?.[slotKey]) { useKey = slotKey; break; }
                         }
                         if (useKey) handleConnectionChange(sourceId, useKey, `${targetDevId}-${targetPortKey}`);
                         // 超過 8 條則不作用

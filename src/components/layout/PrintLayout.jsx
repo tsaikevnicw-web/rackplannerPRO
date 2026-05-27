@@ -420,12 +420,10 @@ const PrintLayout = () => {
                                 if (dev.connections) {
                                     Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                                         if (!targetKey) return;
-                                        const firstDashIdx = targetKey.indexOf('-');
-                                        if (firstDashIdx === -1) return;
-                                        const targetDevId = targetKey.substring(0, firstDashIdx);
-                                        const targetPortKey = targetKey.substring(firstDashIdx + 1);
-                                        const targetDev = devices.find(d => d.id === targetDevId);
+                                        const targetDev = devices.find(d => targetKey.startsWith(d.id + '-'));
                                         if (targetDev) {
+                                            const targetDevId = targetDev.id;
+                                            const targetPortKey = targetKey.substring(targetDevId.length + 1);
                                             const isSwitch = (d) => (d.type || '').startsWith('Switch') || d.type === 'Router';
                                             let cableRole = 'General';
                                             if (isSwitch(targetDev)) {

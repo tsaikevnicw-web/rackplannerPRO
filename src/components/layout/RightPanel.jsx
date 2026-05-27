@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
-import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap } from 'lucide-react';
+import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets } from 'lucide-react';
 
 const RightPanel = () => {
     const { 
@@ -546,6 +546,41 @@ const RightPanel = () => {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* CDU Configuration */}
+                {selectedDevice.type === 'CDU4U' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-400"/> 設備功耗 (W)</label>
+                                <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-400"/> 設備報價 (USD)</label>
+                                <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
+                            </div>
+                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <label className="block text-[11px] font-bold text-cyan-400 mb-1.5 flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-cyan-400"/> In Rack CDU 設定</label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
+                                        <select value={selectedDevice.size || 4} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
+                                            <option value={4}>4U</option>
+                                            <option value={5}>5U</option>
+                                            <option value={6}>6U</option>
+                                            <option value={7}>7U</option>
+                                            <option value={8}>8U</option>
+                                            <option value={9}>9U</option>
+                                            <option value={10}>10U</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

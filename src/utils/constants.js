@@ -39,7 +39,7 @@ export const DEVICE_TEMPLATES = [
     {
         isGroup: true, name: 'CDU', icon: Droplets, theme: 'cyan',
         subItems: [
-            { type: 'CDU4U', name: '4U In Rack CDU', size: 4, icon: Droplets, theme: 'cyan', power: 800, coolingCapacity: 80000 },
+            { type: 'CDU4U', name: 'In Rack CDU', size: 4, icon: Droplets, theme: 'cyan', power: 800, coolingCapacity: 80000 },
             { type: 'SideCDU', name: 'Liquid to Air CDU', size: 48, icon: Droplets, theme: 'cyan', power: 2500, coolingCapacity: 150000 },
         ]
     },

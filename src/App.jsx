@@ -11,6 +11,7 @@ import PrintLayout from './components/layout/PrintLayout';
 import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
 import UserManualModal from './components/layout/UserManualModal';
+import IssueTrackerModal from './components/layout/IssueTrackerModal';
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
@@ -671,6 +672,7 @@ const AppContent = () => {
                 </div>
             )}
             <UserManualModal />
+            <IssueTrackerModal />
             {isGeneratingPDF && (
                 <div className="fixed inset-0 bg-[#020617]/85 backdrop-blur-md z-[10000] flex flex-col items-center justify-center text-white select-none">
                     <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/60 border border-slate-700/50 shadow-2xl">

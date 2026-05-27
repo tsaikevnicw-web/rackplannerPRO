@@ -82,41 +82,67 @@ export function useRackData(alertModalRef) {
             return;
         }
 
-        const parts = targetConnection.split('-port-');
-        if (parts.length < 2) return;
-        const targetSwitchId = parts[0];
+        if (targetConnection === `${deviceId}-${portKey}`) return;
 
         setDevices(prev => {
             const dev = prev.find(d => d.id === deviceId);
-            const targetSwitch = prev.find(d => d.id === targetSwitchId);
-            if (!dev || !targetSwitch) return prev;
+            const targetDev = prev.find(d => targetConnection.startsWith(d.id + '-'));
+            if (!dev || !targetDev) return prev;
 
-            const portMax = getSwitchPortCount(targetSwitch);
-            
-            const occupiedPorts = new Set();
-            prev.forEach(d => {
-                if (d.connections) {
-                    Object.entries(d.connections).forEach(([key, tg]) => {
-                        if (d.id === deviceId && key === portKey) return;
-                        if (tg && tg.startsWith(`${targetSwitchId}-port-`)) {
-                            occupiedPorts.add(tg);
-                        }
+            const targetDevId = targetDev.id;
+            const targetPortKey = targetConnection.substring(targetDevId.length + 1);
+
+            const isSwitchOrRouter = (targetDev.type || '').startsWith('Switch') || targetDev.type === 'Router';
+
+            if (isSwitchOrRouter) {
+                const portMax = getSwitchPortCount(targetDev);
+                const occupiedPorts = new Set();
+                prev.forEach(d => {
+                    if (d.connections) {
+                        Object.entries(d.connections).forEach(([key, tg]) => {
+                            if (d.id === deviceId && key === portKey) return;
+                            if (tg && tg.startsWith(`${targetDevId}-port-`)) {
+                                occupiedPorts.add(tg);
+                            }
+                        });
+                    }
+                });
+
+                if (occupiedPorts.size >= portMax) {
+                    if (alertModalRef?.current) {
+                        alertModalRef.current(`警告：網路設備【${targetDev.customName || targetDev.type}】的連接埠已達上限 (${portMax} 埠)，無法新增連線！`, '連線失敗', 'error');
+                    }
+                    return prev;
+                }
+
+                if (occupiedPorts.has(targetConnection)) {
+                    if (alertModalRef?.current) {
+                        alertModalRef.current(`警告：此連接埠 ${targetPortKey.replace('port-', '')} 已被佔用！`, '連線失敗', 'error');
+                    }
+                    return prev;
+                }
+            } else {
+                // For non-switch connections (like Server to Server network anchors, or Server to CDU water cooling):
+                // Check if the target port is already occupied in the devices connections
+                const isTargetCduWaterPort = (targetDev.type === 'CDU4U' || targetDev.type === 'SideCDU') &&
+                    ['water_cold', 'water_hot'].includes(targetPortKey);
+
+                if (!isTargetCduWaterPort) {
+                    const isOccupied = prev.some(d => {
+                        if (!d.connections) return false;
+                        return Object.entries(d.connections).some(([k, tg]) => {
+                            if (d.id === deviceId && k === portKey) return false;
+                            return tg === targetConnection || (tg && `${d.id}-${k}` === targetConnection);
+                        });
                     });
+                    
+                    if (isOccupied) {
+                        if (alertModalRef?.current) {
+                            alertModalRef.current(`警告：此連接埠/錨點已被佔用！`, '連線失敗', 'error');
+                        }
+                        return prev;
+                    }
                 }
-            });
-
-            if (occupiedPorts.size >= portMax) {
-                if (alertModalRef?.current) {
-                    alertModalRef.current(`警告：網路設備【${targetSwitch.customName || targetSwitch.type}】的連接埠已達上限 (${portMax} 埠)，無法新增連線！`, '連線失敗', 'error');
-                }
-                return prev;
-            }
-
-            if (occupiedPorts.has(targetConnection)) {
-                if (alertModalRef?.current) {
-                    alertModalRef.current(`警告：此連接埠 ${parts[1]} 已被佔用！`, '連線失敗', 'error');
-                }
-                return prev;
             }
 
             return prev.map(d => {

@@ -28,11 +28,11 @@ const RackView = ({ racksToRender }) => {
         if (portKey === 'water_cold' || portKey === 'host_water_cold') {
             waterConnectedColor = isConnected
                 ? 'bg-blue-400 shadow-[0_0_10px_#60a5fa] border-blue-300'
-                : 'bg-slate-700 border-blue-700/50 opacity-70';
+                : 'bg-blue-600 border-blue-500 shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]';
         } else if (portKey === 'water_hot' || portKey === 'host_water_hot') {
             waterConnectedColor = isConnected
                 ? 'bg-red-400 shadow-[0_0_10px_#f87171] border-red-300'
-                : 'bg-slate-700 border-red-700/50 opacity-70';
+                : 'bg-red-600 border-red-500 shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]';
         }
         
         const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
@@ -249,7 +249,7 @@ const RackView = ({ racksToRender }) => {
 
                                         {/* 右側：Ports 區域 */}
                                         <div className="relative z-30 flex items-center justify-end shrink-0 h-full pr-2">
-                                            {(getServerCategory(dev) === 'General' || (dev.type || '').startsWith('Storage') || dev.type === 'CDU4U') && (() => {
+                                            {(getServerCategory(dev) === 'General' || (dev.type || '').startsWith('Storage')) && (() => {
                                                 const is2U = dev.size >= 2 || dev.type === 'Storage2U';
                                                 const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
                                                 const hasLC = hostCooling === 'LC';
@@ -318,7 +318,7 @@ const RackView = ({ racksToRender }) => {
                                                     );
                                                 }
 
-                                                // Default (1U, Storage, CDU) layout
+                                                // Default (1U, Storage) layout
                                                 return (
                                                     <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
                                                         {((dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage')) && (
@@ -357,25 +357,34 @@ const RackView = ({ racksToRender }) => {
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {dev.type === 'CDU4U' && (
-                                                            <>
-                                                                <div className="flex items-center gap-1">
-                                                                    <div className="text-[10px] font-bold font-mono text-blue-300/80 leading-normal pb-0.5">Cold</div>
-                                                                    {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
-                                                                </div>
-                                                                <div className="flex items-center gap-1">
-                                                                    <div className="text-[10px] font-bold font-mono text-red-300/80 leading-normal pb-0.5">Hot</div>
-                                                                    {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                        {dev.type !== 'CDU4U' && hasLC && (
+                                                        {hasLC && (
                                                             <div className="border-l border-cyan-900/50 pl-2">
                                                                 {renderWaterAnchors()}
                                                             </div>
                                                         )}
                                                         <div className="flex items-center gap-1.5">
                                                             <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="flex gap-0.5">
+                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            {dev.type === 'CDU4U' && (() => {
+                                                return (
+                                                    <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full font-mono">
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="text-[10px] font-bold text-blue-300/80 leading-normal pb-0.5">Cold</div>
+                                                            {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="text-[10px] font-bold text-red-300/80 leading-normal pb-0.5">Hot</div>
+                                                            {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="text-[10px] font-bold text-white/60 leading-normal pb-0.5">BMC</div>
                                                             <div className="flex gap-0.5">
                                                                 {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
                                                             </div>

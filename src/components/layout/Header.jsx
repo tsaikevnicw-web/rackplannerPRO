@@ -1,4 +1,4 @@
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
@@ -9,6 +9,7 @@ const Header = () => {
         isFitToScreen, setIsFitToScreen, showCables, setShowCables, showHeatmap, setShowHeatmap,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
         isUserManualOpen, setIsUserManualOpen,
+        isBugTrackerOpen, setIsBugTrackerOpen,
         isExporting, fileInputRef,
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
@@ -58,6 +59,14 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsBugTrackerOpen(true)}
+                        disabled={isExporting}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/50 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <Bug className="w-4 h-4" /> BUG 紀錄
+                    </button>
+
                     <button
                         onClick={handleExportImage}
                         disabled={isExporting}

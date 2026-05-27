@@ -270,6 +270,23 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 </div>
                             </div>
                         );
+                    })() : dev.type === 'CDU4U' ? (() => {
+                        return (
+                            <div className="flex flex-wrap justify-center gap-4">
+                                <div className="flex items-center gap-1">
+                                    <div className="text-[10px] font-bold font-mono text-blue-300/80 leading-normal pb-0.5">Cold</div>
+                                    {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="text-[10px] font-bold font-mono text-red-300/80 leading-normal pb-0.5">Hot</div>
+                                    {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                </div>
+                            </div>
+                        );
                     })() : (() => {
                         const pcieSlotQty = dev.hardwareSpecs?.pcieSlotQty?.qty || 2;
                         return (

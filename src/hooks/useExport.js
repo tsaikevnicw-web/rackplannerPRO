@@ -285,8 +285,7 @@ export function useExport(
             if (dev.connections) {
                 Object.entries(dev.connections).forEach(([portKey, targetKey]) => {
                     if (!targetKey) return;
-                    const targetDeviceId = targetKey.split('-port-')[0];
-                    const targetDevice = devices.find(d => d.id === targetDeviceId);
+                    const targetDevice = devices.find(d => targetKey.startsWith(d.id + '-'));
                     if (targetDevice) {
                         if (getServerCategory(dev) === 'AI' && portKey.startsWith('cx8-')) {
                             const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
@@ -331,15 +330,13 @@ export function useExport(
         devices.forEach(d => {
             if (d.connections) {
                 Object.entries(d.connections).forEach(([localKey, targetKey]) => {
-                    if (targetKey) {
-                        const firstDashIdx = targetKey.indexOf('-');
-                        if (firstDashIdx !== -1) {
-                            const targetDevId = targetKey.substring(0, firstDashIdx);
-                            const targetPortKey = targetKey.substring(firstDashIdx + 1);
+                        const targetDevice = devices.find(x => targetKey.startsWith(x.id + '-'));
+                        if (targetDevice) {
+                            const targetDevId = targetDevice.id;
+                            const targetPortKey = targetKey.substring(targetDevId.length + 1);
                             linkMap[`${d.id}-${localKey}`] = { devId: targetDevId, portKey: targetPortKey };
                             linkMap[targetKey] = { devId: d.id, portKey: localKey };
                         }
-                    }
                 });
             }
         });
