@@ -1,11 +1,88 @@
-import { useState, useRef, useMemo, useCallback } from 'react';
-import { getNicCount, getSwitchPortCount, getFabricGroup } from '../utils/helpers';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { getNicCount, getSwitchPortCount, getFabricGroup, getServerCategory } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
 export function useRackData(alertModalRef) {
     const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 20000 }]);
     const [devices, setDevices] = useState([]);
-    
+
+    // 自動管理水冷 (LC) 連線與斷開
+    useEffect(() => {
+        let changed = false;
+        const nextDevices = devices.map(dev => {
+            const isServer = (dev.type || '').startsWith('Server') || (dev.type || '').startsWith('Storage');
+            if (!isServer) return dev;
+
+            const hostCooling = dev.hardwareSpecs?.cooling?.host || 'AC';
+            const gpuCooling  = dev.hardwareSpecs?.cooling?.gpu  || 'AC';
+            const isHostLC = hostCooling === 'LC';
+            const isGpuLC = gpuCooling === 'LC';
+
+            const cdu = devices.find(d => 
+                d.rackId === dev.rackId && 
+                (d.type === 'CDU4U' || d.type === 'SideCDU')
+            );
+
+            let newConns = { ...(dev.connections || {}) };
+            let devChanged = false;
+
+            if (isHostLC && cdu) {
+                const expectedCold = `${cdu.id}-water_cold`;
+                const expectedHot = `${cdu.id}-water_hot`;
+                if (newConns.host_water_cold !== expectedCold) {
+                    newConns.host_water_cold = expectedCold;
+                    devChanged = true;
+                }
+                if (newConns.host_water_hot !== expectedHot) {
+                    newConns.host_water_hot = expectedHot;
+                    devChanged = true;
+                }
+            } else {
+                if (newConns.host_water_cold) {
+                    delete newConns.host_water_cold;
+                    devChanged = true;
+                }
+                if (newConns.host_water_hot) {
+                    delete newConns.host_water_hot;
+                    devChanged = true;
+                }
+            }
+
+            const isAI = getServerCategory(dev) === 'AI';
+            if (isGpuLC && isAI && cdu) {
+                const expectedCold = `${cdu.id}-water_cold`;
+                const expectedHot = `${cdu.id}-water_hot`;
+                if (newConns.water_cold !== expectedCold) {
+                    newConns.water_cold = expectedCold;
+                    devChanged = true;
+                }
+                if (newConns.water_hot !== expectedHot) {
+                    newConns.water_hot = expectedHot;
+                    devChanged = true;
+                }
+            } else {
+                if (newConns.water_cold) {
+                    delete newConns.water_cold;
+                    devChanged = true;
+                }
+                if (newConns.water_hot) {
+                    delete newConns.water_hot;
+                    devChanged = true;
+                }
+            }
+
+            if (devChanged) {
+                changed = true;
+                return { ...dev, connections: newConns };
+            }
+            return dev;
+        });
+
+        if (changed) {
+            setDevices(nextDevices);
+        }
+    }, [devices, racks]);
+
     // Core references for calculations
     const generateId = () => Math.random().toString(36).substr(2, 9);
     

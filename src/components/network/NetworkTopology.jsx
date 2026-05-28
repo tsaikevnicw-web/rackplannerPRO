@@ -97,7 +97,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
             ? hdNodes.reduce((sum, node) => sum + getNicCount(dev, `ocp_${node}`), 0)
             : getNicCount(dev, 'ocp');
         const portCount = getSwitchPortCount(dev);
-        const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount) : null;
+        const superNicMgtCount = getNicCount(dev, 'super_nic_mgt');
+        const portLayout = ((dev.type || '').startsWith('Switch') || dev.type === 'Router') ? getSwitchPortLayout(portCount, dev.size) : null;
 
         // 計算 Switch 佔用埠數與總埠數
         let usedPortsCount = 0;
@@ -134,6 +135,16 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
         return (
             <div
                 key={dev.id}
+                onMouseUp={(e) => {
+                    if (drawing && drawing.sourceId !== dev.id) {
+                        e.stopPropagation();
+                        const event = new CustomEvent('rackplanner-connect', { 
+                            detail: { targetDevId: dev.id, targetPortKey: null, drawing }
+                        });
+                        window.dispatchEvent(event);
+                        setDrawing(null);
+                    }
+                }}
                 onClick={(e) => {
                     e.stopPropagation();
                     if (e.shiftKey || e.ctrlKey) {
@@ -266,6 +277,14 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                         );
                                     })}
                                     {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                    {superNicMgtCount > 0 && (
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                            <div className="flex gap-0.5">
+                                                {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50'))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                 </div>
                             </div>
@@ -273,14 +292,6 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                     })() : dev.type === 'CDU4U' ? (() => {
                         return (
                             <div className="flex flex-wrap justify-center gap-4">
-                                <div className="flex items-center gap-1">
-                                    <div className="text-[10px] font-bold font-mono text-blue-300/80 leading-normal pb-0.5">Cold</div>
-                                    {renderPortAnchor(dev, 'water_cold', 'Cold Water Inlet', 'hover:border-blue-300 hover:bg-blue-500/40', 'w-3 h-3 shrink-0')}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <div className="text-[10px] font-bold font-mono text-red-300/80 leading-normal pb-0.5">Hot</div>
-                                    {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
-                                </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                     {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
@@ -305,6 +316,14 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                     );
                                 })}
                                 {ocpCount > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{dev.hardwareSpecs?.ocp?.model || 'OCP'}</div><div className="flex gap-1.5">{Array.from({ length: ocpCount }).map((_, i) => renderPortAnchor(dev, `ocp-${i + 1}`, `OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
+                                {superNicMgtCount > 0 && (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="text-[10px] font-bold font-mono text-violet-400/80 leading-normal pb-0.5">S-NIC-M</div>
+                                        <div className="flex gap-0.5">
+                                            {Array.from({ length: superNicMgtCount }).map((_, i) => renderPortAnchor(dev, `super_nic_mgt-${i + 1}`, `Super NIC Mgt Port ${i + 1}`, 'hover:border-violet-400 hover:bg-violet-500/50'))}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                             </div>
                         );

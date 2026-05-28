@@ -321,7 +321,7 @@ const AppContent = () => {
 
             {/* Modals */}
             {alertModal.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-700/50 flex items-center gap-2.5 bg-[#111e2e]">
                             {alertModal.type === 'error' && <X className="w-5 h-5 text-rose-400" />}
@@ -339,7 +339,7 @@ const AppContent = () => {
             )}
 
             {clearConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Eraser className="w-5 h-5" /> 警告：一鍵清除</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要清除{clearConfirm.type === 'single' ? '「當前機櫃」' : '「所有機櫃」'} 中的所有設備嗎？</p><p className="text-sm text-slate-500 mt-2">此操作無法復原，請確認您已經匯出存檔！</p></div>
@@ -352,7 +352,7 @@ const AppContent = () => {
             )}
 
             {deleteRackConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除機櫃</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要刪除這個機櫃嗎？</p><p className="text-sm text-slate-500 mt-2">此機櫃內的所有設備將被一併移除，且與其相關的網路線也會被清除。此操作無法復原！</p></div>
@@ -365,7 +365,7 @@ const AppContent = () => {
             )}
 
             {clearDeviceConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-amber-400 flex items-center gap-2"><Unplug className="w-5 h-5" /> 警告：清除設備連線</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要清除此設備的所有網路連線嗎？</p><p className="text-sm text-slate-500 mt-2">包含此設備主動連出的線路，以及其他設備連向此設備的線路都會被一併徹底移除。</p></div>
@@ -378,7 +378,7 @@ const AppContent = () => {
             )}
 
             {deleteDeviceConfirm.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-700/50 bg-[#111e2e]"><h3 className="text-base font-bold text-rose-400 flex items-center gap-2"><Trash2 className="w-5 h-5" /> 警告：刪除設備</h3></div>
                         <div className="p-6 text-slate-300"><p>確定要從機櫃中完全刪除這台設備嗎？</p><p className="text-sm text-slate-500 mt-2">此設備以及所有相連的網路線都將被移除，且此操作無法復原！</p></div>
@@ -391,7 +391,7 @@ const AppContent = () => {
             )}
 
             {raModalState.isOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[20000] flex items-center justify-center p-4">
                     <div className="bg-[#0d1b2e] border border-slate-600/60 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 mt-10 mb-10 max-h-[90vh]">
                         <div className="px-6 py-4 border-b border-slate-700/50 flex justify-between items-center bg-[#111e2e]">
                             <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2">
@@ -684,6 +684,11 @@ const AppContent = () => {
             )}
             </div>
             <PrintLayout />
+            {isGeneratingPDF && (
+                <div id="pdf-print-area" style={{ position: 'absolute', left: '-9999px', top: '0', width: '794px', background: '#ffffff', color: '#0d1b2e' }}>
+                    <PrintLayout isForDownload={true} />
+                </div>
+            )}
         </>
     );
 };

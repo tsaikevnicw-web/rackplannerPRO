@@ -7,28 +7,41 @@ const IssueTrackerModal = () => {
     const [bugs, setBugs] = useState([]);
     const [newBugContent, setNewBugContent] = useState('');
 
-    // Load bugs from localStorage on mount or when modal opens
+    // Fetch bugs from backend
+    const fetchBugs = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.BASE_URL}api/bugs`);
+            if (response.ok) {
+                const data = await response.json();
+                setBugs(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch bug reports:', e);
+        }
+    };
+
+    // Save bugs to backend
+    const saveToBackend = async (updatedBugs) => {
+        setBugs(updatedBugs);
+        try {
+            await fetch(`${import.meta.env.BASE_URL}api/bugs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedBugs)
+            });
+        } catch (e) {
+            console.error('Failed to save bug reports:', e);
+        }
+    };
+
+    // Load bugs when modal opens
     useEffect(() => {
         if (isBugTrackerOpen) {
-            const stored = localStorage.getItem('rackplanner_bug_reports');
-            if (stored) {
-                try {
-                    setBugs(JSON.parse(stored));
-                } catch (e) {
-                    console.error('Failed to parse bug reports:', e);
-                    setBugs([]);
-                }
-            } else {
-                setBugs([]);
-            }
+            fetchBugs();
         }
     }, [isBugTrackerOpen]);
-
-    // Save bugs to localStorage whenever the bugs state changes
-    const saveToLocalStorage = (updatedBugs) => {
-        setBugs(updatedBugs);
-        localStorage.setItem('rackplanner_bug_reports', JSON.stringify(updatedBugs));
-    };
 
     // Close on ESC key press
     useEffect(() => {
@@ -59,7 +72,7 @@ const IssueTrackerModal = () => {
         };
 
         const updatedBugs = [newBug, ...bugs];
-        saveToLocalStorage(updatedBugs);
+        saveToBackend(updatedBugs);
         setNewBugContent('');
     };
 
@@ -67,12 +80,12 @@ const IssueTrackerModal = () => {
         const updatedBugs = bugs.map(bug => 
             bug.id === id ? { ...bug, status: newStatus } : bug
         );
-        saveToLocalStorage(updatedBugs);
+        saveToBackend(updatedBugs);
     };
 
     const handleDelete = (id) => {
         const updatedBugs = bugs.filter(bug => bug.id !== id);
-        saveToLocalStorage(updatedBugs);
+        saveToBackend(updatedBugs);
     };
 
     return (

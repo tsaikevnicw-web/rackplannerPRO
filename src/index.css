@@ -118,6 +118,74 @@ body, html, #root {
     white-space: nowrap !important;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6) !important;
   }
+
+  /* Repeating header layout outer table styling */
+  .print-outer-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  .print-outer-table, .print-outer-table > thead > tr > td, .print-outer-table > tbody > tr > td {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+}
+
+/* Screen and print styles for PDF pages */
+.pdf-page {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  background-color: #ffffff !important;
+  color: #0d1b2e !important;
+  padding: 1.6cm 1.8cm !important;
+  position: relative !important;
+}
+
+@media screen {
+  /* when rendered offscreen, make sure it has exact A4 pixel dimensions at 96 DPI */
+  #pdf-print-area .pdf-page {
+    width: 794px !important;
+    min-height: 1123px !important;
+    height: 1123px !important;
+    overflow: hidden !important;
+  }
+}
+
+/* PDF Watermark styling for offscreen image generation */
+.pdf-watermark {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  opacity: 0.16 !important;
+}
+.pdf-watermark-wrapper {
+  transform: rotate(-45deg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+.pdf-watermark-text {
+  font-size: 3.5rem !important;
+  font-weight: 800 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  color: rgb(128, 128, 128) !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.1em !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+.pdf-watermark-time {
+  font-size: 1.8rem !important;
+  font-weight: 600 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  color: rgb(128, 128, 128) !important;
+  margin-top: 0.5rem !important;
+  white-space: nowrap !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 

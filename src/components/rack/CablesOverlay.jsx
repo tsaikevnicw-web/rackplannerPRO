@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { getDeviceLayerPrefix, getDeviceGroupName } from '../../utils/helpers';
+import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
 
 const CablesOverlay = () => {
     const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF } = useRackPlanner();
@@ -87,6 +87,88 @@ const CablesOverlay = () => {
             }
         };
 
+        const getAvailableTargetPortKey = (targetDev) => {
+            const targetDevId = targetDev.id;
+            const isSwitchOrRouter = (targetDev.type || '').startsWith('Switch') || targetDev.type === 'Router';
+            
+            if (isSwitchOrRouter) {
+                const portMax = getSwitchPortCount(targetDev);
+                const occupiedPorts = new Set();
+                devices.forEach(d => {
+                    if (d.connections) {
+                        Object.entries(d.connections).forEach(([key, tg]) => {
+                            if (tg && tg.startsWith(`${targetDevId}-port-`)) {
+                                occupiedPorts.add(tg.substring(targetDevId.length + 1));
+                            }
+                        });
+                    }
+                    if (d.id === targetDevId && d.connections) {
+                        Object.keys(d.connections).forEach(key => {
+                            if (key.startsWith('port-') && d.connections[key]) {
+                                occupiedPorts.add(key);
+                            }
+                        });
+                    }
+                });
+                for (let pIdx = 1; pIdx <= portMax; pIdx++) {
+                    const portKey = `port-${pIdx}`;
+                    if (!occupiedPorts.has(portKey)) {
+                        return portKey;
+                    }
+                }
+                return null;
+            }
+
+            const possiblePorts = [];
+            
+            const nic1Count = getNicCount(targetDev, 'ns_nic_1');
+            if (nic1Count > 0) possiblePorts.push('ns_nic_1');
+            
+            const nic2Count = getNicCount(targetDev, 'ns_nic_2');
+            if (nic2Count > 0) possiblePorts.push('ns_nic_2');
+
+            const ocpCount = getNicCount(targetDev, 'ocp');
+            for (let i = 1; i <= ocpCount; i++) {
+                possiblePorts.push(`ocp-${i}`);
+            }
+
+            const pcieSlotQty = targetDev.hardwareSpecs?.pcieSlotQty?.qty || 2;
+            for (let i = 1; i <= pcieSlotQty; i++) {
+                const { qty: slotPortCount } = getPcieSlotInfo(targetDev, i);
+                for (let pIdx = 1; pIdx <= slotPortCount; pIdx++) {
+                    possiblePorts.push(`pcie_slot_${i}-${pIdx}`);
+                }
+            }
+
+            possiblePorts.push('bmc');
+
+            const occupiedPorts = new Set();
+            devices.forEach(d => {
+                if (d.connections) {
+                    Object.entries(d.connections).forEach(([key, tg]) => {
+                        if (tg && tg.startsWith(`${targetDevId}-`)) {
+                            occupiedPorts.add(tg.substring(targetDevId.length + 1));
+                        }
+                    });
+                }
+                if (d.id === targetDevId && d.connections) {
+                    Object.keys(d.connections).forEach(key => {
+                        if (d.connections[key]) {
+                            occupiedPorts.add(key);
+                        }
+                    });
+                }
+            });
+
+            for (const portKey of possiblePorts) {
+                if (!occupiedPorts.has(portKey)) {
+                    return portKey;
+                }
+            }
+
+            return null;
+        };
+
         const handleConnectEvent = (e) => {
             if (e.detail && e.detail.drawing) {
                 let { sourceId, sourcePortKey } = e.detail.drawing;
@@ -95,7 +177,15 @@ const CablesOverlay = () => {
                 const sourceDevice = devices.find(d => d.id === sourceId);
                 const targetDevice = devices.find(d => d.id === targetDevId);
 
-                if (sourceDevice && targetDevice) {
+                if (!targetDevice) return;
+
+                if (!targetPortKey) {
+                    targetPortKey = getAvailableTargetPortKey(targetDevice);
+                }
+
+                if (!targetPortKey) return; // No free ports available
+
+                if (sourceDevice) {
                     const isSourceCDU = sourceDevice.type === 'CDU4U' || sourceDevice.type === 'SideCDU';
                     const isTargetCDU = targetDevice.type === 'CDU4U' || targetDevice.type === 'SideCDU';
                     const isWaterPort = (port) => ['water_cold', 'water_hot', 'host_water_cold', 'host_water_hot'].includes(port);

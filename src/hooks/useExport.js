@@ -69,7 +69,8 @@ export function useExport(
     racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert,
     viewMode, setViewMode, activeRackId, setActiveRackId,
     expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
-    scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen
+    scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen,
+    projectName
 ) {
     const [rackScreenshots, setRackScreenshots] = useState({});
     const [topoScreenshot, setTopoScreenshot] = useState(null);
@@ -191,19 +192,65 @@ export function useExport(
         setScaleFactor(originalScale);
         setIsFitToScreen(originalFit);
 
-        setIsGeneratingPDF(false);
+        // Wait a bit for React to render the offscreen print layout
+        await delay(500);
 
-        // A small delay for React state updates and loading overlay closure
-        await delay(300);
-        window.print();
+        // Retrieve offscreen PDF area element
+        const element = document.getElementById('pdf-print-area');
+        if (element) {
+            try {
+                // Find all pages inside the print container
+                const pages = element.querySelectorAll('.pdf-page');
+                
+                if (pages.length > 0) {
+                    const { jsPDF } = await import('jspdf');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = 210;
+                    const pdfHeight = 297;
+                    
+                    for (let i = 0; i < pages.length; i++) {
+                        const pageEl = pages[i];
+                        // Convert each page to a canvas natively using html-to-image
+                        const canvas = await toCanvas(pageEl, {
+                            backgroundColor: '#ffffff',
+                            pixelRatio: 2, // high-quality crisp output
+                        });
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        if (i > 0) {
+                            pdf.addPage();
+                        }
+                        
+                        // Add image fitting A4 page dimensions exactly
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    }
+                    
+                    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+                    pdf.save(`${projectName || '未命名專案'}規格書_${dateStr}.pdf`);
+                } else {
+                    console.error("No .pdf-page elements found inside print area");
+                    showAlert('PDF 規格書無內容可供產生。', '錯誤', 'error');
+                }
+            } catch (err) {
+                console.error("PDF generation failed:", err);
+                showAlert('PDF 規格書產生失敗，請重試。', '錯誤', 'error');
+            }
+        } else {
+            console.error("pdf-print-area element not found!");
+            showAlert('無法找到列印區塊，PDF 產生失敗。', '錯誤', 'error');
+        }
+
+        setIsGeneratingPDF(false);
     };
 
     const handleSaveData = () => {
-        const dataToSave = { racks, devices, timestamp: new Date().toISOString() };
+        const dataToSave = { projectName, racks, devices, timestamp: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url; link.download = `RackPlanner-Backup-${new Date().toISOString().slice(0, 10)}.json`;
+        link.href = url; 
+        const dateStr = new Date().toISOString().slice(0, 10);
+        link.download = `${projectName || 'RackPlanner'}-Backup-${dateStr}.json`;
         link.click(); URL.revokeObjectURL(url); setIsFileMenuOpen(false);
     };
 

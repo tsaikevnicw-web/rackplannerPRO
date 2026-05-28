@@ -25,6 +25,7 @@ export const RackPlannerProvider = ({ children }) => {
     const selectedId = selectedIds.length > 0 ? selectedIds[0] : null;
     const setSelectedId = (id) => setSelectedIds(id ? [id] : []);
     const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
+    const [projectName, setProjectName] = useState('未命名專案');
 
     // History (Undo / Redo) States
     const [historyState, setHistoryState] = useState({ history: [], index: -1 });
@@ -130,7 +131,8 @@ export const RackPlannerProvider = ({ children }) => {
         racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert,
         viewMode, setViewMode, activeRackId, setActiveRackId,
         expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
-        scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen
+        scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen,
+        projectName
     );
 
     const handleFileChange = (e) => {
@@ -141,7 +143,15 @@ export const RackPlannerProvider = ({ children }) => {
             try {
                 const parsedData = JSON.parse(event.target.result);
                 if (parsedData.racks && Array.isArray(parsedData.devices)) {
-                    setRacks(parsedData.racks); setDevices(parsedData.devices); setActiveRackId(parsedData.racks[0]?.id); setSelectedId(null); setIsFileMenuOpen(false); showAlert('專案讀取成功！', '成功', 'success');
+                    setRacks(parsedData.racks); 
+                    setDevices(parsedData.devices); 
+                    if (parsedData.projectName !== undefined) {
+                        setProjectName(parsedData.projectName);
+                    }
+                    setActiveRackId(parsedData.racks[0]?.id); 
+                    setSelectedId(null); 
+                    setIsFileMenuOpen(false); 
+                    showAlert('專案讀取成功！', '成功', 'success');
                 } else throw new Error();
             } catch { showAlert('檔案讀取失敗！', '錯誤', 'error'); }
         };
@@ -152,6 +162,7 @@ export const RackPlannerProvider = ({ children }) => {
         <RackPlannerContext.Provider value={{
             racks, setRacks, devices, setDevices, activeRackId, setActiveRackId, viewMode, setViewMode, selectedId, setSelectedId,
             selectedIds, setSelectedIds, deviceSearchTerm, setDeviceSearchTerm,
+            projectName, setProjectName,
             undo, redo, canUndo, canRedo,
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,

@@ -105,23 +105,44 @@ const RackView = ({ racksToRender }) => {
                         className={`bg-gradient-to-b from-slate-700 to-slate-800 w-[420px] h-12 rounded-t-xl border-t-2 border-x-2 border-slate-500 flex justify-between items-center px-6 shadow-xl z-10 relative overflow-hidden cursor-pointer transition-all duration-200 ${isRackSelected ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950 brightness-125' : 'hover:brightness-110'}`}
                     >
                         <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,#000_4px,#000_8px)] mix-blend-overlay"></div>
-                        <div 
-                            className={`w-3 h-3 rounded-full relative z-10 border transition-all duration-300 ${
-                                isPowerOverloaded 
-                                    ? 'bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444] border-red-200' 
+                        <div className="flex items-center gap-3 relative z-10 truncate max-w-[220px]">
+                            <div 
+                                className={`w-3 h-3 rounded-full border transition-all duration-300 shrink-0 ${
+                                    isPowerOverloaded 
+                                        ? 'bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444] border-red-200' 
+                                        : isPowerWarning
+                                            ? 'bg-amber-500 animate-pulse shadow-[0_0_10px_#f59e0b] border-amber-200'
+                                            : 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] border-green-200'
+                                }`}
+                                title={isPowerOverloaded 
+                                    ? `電力超載！目前功耗 ${totalRackPower}W 已超過限制 ${limit}W` 
                                     : isPowerWarning
-                                        ? 'bg-amber-500 animate-pulse shadow-[0_0_10px_#f59e0b] border-amber-200'
-                                        : 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e] border-green-200'
-                            }`}
-                            title={isPowerOverloaded 
-                                ? `電力超載！目前功耗 ${totalRackPower}W 已超過限制 ${limit}W` 
-                                : isPowerWarning
-                                    ? `電力接近負載上限！目前功耗 ${totalRackPower}W 已達限制的 90% (${limit}W)`
-                                    : `電力狀態正常 (${totalRackPower}W / ${limit}W)`
-                            }
-                        ></div>
-                        <div className="text-sm font-mono text-slate-200 font-bold tracking-widest relative z-10 drop-shadow-md truncate max-w-[280px]">{rack.name}</div>
-                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6] relative z-10 border border-blue-200"></div>
+                                        ? `電力接近負載上限！目前功耗 ${totalRackPower}W 已達限制的 90% (${limit}W)`
+                                        : `電力狀態正常 (${totalRackPower}W / ${limit}W)`
+                                }
+                            ></div>
+                            <div className="text-sm font-mono text-slate-200 font-bold tracking-widest truncate drop-shadow-md">{rack.name}</div>
+                        </div>
+
+                        {/* Power Health Bar */}
+                        <div 
+                            className="w-36 h-5 bg-slate-950/70 border border-slate-700/50 rounded-full relative overflow-hidden flex items-center justify-center z-10 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]"
+                            title={`目前功耗: ${totalRackPower}W / 供電上限: ${limit}W (${Math.round((totalRackPower / limit) * 100)}%)`}
+                        >
+                            <div 
+                                className={`absolute left-0 top-0 bottom-0 transition-all duration-500 ${
+                                    isPowerOverloaded 
+                                        ? 'bg-gradient-to-r from-red-600 to-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' 
+                                        : isPowerWarning
+                                            ? 'bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                                            : 'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(0, (totalRackPower / limit) * 100))}%` }}
+                            ></div>
+                            <span className="text-[10px] font-black text-slate-100 drop-shadow-md z-10 select-none tracking-wider font-mono">
+                                功耗 {totalRackPower}
+                            </span>
+                        </div>
                     </div>
 
                     {/* 機櫃主體 */}
@@ -201,6 +222,16 @@ const RackView = ({ racksToRender }) => {
                                     key={dev.id} 
                                     draggable 
                                     onDragStart={(e) => handleDragStart(e, dev, false)} 
+                                    onMouseUp={(e) => {
+                                        if (drawing && drawing.sourceId !== dev.id) {
+                                            e.stopPropagation();
+                                            const event = new CustomEvent('rackplanner-connect', { 
+                                                detail: { targetDevId: dev.id, targetPortKey: null, drawing }
+                                            });
+                                            window.dispatchEvent(event);
+                                            setDrawing(null);
+                                        }
+                                    }}
                                     onClick={(e) => { 
                                         e.stopPropagation(); 
                                         if (e.shiftKey || e.ctrlKey || e.metaKey) {

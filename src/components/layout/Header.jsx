@@ -14,7 +14,8 @@ const Header = () => {
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
         undo, redo, canUndo, canRedo,
-        deviceSearchTerm, setDeviceSearchTerm
+        deviceSearchTerm, setDeviceSearchTerm,
+        projectName, setProjectName
     } = useRackPlanner();
 
     const handleSelectSearchDevice = (dev) => {
@@ -56,6 +57,20 @@ const Header = () => {
                     <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono">
                         RACK<span className="text-[#D71422]">PLANNER</span> <span className="text-[10px] text-slate-400 align-top">PRO</span>
                     </h1>
+                </div>
+
+                {/* Project Name Input */}
+                <div className="flex-1 max-w-sm mx-8">
+                    <div className="relative flex items-center bg-slate-900/40 rounded-lg border border-slate-700/50 hover:border-indigo-500/50 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all px-3 py-1.5 gap-2">
+                        <span className="text-xs font-semibold text-slate-500 select-none uppercase tracking-wider whitespace-nowrap">專案名稱</span>
+                        <input
+                            type="text"
+                            value={projectName}
+                            onChange={(e) => setProjectName(e.target.value)}
+                            placeholder="請輸入專案名稱..."
+                            className="w-full bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-600 focus:ring-0 p-0"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
