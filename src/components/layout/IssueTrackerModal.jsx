@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bug, Trash2, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Bug, Trash2, Clock, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const IssueTrackerModal = () => {
@@ -7,22 +7,73 @@ const IssueTrackerModal = () => {
     const [bugs, setBugs] = useState([]);
     const [newBugContent, setNewBugContent] = useState('');
 
-    // Fetch bugs from backend
+    // Fetch bugs from backend with localStorage fallback & sync
     const fetchBugs = async () => {
+        let remoteBugs = [];
         try {
+            // 1. Try to fetch from the active api route
             const response = await fetch(`${import.meta.env.BASE_URL}api/bugs`);
             if (response.ok) {
-                const data = await response.json();
-                setBugs(data);
+                remoteBugs = await response.json();
+            } else {
+                // If api route fails (e.g. 404 on static hosting like GitHub Pages), try fetching static bugs.json file
+                const staticRes = await fetch(`${import.meta.env.BASE_URL}bugs/bugs.json`);
+                if (staticRes.ok) {
+                    remoteBugs = await staticRes.json();
+                }
             }
         } catch (e) {
-            console.error('Failed to fetch bug reports:', e);
+            console.warn('API fetch failed, falling back to static bugs.json:', e);
+            try {
+                const staticRes = await fetch(`${import.meta.env.BASE_URL}bugs/bugs.json`);
+                if (staticRes.ok) {
+                    remoteBugs = await staticRes.json();
+                }
+            } catch (err) {
+                console.error('Failed to fetch static bugs:', err);
+            }
         }
+
+        // Get local state
+        const localDataStr = localStorage.getItem('local_bug_reports');
+        if (!localDataStr) {
+            // If no local changes yet, just use remote and save to local
+            setBugs(remoteBugs);
+            localStorage.setItem('local_bug_reports', JSON.stringify(remoteBugs));
+            return;
+        }
+
+        const localBugs = JSON.parse(localDataStr);
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_bug_ids') || '[]');
+
+        // Sync: update status of local bugs if remote status changed, and add new remote bugs
+        const syncedBugs = localBugs.map(lBug => {
+            const rBug = remoteBugs.find(r => r.id === lBug.id);
+            if (rBug && rBug.status !== lBug.status) {
+                return { ...lBug, status: rBug.status };
+            }
+            return lBug;
+        });
+
+        remoteBugs.forEach(rBug => {
+            const isLocal = syncedBugs.some(lBug => lBug.id === rBug.id);
+            const isDeleted = deletedIds.includes(rBug.id);
+            if (!isLocal && !isDeleted) {
+                syncedBugs.push(rBug);
+            }
+        });
+
+        // Sort by timestamp desc (newest first)
+        syncedBugs.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+        setBugs(syncedBugs);
+        localStorage.setItem('local_bug_reports', JSON.stringify(syncedBugs));
     };
 
-    // Save bugs to backend
+    // Save bugs to backend & localStorage
     const saveToBackend = async (updatedBugs) => {
         setBugs(updatedBugs);
+        localStorage.setItem('local_bug_reports', JSON.stringify(updatedBugs));
         try {
             await fetch(`${import.meta.env.BASE_URL}api/bugs`, {
                 method: 'POST',
@@ -32,7 +83,7 @@ const IssueTrackerModal = () => {
                 body: JSON.stringify(updatedBugs)
             });
         } catch (e) {
-            console.error('Failed to save bug reports:', e);
+            console.warn('Failed to save to backend (running on static site?):', e);
         }
     };
 
@@ -85,7 +136,25 @@ const IssueTrackerModal = () => {
 
     const handleDelete = (id) => {
         const updatedBugs = bugs.filter(bug => bug.id !== id);
+        
+        // Save deleted bug ID locally to prevent it from being synced back
+        const deletedIds = JSON.parse(localStorage.getItem('deleted_bug_ids') || '[]');
+        if (!deletedIds.includes(id)) {
+            deletedIds.push(id);
+            localStorage.setItem('deleted_bug_ids', JSON.stringify(deletedIds));
+        }
+
         saveToBackend(updatedBugs);
+    };
+
+    const handleExportJSON = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bugs, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "bugs.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
     };
 
     return (
@@ -106,17 +175,35 @@ const IssueTrackerModal = () => {
                         </div>
                     </div>
                     
-                    <button 
-                        onClick={() => setIsBugTrackerOpen(false)}
-                        className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-700/50"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportJSON}
+                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors mr-1"
+                            title="將 BUG 紀錄匯出為 JSON 檔"
+                        >
+                            <Download className="w-3.5 h-3.5 text-rose-400" /> 匯出 JSON
+                        </button>
+                        <button 
+                            onClick={() => setIsBugTrackerOpen(false)}
+                            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-700/50"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Body Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#09101d] custom-scrollbar">
                     
+                    {/* Helper Info for Static Hosting */}
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
+                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                            <strong>靜態網頁（如 GitHub Pages）提示：</strong>
+                            新回報的 BUG 會暫存於此瀏覽器中。若要同步給所有人，請點擊右上方「匯出 JSON」將檔案取代專案目錄下的 <code>bugs/bugs.json</code> 後 commit & push 到 GitHub 即可。
+                        </div>
+                    </div>
+
                     {/* Add Bug Form */}
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
