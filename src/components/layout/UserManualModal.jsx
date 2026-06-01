@@ -497,6 +497,27 @@ const UserManualModal = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="space-y-3 pt-4 border-t border-slate-800/60">
+                                <h3 className="text-sm font-bold text-slate-200">4.4 線路路徑與走線槽動態最佳化</h3>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    系統提供「最佳化走線」功能，模擬真實機房的走線方式，自動將交叉凌亂的連線整理進兩側理線槽：
+                                </p>
+                                <ul className="list-disc pl-5 text-xs text-slate-400 space-y-2">
+                                    <li>
+                                        <strong className="text-slate-300">同機櫃走線：</strong>
+                                        線路自埠口水平拉出，進入兩側 32px 的「立柱理線槽 (Pillars)」。同側連線直接在立柱內爬升；對角連線會爬升至頂端或底座繞行跨越，避免遮擋伺服器面板。
+                                    </li>
+                                    <li>
+                                        <strong className="text-slate-300">跨機櫃走線：</strong>
+                                        線路自立柱槽爬升至機櫃上方，透過「架空橋接線槽 (Overhead Tray)」橫向跨越至另一機櫃，再由其立柱槽垂直降下接至目標埠口。
+                                    </li>
+                                    <li>
+                                        <strong className="text-slate-300">走線模式切換：</strong>
+                                        點擊頂部控制列的 **「最佳化走線 / 直連走線」** 按鈕可即時切換。最佳化走線提供乾淨整潔的 CAD 工地排線外觀，直連走線則使用經典弧形貝氏曲線，便於端點對比。
+                                    </li>
+                                </ul>
+                            </div>
                         </section>
 
                         {/* Section 5: Hotkeys */}

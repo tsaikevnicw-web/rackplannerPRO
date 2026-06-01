@@ -104,6 +104,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [portCoords, setPortCoords] = useState({});
     const [showCables, setShowCables] = useState(true);
     const [showHeatmap, setShowHeatmap] = useState(false);
+    const [isCableRoutingOptimized, setIsCableRoutingOptimized] = useState(true);
 
     // Modals
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '', title: '提示', type: 'info' });
@@ -166,7 +167,7 @@ export const RackPlannerProvider = ({ children }) => {
             undo, redo, canUndo, canRedo,
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
-            showCables, setShowCables, showHeatmap, setShowHeatmap, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
+            showCables, setShowCables, showHeatmap, setShowHeatmap, isCableRoutingOptimized, setIsCableRoutingOptimized, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
             clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
             isUserManualOpen, setIsUserManualOpen,
             isBugTrackerOpen, setIsBugTrackerOpen,

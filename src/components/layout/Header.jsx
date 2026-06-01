@@ -1,4 +1,4 @@
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug, Cable } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
@@ -7,6 +7,7 @@ const Header = () => {
         viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
         setSelectedIds, selectedIds,
         isFitToScreen, setIsFitToScreen, showCables, setShowCables, showHeatmap, setShowHeatmap,
+        isCableRoutingOptimized, setIsCableRoutingOptimized,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
         isUserManualOpen, setIsUserManualOpen,
         isBugTrackerOpen, setIsBugTrackerOpen,
@@ -60,27 +61,20 @@ const Header = () => {
                 </div>
 
                 {/* Project Name Input */}
-                <div className="flex-1 max-w-sm mx-8">
-                    <div className="relative flex items-center bg-slate-900/40 rounded-lg border border-slate-700/50 hover:border-indigo-500/50 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all px-3 py-1.5 gap-2">
-                        <span className="text-xs font-semibold text-slate-500 select-none uppercase tracking-wider whitespace-nowrap">專案名稱</span>
+                <div className="flex-1 max-w-md mx-8">
+                    <div className="relative flex items-center bg-[#09111c] rounded-xl border-2 border-indigo-500/50 hover:border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.15)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all px-4 py-2 gap-3">
+                        <span className="text-xs font-bold text-indigo-400 select-none uppercase tracking-widest whitespace-nowrap bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">專案名稱</span>
                         <input
                             type="text"
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
                             placeholder="請輸入專案名稱..."
-                            className="w-full bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-600 focus:ring-0 p-0"
+                            className="w-full bg-transparent border-none outline-none text-base font-bold text-slate-100 placeholder-slate-600 focus:ring-0 p-0"
                         />
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setIsBugTrackerOpen(true)}
-                        disabled={isExporting}
-                        className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/50 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        <Bug className="w-4 h-4" /> BUG 紀錄
-                    </button>
 
                     <button
                         onClick={handleExportImage}
@@ -310,6 +304,22 @@ const Header = () => {
                         {showCables ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         <span className="whitespace-nowrap">{showCables ? '顯示線路' : '隱藏線路'}</span>
                     </button>
+
+                    {/* 最佳化走線 */}
+                    {showCables && viewMode !== 'network' && (
+                        <button
+                            onClick={() => setIsCableRoutingOptimized(!isCableRoutingOptimized)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                                isCableRoutingOptimized
+                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/35 shadow-[0_0_12px_rgba(34,197,94,0.15)] font-bold'
+                                    : 'bg-slate-700/40 text-slate-500 border-slate-600/50 hover:text-slate-300 hover:bg-slate-700/60'
+                            }`}
+                            title="切換線路路徑為走線槽最佳化路徑或直接連接"
+                        >
+                            <Cable className="w-3.5 h-3.5" />
+                            <span className="whitespace-nowrap">{isCableRoutingOptimized ? '最佳化走線' : '直連走線'}</span>
+                        </button>
+                    )}
 
                     {/* 熱圖模式 */}
                     {viewMode !== 'network' && (

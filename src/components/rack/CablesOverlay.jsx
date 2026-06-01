@@ -3,7 +3,7 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
 
 const CablesOverlay = () => {
-    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF } = useRackPlanner();
+    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
@@ -27,6 +27,17 @@ const CablesOverlay = () => {
                     const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
                     const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
                     newCoords[id] = { x, y };
+                });
+
+                const racksEl = document.querySelectorAll('[data-rack-id]');
+                racksEl.forEach(rackEl => {
+                    const id = rackEl.getAttribute('data-rack-id');
+                    const rect = rackEl.getBoundingClientRect();
+                    const x = (rect.left - containerRect.left) / currentScale;
+                    const y = (rect.top - containerRect.top) / currentScale;
+                    const w = rect.width / currentScale;
+                    const h = rect.height / currentScale;
+                    newCoords[`rack-${id}`] = { x, y, w, h };
                 });
 
                 groups.forEach(group => {
@@ -308,7 +319,49 @@ const CablesOverlay = () => {
         return '#64748b';
     };
 
-    const generatePath = (startCoord, endCoord) => {
+    const drawRoundedPath = (points, radius = 8) => {
+        if (!points || points.length === 0) return '';
+        if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+        
+        let d = `M ${points[0].x} ${points[0].y}`;
+        
+        for (let i = 1; i < points.length - 1; i++) {
+            const pPrev = points[i - 1];
+            const pCurr = points[i];
+            const pNext = points[i + 1];
+            
+            const dx1 = pPrev.x - pCurr.x;
+            const dy1 = pPrev.y - pCurr.y;
+            const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+            
+            const dx2 = pNext.x - pCurr.x;
+            const dy2 = pNext.y - pCurr.y;
+            const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            
+            if (len1 === 0 || len2 === 0) {
+                d += ` L ${pCurr.x} ${pCurr.y}`;
+                continue;
+            }
+            
+            const r = Math.min(radius, len1 / 2, len2 / 2);
+            
+            const cornerStart = {
+                x: pCurr.x + (dx1 / len1) * r,
+                y: pCurr.y + (dy1 / len1) * r
+            };
+            const cornerEnd = {
+                x: pCurr.x + (dx2 / len2) * r,
+                y: pCurr.y + (dy2 / len2) * r
+            };
+            
+            d += ` L ${cornerStart.x} ${cornerStart.y} Q ${pCurr.x} ${pCurr.y}, ${cornerEnd.x} ${cornerEnd.y}`;
+        }
+        
+        d += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
+        return d;
+    };
+
+    const generatePath = (startCoord, endCoord, startPortId = null, endPortId = null) => {
         let x1 = startCoord.x;
         let y1 = startCoord.y;
         let x2 = endCoord.x;
@@ -331,6 +384,72 @@ const CablesOverlay = () => {
             else if (endCoord.id.includes('Leaf')) {
                 if (startCoord.id && startCoord.id.includes('Spine')) y2 = endCoord.rect.top;
                 else y2 = endCoord.rect.bottom;
+            }
+        }
+
+        // Optimized cabling routing path calculation
+        if (viewMode !== 'network' && isCableRoutingOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
+            const devAId = startPortId.includes('-') ? startPortId.substring(0, startPortId.indexOf('-')) : startPortId;
+            const devBId = endPortId.includes('-') ? endPortId.substring(0, endPortId.indexOf('-')) : endPortId;
+            
+            const devA = devices.find(d => d.id === devAId);
+            const devB = devices.find(d => d.id === devBId);
+            
+            if (devA && devB) {
+                const rackACoords = localCoords[`rack-${devA.rackId}`];
+                const rackBCoords = localCoords[`rack-${devB.rackId}`];
+                
+                if (rackACoords && rackBCoords) {
+                    const rackAXCenter = rackACoords.x + rackACoords.w / 2;
+                    const leftChannelAX = rackACoords.x + 16;
+                    const rightChannelAX = rackACoords.x + rackACoords.w - 16;
+                    const channelAX = x1 < rackAXCenter ? leftChannelAX : rightChannelAX;
+
+                    const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
+                    const leftChannelBX = rackBCoords.x + 16;
+                    const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
+                    const channelBX = x2 < rackBXCenter ? leftChannelBX : rightChannelBX;
+
+                    if (devA.rackId === devB.rackId) {
+                        // Same rack
+                        if (channelAX === channelBX) {
+                            const points = [
+                                { x: x1, y: y1 },
+                                { x: channelAX, y: y1 },
+                                { x: channelAX, y: y2 },
+                                { x: x2, y: y2 }
+                            ];
+                            return drawRoundedPath(points, 8);
+                        } else {
+                            const rackCenterY = rackACoords.y + rackACoords.h / 2;
+                            const yCross = (y1 + y2) / 2 < rackCenterY 
+                                ? (rackACoords.y + 48)
+                                : (rackACoords.y + rackACoords.h - 16);
+                            
+                            const points = [
+                                { x: x1, y: y1 },
+                                { x: channelAX, y: y1 },
+                                { x: channelAX, y: yCross },
+                                { x: channelBX, y: yCross },
+                                { x: channelBX, y: y2 },
+                                { x: x2, y: y2 }
+                            ];
+                            return drawRoundedPath(points, 8);
+                        }
+                    } else {
+                        // Different racks: route via overhead tray
+                        const overheadY = Math.min(rackACoords.y, rackBCoords.y) - 24;
+                        const points = [
+                            { x: x1, y: y1 },
+                            { x: channelAX, y: y1 },
+                            { x: channelAX, y: overheadY },
+                            { x: channelBX, y: overheadY },
+                            { x: channelBX, y: y2 },
+                            { x: x2, y: y2 }
+                        ];
+                        return drawRoundedPath(points, 8);
+                    }
+                }
             }
         }
 
@@ -407,7 +526,7 @@ const CablesOverlay = () => {
                                 if (startCoord && endCoord) {
                                     connectionPaths.push({
                                         id: `${dev.id}-${localKey}-to-${targetKey}`,
-                                        path: generatePath(startCoord, endCoord),
+                                        path: generatePath(startCoord, endCoord, localAnchor.id, targetAnchor.id),
                                         colorClass: getLineColor(localKey, dev.id, targetDevId, targetPortKey, localAnchor, targetAnchor),
                                         isHighlighted,
                                         isGroupConnection

@@ -97,7 +97,7 @@ const RackView = ({ racksToRender }) => {
 
         return (
             <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">
-                <div className="w-[420px] flex flex-col items-center rack-container relative">
+                <div data-rack-id={rack.id} className="w-[420px] flex flex-col items-center rack-container relative">
                     
                     {/* 機櫃頂部 */}
                     <div 
