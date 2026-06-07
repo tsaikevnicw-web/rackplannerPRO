@@ -21,6 +21,18 @@ export const RackPlannerProvider = ({ children }) => {
     // UI States
     const [activeRackId, setActiveRackId] = useState('rack-1');
     const [viewMode, setViewMode] = useState('single');
+    const [containers, setContainers] = useState([
+        { id: 'container-1', name: '貨櫃-A', type: '40ft', powerLimit: 500000, weightLimit: 30000, pueBase: 1.15 }
+    ]);
+    const [projectInfo, setProjectInfo] = useState({
+        partners: [''],
+        isCdcProject: false,
+        location: '',
+        deliveryDate: '',
+        projectManager: '',
+        clientName: '',
+        notes: ''
+    });
     const [selectedIds, setSelectedIds] = useState([]);
     const selectedId = selectedIds.length > 0 ? selectedIds[0] : null;
     const setSelectedId = (id) => setSelectedIds(id ? [id] : []);
@@ -104,6 +116,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [portCoords, setPortCoords] = useState({});
     const [showCables, setShowCables] = useState(true);
     const [showHeatmap, setShowHeatmap] = useState(false);
+    const [hideNonItCabinets, setHideNonItCabinets] = useState(false);
     const [isCableRoutingOptimized, setIsCableRoutingOptimized] = useState(true);
 
     // Modals
@@ -133,7 +146,7 @@ export const RackPlannerProvider = ({ children }) => {
         viewMode, setViewMode, activeRackId, setActiveRackId,
         expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
         scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen,
-        projectName
+        projectName, projectInfo, containers
     );
 
     const handleFileChange = (e) => {
@@ -148,6 +161,12 @@ export const RackPlannerProvider = ({ children }) => {
                     setDevices(parsedData.devices); 
                     if (parsedData.projectName !== undefined) {
                         setProjectName(parsedData.projectName);
+                    }
+                    if (parsedData.projectInfo !== undefined) {
+                        setProjectInfo(parsedData.projectInfo);
+                    }
+                    if (parsedData.containers !== undefined) {
+                        setContainers(parsedData.containers);
                     }
                     setActiveRackId(parsedData.racks[0]?.id); 
                     setSelectedId(null); 
@@ -164,10 +183,11 @@ export const RackPlannerProvider = ({ children }) => {
             racks, setRacks, devices, setDevices, activeRackId, setActiveRackId, viewMode, setViewMode, selectedId, setSelectedId,
             selectedIds, setSelectedIds, deviceSearchTerm, setDeviceSearchTerm,
             projectName, setProjectName,
+            projectInfo, setProjectInfo,
             undo, redo, canUndo, canRedo,
             draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
             isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
-            showCables, setShowCables, showHeatmap, setShowHeatmap, isCableRoutingOptimized, setIsCableRoutingOptimized, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
+            showCables, setShowCables, showHeatmap, setShowHeatmap, hideNonItCabinets, setHideNonItCabinets, isCableRoutingOptimized, setIsCableRoutingOptimized, containers, setContainers, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
             clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
             isUserManualOpen, setIsUserManualOpen,
             isBugTrackerOpen, setIsBugTrackerOpen,

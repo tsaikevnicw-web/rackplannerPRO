@@ -4,7 +4,8 @@ import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import RightPanel from './components/layout/RightPanel';
 import RackView from './components/rack/RackView';
-import RackView3D from './components/rack/RackView3D';
+
+import ContainerView from './components/rack/ContainerView';
 import NetworkTopology from './components/network/NetworkTopology';
 import CablesOverlay from './components/rack/CablesOverlay';
 import PrintLayout from './components/layout/PrintLayout';
@@ -26,12 +27,23 @@ const AppContent = () => {
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
-        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF
+        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, containers,
+        projectInfo, hideNonItCabinets
     } = useRackPlanner();
+
+    const [activeOverviewContainerId, setActiveOverviewContainerId] = React.useState(null);
+
+    const activeCid = activeOverviewContainerId || containers[0]?.id || 'container-1';
+
+    useEffect(() => {
+        if (containers.length > 0 && !containers.some(c => c.id === activeOverviewContainerId)) {
+            setActiveOverviewContainerId(containers[0].id);
+        }
+    }, [containers, activeOverviewContainerId]);
 
     // Scale Logic
     useEffect(() => {
-        if (!isFitToScreen || viewMode === 'single' || viewMode === '3d' || !mainAreaRef.current || !rackContainerRef.current) {
+        if (!isFitToScreen || viewMode === 'single' || !mainAreaRef.current || !rackContainerRef.current) {
             setScaleFactor(1);
             return;
         }
@@ -83,26 +95,39 @@ const AppContent = () => {
                 return;
             }
 
-            // ── Del：刪除選中設備 ──
+            // ── Del：刪除選中設備或機櫃 ──
             if (e.key === 'Delete' && !inForm) {
                 if (selectedIds.length === 0) return;
                 
-                setDevices(prev => prev.map(dev => {
-                    if (selectedIds.includes(dev.id)) return null;
-                    const newConns = { ...(dev.connections || {}) };
-                    let modified = false;
-                    Object.keys(newConns).forEach(k => { 
-                        if (newConns[k]) {
-                            const matchedId = selectedIds.find(id => newConns[k].startsWith(id + '-'));
-                            if (matchedId) {
-                                delete newConns[k];
-                                modified = true;
+                const hasSelectedRacks = racks.some(r => selectedIds.includes(r.id));
+                
+                if (hasSelectedRacks) {
+                    // 刪除選中的機櫃與其內的所有設備
+                    setRacks(prev => prev.filter(r => !selectedIds.includes(r.id)));
+                    setDevices(prev => prev.filter(d => !selectedIds.includes(d.rackId)));
+                    if (selectedIds.includes(activeRackId)) {
+                        const remaining = racks.filter(r => !selectedIds.includes(r.id));
+                        setActiveRackId(remaining[0]?.id || null);
+                    }
+                } else {
+                    // 原本的刪除設備邏輯
+                    setDevices(prev => prev.map(dev => {
+                        if (selectedIds.includes(dev.id)) return null;
+                        const newConns = { ...(dev.connections || {}) };
+                        let modified = false;
+                        Object.keys(newConns).forEach(k => { 
+                            if (newConns[k]) {
+                                const matchedId = selectedIds.find(id => newConns[k].startsWith(id + '-'));
+                                if (matchedId) {
+                                    delete newConns[k];
+                                    modified = true;
+                                }
                             }
-                        }
-                    });
-                    if (!modified) return dev;
-                    return { ...dev, connections: newConns };
-                }).filter(Boolean));
+                        });
+                        if (!modified) return dev;
+                        return { ...dev, connections: newConns };
+                    }).filter(Boolean));
+                }
                 setSelectedIds([]);
                 return;
             }
@@ -193,9 +218,35 @@ const AppContent = () => {
                     const srcRack = clipboard.data;
                     const srcDevices = clipboard.devices;
 
+                    let targetSlotIndex = null;
+                    let targetContainerId = null;
+                    if (viewMode === 'container') {
+                        for (const container of containers) {
+                            const maxSlots = container.type === '20ft' ? 10 : 20;
+                            for (let i = 0; i < maxSlots; i++) {
+                                if (!racks.some(r => (r.containerId || 'container-1') === container.id && r.slotIndex === i)) {
+                                    targetSlotIndex = i;
+                                    targetContainerId = container.id;
+                                    break;
+                                }
+                            }
+                            if (targetSlotIndex !== null) break;
+                        }
+                        if (targetSlotIndex === null) {
+                            showAlert('所有貨櫃插槽已滿，無法貼上機櫃！', '警告', 'warning');
+                            return;
+                        }
+                    }
+
                     const newRackName = getIncrementedName(srcRack.name, racks, 'name');
                     const newRackId = generateId();
-                    const newRack = { ...srcRack, id: newRackId, name: newRackName };
+                    const newRack = { 
+                        ...srcRack, 
+                        id: newRackId, 
+                        name: newRackName, 
+                        slotIndex: targetSlotIndex,
+                        containerId: targetContainerId || (containers[0]?.id || 'container-1')
+                    };
                     
                     setRacks(prev => [...prev, newRack]);
                     
@@ -210,6 +261,7 @@ const AppContent = () => {
                     });
                     
                     setActiveRackId(newRackId);
+                    setSelectedIds([newRackId]);
                     showAlert(`成功複製機櫃為 ${newRackName}`, '提示', 'success');
                 }
                 return;
@@ -217,7 +269,7 @@ const AppContent = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedId, selectedIds, devices, racks, activeRackId, generateId, showAlert, setDevices, setSelectedIds, undo, redo]);
+    }, [selectedId, selectedIds, devices, racks, activeRackId, generateId, showAlert, setDevices, setSelectedIds, undo, redo, viewMode, containers, setRacks, setActiveRackId]);
 
     const handleLoadExample = (dataToLoad) => {
         if (dataToLoad && dataToLoad.racks && dataToLoad.devices) {
@@ -230,7 +282,16 @@ const AppContent = () => {
     };
 
     // Derived states
-    const racksToRender = viewMode === 'single' ? racks.filter(r => r.id === activeRackId) : racks;
+    let tempRacks = viewMode === 'single' 
+        ? racks.filter(r => r.id === activeRackId) 
+        : (projectInfo?.isCdcProject && viewMode === 'overview')
+            ? racks.filter(r => (r.containerId || 'container-1') === activeCid && r.slotIndex !== null && r.slotIndex !== undefined)
+            : racks;
+
+    if (hideNonItCabinets && viewMode === 'overview') {
+        tempRacks = tempRacks.filter(r => r.type === 'General' || !r.type);
+    }
+    const racksToRender = tempRacks;
     const nsSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole === 'Spine');
     const nsLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole !== 'Spine');
     const ewSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'East-West' && d.networkRole === 'Spine');
@@ -287,35 +348,67 @@ const AppContent = () => {
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
                 <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#060c16] flex flex-col">
-                    <div 
-                        className={`relative flex ${viewMode === 'overview' ? 'min-h-full' : (isFitToScreen && viewMode !== 'single' ? 'justify-start' : 'justify-center w-full')}`}
-                        style={{ 
-                            width: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.w * scaleFactor, 100) : undefined,
-                            height: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.h * scaleFactor, 100) : undefined,
-                            margin: isFitToScreen && viewMode !== 'single' ? 'auto' : undefined
-                        }}
-                    >
-                        <div 
-                            ref={rackContainerRef} 
-                            className={`relative flex p-8 pb-12 ${viewMode === 'overview' ? 'gap-8 flex-row items-start justify-start' : 'flex-col items-center w-full'} ${viewMode === 'network' ? 'min-w-[1800px] shrink-0' : ''}`} 
+                    {viewMode === 'container' ? (
+                        <ContainerView />
+                    ) : (
+                        <>
+                            {projectInfo?.isCdcProject && viewMode === 'overview' && (
+                                <div className="bg-[#0b1523]/90 backdrop-blur-md px-6 py-3 border-b border-slate-700/30 flex items-center justify-between sticky top-0 z-20 shrink-0 shadow-lg">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">貨櫃總覽</span>
+                                        <h3 className="text-sm font-bold text-slate-200">
+                                            當前顯示貨櫃：
+                                            <span className="text-indigo-400 font-mono ml-1 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">
+                                                {containers.find(c => c.id === activeCid)?.name || '未選擇貨櫃'}
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <div className="flex bg-[#060c16] rounded-xl p-1 border border-slate-700/50 shadow-inner gap-1">
+                                        {containers.map((container) => (
+                                            <button
+                                                key={container.id}
+                                                onClick={() => setActiveOverviewContainerId(container.id)}
+                                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                                    activeCid === container.id
+                                                        ? 'bg-indigo-600 text-white shadow-lg'
+                                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                                                }`}
+                                            >
+                                                {container.name} ({container.type === '20ft' ? '20呎' : '40呎'})
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div 
+                            className={`relative flex ${viewMode === 'overview' ? 'min-h-full' : (isFitToScreen && viewMode !== 'single' ? 'justify-start' : 'justify-center w-full')}`}
                             style={{ 
-                                transform: isFitToScreen && viewMode !== 'single' ? `scale(${scaleFactor})` : 'none', 
-                                transformOrigin: 'top left',
-                                width: viewMode !== 'single' ? 'max-content' : undefined,
-                                height: viewMode !== 'single' ? 'max-content' : undefined
+                                width: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.w * scaleFactor, 100) : undefined,
+                                height: isFitToScreen && viewMode !== 'single' ? Math.max(layoutSize.h * scaleFactor, 100) : undefined,
+                                margin: isFitToScreen && viewMode !== 'single' ? 'auto' : undefined
                             }}
                         >
-                             {viewMode !== '3d' && <CablesOverlay />}
-                             {viewMode === 'network' ? (
-                                 <NetworkTopology nsSpineDevs={nsSpineDevs} nsLeafDevs={nsLeafDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
-                             ) : viewMode === '3d' ? (
-                                 <RackView3D racksToRender={racksToRender} />
-                             ) : (
-                                 <RackView racksToRender={racksToRender} />
-                             )}
+                            <div 
+                                ref={rackContainerRef} 
+                                className={`relative flex p-8 pb-12 ${viewMode === 'overview' ? 'gap-8 flex-row items-start justify-start' : 'flex-col items-center w-full'} ${viewMode === 'network' ? 'min-w-[1800px] shrink-0' : ''}`} 
+                                style={{ 
+                                    transform: isFitToScreen && viewMode !== 'single' ? `scale(${scaleFactor})` : 'none', 
+                                    transformOrigin: 'top left',
+                                    width: viewMode !== 'single' ? 'max-content' : undefined,
+                                    height: viewMode !== 'single' ? 'max-content' : undefined
+                                }}
+                            >
+                                 <CablesOverlay />
+                                 {viewMode === 'network' ? (
+                                     <NetworkTopology nsSpineDevs={nsSpineDevs} nsLeafDevs={nsLeafDevs} ewSpineDevs={ewSpineDevs} ewLeafDevs={ewLeafDevs} epDevs={epDevs} />
+                                 ) : (
+                                     <RackView racksToRender={racksToRender} />
+                                 )}
+                            </div>
                         </div>
-                    </div>
-                </main>
+                    </>
+                )}
+            </main>
                 <RightPanel />
             </div>
 

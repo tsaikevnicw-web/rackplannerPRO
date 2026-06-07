@@ -70,7 +70,7 @@ export function useExport(
     viewMode, setViewMode, activeRackId, setActiveRackId,
     expandedNetGroups, setExpandedNetGroups, showCables, setShowCables,
     scaleFactor, setScaleFactor, isFitToScreen, setIsFitToScreen,
-    projectName
+    projectName, projectInfo, containers
 ) {
     const [rackScreenshots, setRackScreenshots] = useState({});
     const [topoScreenshot, setTopoScreenshot] = useState(null);
@@ -244,7 +244,7 @@ export function useExport(
     };
 
     const handleSaveData = () => {
-        const dataToSave = { projectName, racks, devices, timestamp: new Date().toISOString() };
+        const dataToSave = { projectName, racks, devices, projectInfo, containers, timestamp: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -256,7 +256,42 @@ export function useExport(
 
     const handleExportBOM = () => {
         let csv = '\uFEFF';
-        csv += "機櫃名稱,位置,設備名稱,設備類型,功耗(W),解熱能力(W),報價(USD),CPU (型號*數量),DIMM (型號*數量),PCIe Slot 1 (數量),PCIe Slot 2 (數量),GPU (型號*數量),M.2 (型號*數量),HDD (型號*數量),54V PSU (型號*數量),12V PSU (型號*數量),Other (型號*數量)\n";
+        
+        // 1. 貨櫃基礎設施與機櫃本體
+        if (projectInfo?.isCdcProject) {
+            csv += "貨櫃基礎設施與機櫃清單 (Cabinets & Infrastructure)\n";
+            csv += "機櫃名稱,配置位置,設備類型,本體重量(kg),功耗(W),容量參數,報價(USD)\n";
+        } else {
+            csv += "機櫃清單 (Cabinets List)\n";
+            csv += "機櫃名稱,配置位置,設備類型,本體重量(kg),功耗(W),容量參數,報價(USD)\n";
+        }
+        
+        racks.forEach(rack => {
+            const position = projectInfo?.isCdcProject
+                ? (rack.slotIndex !== null && rack.slotIndex !== undefined 
+                    ? `Slot ${rack.slotIndex + 1}` 
+                    : "備用棧板")
+                : "一般佈局";
+                
+            let capacityParam = '-';
+            if (rack.type === 'Cooling') capacityParam = `解熱: ${(rack.coolingCapacity/1000).toFixed(0)}kW`;
+            else if (rack.type === 'UPS') capacityParam = `容量: ${(rack.powerCapacity/1000).toFixed(0)}kW`;
+            else if (rack.type === 'Battery') capacityParam = `電能: ${(rack.batteryCapacity/1000).toFixed(0)}kWh`;
+            
+            const rowData = [
+                rack.name,
+                position,
+                rack.type || 'General',
+                rack.weight || 150,
+                rack.power || 0,
+                capacityParam,
+                rack.price || 0
+            ];
+            csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+        });
+        
+        csv += "\n\n機櫃內部 IT 設備清單 (Cabinet Devices List)\n";
+        csv += "所屬機櫃,機櫃內位置,設備名稱,設備類型,功耗(W),解熱能力(W),報價(USD),CPU (型號*數量),DIMM (型號*數量),PCIe Slot 1 (數量),PCIe Slot 2 (數量),GPU (型號*數量),M.2 (型號*數量),HDD (型號*數量),54V PSU (型號*數量),12V PSU (型號*數量),Other (型號*數量)\n";
 
         const sortedDevices = [...devices].sort((a, b) => {
             if (a.rackId !== b.rackId) return a.rackId.localeCompare(b.rackId);
@@ -443,10 +478,12 @@ export function useExport(
     };
 
     const handleExportImage = async () => {
-        if (!rackContainerRef.current) return;
+        const element = viewMode === 'container'
+            ? document.getElementById('container-view-canvas')
+            : rackContainerRef.current;
+        if (!element) return;
         setIsExporting(true);
         try {
-            const element = rackContainerRef.current;
             const originalStyle = element.style.cssText; 
             const originalTransform = element.style.transform;
             

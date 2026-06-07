@@ -2,12 +2,13 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
-import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets } from 'lucide-react';
+import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight } from 'lucide-react';
 
 const RightPanel = () => {
     const { 
         racks, devices, setDevices, selectedId, setSelectedId, selectedIds, setSelectedIds, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
-        handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert
+        handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert,
+        projectInfo
     } = useRackPlanner();
 
     const selectedRack = racks.find(r => r.id === selectedId);
@@ -206,6 +207,9 @@ const RightPanel = () => {
     }
 
     if (selectedRack && !selectedDevice) {
+        const isCDUOrCooling = projectInfo?.isCdcProject && (selectedRack.type === 'CDU' || selectedRack.type === 'Cooling');
+        const isOtherInfra = projectInfo?.isCdcProject && ['UPS', 'Battery', 'Switchboard', 'PowerPanel', 'FireSuppression', 'Monitoring', 'EnvControl'].includes(selectedRack.type);
+
         return (
             <aside className="w-[360px] bg-[#0b1523]/95 border-l border-slate-700/40 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
                 <div className="flex justify-between items-center mb-6">
@@ -227,34 +231,86 @@ const RightPanel = () => {
                 </div>
 
                 <div className={sectionCls}>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
-                        <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃類型 (Rack Type)</label>
-                        <select value={selectedRack.type || 'General'} onChange={(e) => handleUpdateRack(selectedRack.id, { type: e.target.value })} className={selectCls}>
-                            <option value="General">General (泛用型)</option>
-                            <option value="ORv3">ORv3 (開放運算計畫)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5">總 U 數 (Rack U)</label>
-                        <input type="number" value={selectedRack.uCount || DEFAULT_RACK_U_COUNT} onChange={(e) => handleUpdateRack(selectedRack.id, { uCount: parseInt(e.target.value) || 1 })} disabled={selectedRack.type === 'ORv3'} className={`${inputCls} font-mono disabled:opacity-40 disabled:cursor-not-allowed`} />
-                        {selectedRack.type === 'ORv3' && <p className="text-[10px] text-slate-500 mt-1">ORv3 規格固定為 44U</p>}
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
-                            <Zap className="w-3.5 h-3.5 text-amber-400" />
-                            機櫃電力限制 (Power Limit - W)
-                        </label>
-                        <input 
-                            type="number" 
-                            value={selectedRack.powerLimit !== undefined ? selectedRack.powerLimit : 20000} 
-                            onChange={(e) => handleUpdateRack(selectedRack.id, { powerLimit: parseInt(e.target.value) || 0 })} 
-                            className={`${inputCls} font-mono`} 
-                        />
-                    </div>
+                    {isCDUOrCooling ? (
+                        <>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                                    解熱能力 (Cooling Capacity - kW)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={selectedRack.coolingCapacity !== undefined ? selectedRack.coolingCapacity / 1000 : 0} 
+                                    onChange={(e) => handleUpdateRack(selectedRack.id, { coolingCapacity: parseFloat(e.target.value) * 1000 || 0 })} 
+                                    className={`${inputCls} font-mono`} 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    設備重量 (Weight - KG)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={selectedRack.weight !== undefined ? selectedRack.weight : 0} 
+                                    onChange={(e) => handleUpdateRack(selectedRack.id, { weight: parseFloat(e.target.value) || 0 })} 
+                                    className={`${inputCls} font-mono`} 
+                                />
+                            </div>
+                        </>
+                    ) : isOtherInfra ? (
+                        <>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    設備重量 (Weight - KG)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={selectedRack.weight !== undefined ? selectedRack.weight : 0} 
+                                    onChange={(e) => handleUpdateRack(selectedRack.id, { weight: parseFloat(e.target.value) || 0 })} 
+                                    className={`${inputCls} font-mono`} 
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃類型 (Rack Type)</label>
+                                <select value={selectedRack.type || 'General'} onChange={(e) => handleUpdateRack(selectedRack.id, { type: e.target.value })} className={selectCls}>
+                                    <option value="General">General (泛用型)</option>
+                                    <option value="ORv3">ORv3 (開放運算計畫)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">總 U 數 (Rack U)</label>
+                                <input type="number" value={selectedRack.uCount || DEFAULT_RACK_U_COUNT} onChange={(e) => handleUpdateRack(selectedRack.id, { uCount: parseInt(e.target.value) || 1 })} disabled={selectedRack.type === 'ORv3'} className={`${inputCls} font-mono disabled:opacity-40 disabled:cursor-not-allowed`} />
+                                {selectedRack.type === 'ORv3' && <p className="text-[10px] text-slate-500 mt-1">ORv3 規格固定為 44U</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                                    機櫃電力限制 (Power Limit - W)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={selectedRack.powerLimit !== undefined ? selectedRack.powerLimit : 20000} 
+                                    onChange={(e) => handleUpdateRack(selectedRack.id, { powerLimit: parseInt(e.target.value) || 0 })} 
+                                    className={`${inputCls} font-mono`} 
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             </aside>
         );
@@ -358,6 +414,19 @@ const RightPanel = () => {
                                 <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
                                 <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : `U${selectedDevice.startU}-U${selectedDevice.startU + selectedDevice.size - 1}`}</span>
                             </div>
+                        </div>
+                        <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                            <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                                <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
+                            </label>
+                            <input
+                                type="number"
+                                min={0}
+                                value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
+                                onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
+                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                placeholder="預設為 10 KG..."
+                            />
                         </div>
                     </div>
                 </div>

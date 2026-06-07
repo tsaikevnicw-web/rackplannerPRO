@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-    X, BookOpen, ChevronRight, Search, FileText, Cpu, Droplet, 
+    X, BookOpen, ChevronRight, FileText, Cpu, Droplet, 
     LayoutTemplate, HelpCircle, HardDrive, Network, Settings2, 
     Info, AlertTriangle, Lightbulb, Keyboard, Download, Link2, Monitor
 } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const UserManualModal = () => {
-    const { isUserManualOpen, setIsUserManualOpen } = useRackPlanner();
+    const { isUserManualOpen, setIsUserManualOpen, projectInfo } = useRackPlanner();
     const [activeTab, setActiveTab] = useState('overview');
-    const [searchTerm, setSearchTerm] = useState('');
     
     // For interactive PCIe Simulation inside the manual
     const [simPcieSlots, setSimPcieSlots] = useState(4);
@@ -45,6 +44,7 @@ const UserManualModal = () => {
         { id: 'sec-topology', tab: 'topology', title: '四、 網路與水路拓撲管理', icon: Network },
         { id: 'sec-hotkeys', tab: 'hotkeys', title: '五、 進階快捷操作與範本', icon: Keyboard },
         { id: 'sec-export', tab: 'export', title: '六、 數據匯出與整合', icon: Download },
+        ...(projectInfo?.isCdcProject ? [{ id: 'sec-container', tab: 'container', title: '七、 貨櫃式資料中心規畫', icon: LayoutTemplate }] : []),
     ];
 
     return (
@@ -66,26 +66,6 @@ const UserManualModal = () => {
                     </div>
                     
                     <div className="flex items-center gap-4">
-                        {/* Search input (Visual Decoration & Interactive filter indicator) */}
-                        <div className="relative hidden sm:block">
-                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input 
-                                type="text"
-                                placeholder="搜尋手冊關鍵字..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-[#070e1a] border border-slate-700 text-slate-200 placeholder-slate-500 text-xs pl-9 pr-4 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-48 transition-all"
-                            />
-                            {searchTerm && (
-                                <button 
-                                    onClick={() => setSearchTerm('')} 
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
-                                >
-                                    清除
-                                </button>
-                            )}
-                        </div>
-
                         <button 
                             onClick={() => setIsUserManualOpen(false)}
                             className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-700/50"
@@ -137,13 +117,7 @@ const UserManualModal = () => {
                         className="flex-1 overflow-y-auto p-6 md:p-8 space-y-12 scroll-smooth custom-scrollbar bg-[#09101d] text-slate-300"
                     >
                         
-                        {/* Search Filter Warning */}
-                        {searchTerm && (
-                            <div className="bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-3 text-xs text-indigo-300 flex items-center gap-2">
-                                <Info className="w-4 h-4" />
-                                正在篩選含有 <strong>"{searchTerm}"</strong> 的關鍵內容。建議搭配目錄點選以定位閱讀。
-                            </div>
-                        )}
+
 
                         {/* Section 1: Intro */}
                         <section id="sec-intro" className="space-y-6">
@@ -626,6 +600,50 @@ const UserManualModal = () => {
                                 </p>
                             </div>
                         </section>
+
+                        {/* Section 7: Container Data Center */}
+                        {projectInfo?.isCdcProject && (
+                            <section id="sec-container" className="space-y-6">
+                                <div className="border-b border-slate-800 pb-4">
+                                    <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                                        <span className="text-indigo-400">七、</span> 貨櫃式資料中心 (Container Data Center) 規畫指南
+                                    </h2>
+                                    <p className="text-xs text-slate-400 mt-1">20呎/40呎貨櫃平面佈局、基礎設施拖放、資源負載與雙擊編輯</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-slate-200">7.1 視圖與尺寸切換</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        點選頂部「貨櫃佈局」按鈕切換至貨櫃規劃視圖。在該模式下，您可以藉由頂部控制面板隨時切換 20呎貨櫃 (10 格位) 與 40呎貨櫃 (20 格位)，系統將即時調整底部的平面插槽。
+                                    </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-slate-200">7.2 基礎設施元件配置與拖放</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        側邊欄將變更為「貨櫃基礎元件」，包含：IT 機櫃 (General/ORv3)、列間空調 (In-Row Cooling)、UPS 動力總櫃、鋰電池機櫃與低壓配電櫃。將其拖曳即可放置到網格，也可以在網格間相互拖動交換位置。未分配的機櫃會保留在下方的備用棧板區。
+                                    </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-slate-200">7.3 貨櫃級指標計算 (PUE 與總重負荷)</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        頂部看板動態彙整貨櫃內所有機櫃的重量與功耗：
+                                    </p>
+                                    <ul className="list-disc pl-5 text-xs text-slate-400 space-y-1.5">
+                                        <li><strong className="text-slate-300">PUE 估算：</strong>依據 `(IT 功耗 + 空調功耗 + UPS 損耗) / IT 功耗` 進行動態推估（基準 1.15）。</li>
+                                        <li><strong className="text-slate-300">重量安全限值：</strong>加總所有基礎設施與 IT 機架重量，若超過安全起吊限載 30,000 kg (30 噸) 將紅字閃爍警告，以避免物流安裝安全風險。</li>
+                                    </ul>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-slate-200">7.4 雙擊鑽取單櫃編輯</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        在貨櫃佈局中雙擊任何 IT 機櫃，系統將無縫轉入該機櫃的「單櫃編輯」模式。在此您可以規劃該機櫃內部的伺服器配置與網路佈線。點選「貨櫃佈局」回切時，其功耗與重量將自動即時加總反映至貨櫃層級指標中。
+                                    </p>
+                                </div>
+                            </section>
+                        )}
 
                     </div>
                 </div>

@@ -3,10 +3,105 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
+import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server } from 'lucide-react';
+
+const getInfraIcon = (type) => {
+    switch (type) {
+        case 'CDU':
+        case 'Cooling':
+            return Droplets;
+        case 'UPS':
+        case 'PowerPanel':
+            return Zap;
+        case 'Battery':
+            return LayoutGrid;
+        case 'Switchboard':
+            return Settings;
+        case 'FireSuppression':
+            return ShieldAlert;
+        case 'Monitoring':
+            return Eye;
+        case 'EnvControl':
+            return Thermometer;
+        default:
+            return Server;
+    }
+};
+
+const getInfraTheme = (type) => {
+    switch (type) {
+        case 'Battery':
+            return {
+                bg: 'bg-gradient-to-b from-[#4d0726] to-[#7f1d43]',
+                border: 'border-pink-500/50',
+                text: 'text-pink-400',
+                glow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#7f1d43] to-[#9d174d] border-pink-400 shadow-[0_0_30px_rgba(244,63,94,0.25)]',
+                label: '鋰電池櫃 (Battery)'
+            };
+        case 'UPS':
+            return {
+                bg: 'bg-gradient-to-b from-[#3b1c0a] to-[#672f10]',
+                border: 'border-orange-500/50',
+                text: 'text-orange-400',
+                glow: 'shadow-[0_0_20px_rgba(249,115,22,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#672f10] to-[#7c2d12] border-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.25)]',
+                label: 'UPS 動力主櫃'
+            };
+        case 'PowerPanel':
+            return {
+                bg: 'bg-gradient-to-b from-[#3b2405] to-[#5f370e]',
+                border: 'border-amber-500/50',
+                text: 'text-amber-400',
+                glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#5f370e] to-[#78350f] border-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.25)]',
+                label: '分配電盤 (Power Panel)'
+            };
+        case 'Switchboard':
+            return {
+                bg: 'bg-gradient-to-b from-[#111827] to-[#1f2937]',
+                border: 'border-slate-500/50',
+                text: 'text-slate-400',
+                glow: 'shadow-[0_0_20px_rgba(100,116,139,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#1f2937] to-[#374151] border-slate-400 shadow-[0_0_30px_rgba(100,116,139,0.25)]',
+                label: '低壓配電總櫃 (Switchboard)'
+            };
+        case 'FireSuppression':
+            return {
+                bg: 'bg-gradient-to-b from-[#450a0a] to-[#7f1d1d]',
+                border: 'border-red-500/50',
+                text: 'text-red-400',
+                glow: 'shadow-[0_0_20px_rgba(239,68,68,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#7f1d1d] to-[#991b1b] border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.25)]',
+                label: '氣體消防系統 (Fire)'
+            };
+        case 'Monitoring':
+            return {
+                bg: 'bg-gradient-to-b from-[#081a36] to-[#172554]',
+                border: 'border-blue-500/50',
+                text: 'text-blue-400',
+                glow: 'shadow-[0_0_20px_rgba(59,130,246,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#172554] to-[#1e3a8a] border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.25)]',
+                label: '監控中心主櫃 (Monitoring)'
+            };
+        case 'EnvControl':
+            return {
+                bg: 'bg-gradient-to-b from-[#022c22] to-[#064e3b]',
+                border: 'border-emerald-500/50',
+                text: 'text-emerald-400',
+                glow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+                selectedBg: 'bg-gradient-to-b from-[#064e3b] to-[#0f766e] border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.25)]',
+                label: '環境控制系統 (Env Control)'
+            };
+        default:
+            return null;
+    }
+};
 
 const RackView = ({ racksToRender }) => {
     const { 
-        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, showHeatmap, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort 
+        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, showHeatmap, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort,
+        projectInfo
     } = useRackPlanner();
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
@@ -94,6 +189,135 @@ const RackView = ({ racksToRender }) => {
         const limit = rack.powerLimit || 20000;
         const isPowerOverloaded = totalRackPower > limit;
         const isPowerWarning = totalRackPower >= limit * 0.9 && !isPowerOverloaded;
+
+        if (projectInfo?.isCdcProject && (rack.type === 'CDU' || rack.type === 'Cooling')) {
+            const isCDU = rack.type === 'CDU';
+            return (
+                <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">
+                    <div 
+                        onClick={(e) => { e.stopPropagation(); setSelectedId(rack.id); }}
+                        className={`w-[420px] rounded-2xl border-2 flex flex-col justify-between p-6 shadow-2xl relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                            isRackSelected 
+                                ? 'border-cyan-400 ring-2 ring-cyan-400/50 bg-[#081e28]/90 shadow-[0_0_30px_rgba(6,182,212,0.25)]' 
+                                : 'border-slate-700 bg-[#050e18]/90 hover:border-slate-600 shadow-[0_0_20px_rgba(0,0,0,0.4)]'
+                        }`}
+                        style={{ height: rackMaxU * U_HEIGHT + 48 }}
+                    >
+                        <div className="absolute inset-0 opacity-15 bg-[linear-gradient(rgba(18,24,38,0.95)_1px,transparent_1px),linear-gradient(90deg,rgba(18,24,38,0.95)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                        <div className={`absolute top-0 left-0 right-0 h-1.5 ${isCDU ? 'bg-cyan-500 animate-pulse' : 'bg-emerald-500 animate-pulse'}`}></div>
+                        
+                        <div className="absolute inset-0 flex justify-around pointer-events-none opacity-20">
+                            <div className="w-0.5 h-full bg-gradient-to-b from-transparent via-cyan-400 to-transparent animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                            <div className="w-0.5 h-full bg-gradient-to-b from-transparent via-blue-400 to-transparent animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+                        </div>
+
+                        <div className="flex justify-between items-center relative z-10">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Cooling Module</span>
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2.5 h-2.5 rounded-full ${isCDU ? 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]'} animate-pulse`}></div>
+                                <span className={`text-[10px] font-black font-mono ${isCDU ? 'text-cyan-400' : 'text-emerald-400'}`}>
+                                    {isCDU ? 'CDU' : 'IN-ROW'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center flex-1 my-4 relative z-10 gap-3">
+                            <div className="w-24 h-24 rounded-full border-2 border-slate-700/60 bg-slate-900/80 flex items-center justify-center relative shadow-inner hover:border-slate-500 transition-colors">
+                                <div className="absolute inset-1.5 rounded-full border border-dashed border-slate-800/80 animate-[spin_8s_linear_infinite] pointer-events-none"></div>
+                                <div className="absolute inset-3 rounded-full bg-slate-950/40 border border-slate-800/60 flex items-center justify-center">
+                                    <Droplets className={`w-10 h-10 ${isCDU ? 'text-cyan-400' : 'text-emerald-400'} animate-bounce`} style={{ animationDuration: '3s' }} />
+                                </div>
+                                <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping opacity-60" style={{ animationDuration: '4s' }}></div>
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-lg font-bold text-slate-100 drop-shadow">{rack.name}</h3>
+                                <p className="text-xs text-slate-400 font-medium mt-1">
+                                    {isCDU ? '水冷分配單元 (Liquid to Air CDU)' : '列間空調 (In-Row Cooling)'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 flex justify-between items-center text-xs font-mono relative z-10">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[9px] text-slate-500 uppercase font-sans font-bold">Capacity</span>
+                                <span className="text-slate-300 font-bold">
+                                    {((rack.coolingCapacity || (isCDU ? 150000 : 75000)) / 1000).toFixed(0)} kW
+                                </span>
+                            </div>
+                            <div className="h-6 w-px bg-slate-800"></div>
+                            <div className="flex flex-col gap-0.5 items-end">
+                                <span className="text-[9px] text-slate-500 uppercase font-sans font-bold">Weight</span>
+                                <span className="text-slate-300 font-bold">
+                                    {(rack.weight || (isCDU ? 350 : 320)).toLocaleString()} kg
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const infraTheme = projectInfo?.isCdcProject ? getInfraTheme(rack.type) : null;
+        if (infraTheme) {
+            const SelectedIcon = getInfraIcon(rack.type);
+            
+            let capacityText = '-';
+            if (rack.type === 'UPS') capacityText = `容量: ${(rack.powerCapacity/1000).toFixed(0)}kW`;
+            else if (rack.type === 'Battery') capacityText = `電能: ${(rack.batteryCapacity/1000).toFixed(0)}kWh`;
+            
+            return (
+                <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">
+                    <div 
+                        onClick={(e) => { e.stopPropagation(); setSelectedId(rack.id); }}
+                        className={`w-[420px] rounded-2xl border-2 flex flex-col justify-between p-6 shadow-2xl relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                            isRackSelected 
+                                ? infraTheme.selectedBg 
+                                : `${infraTheme.bg} ${infraTheme.border} ${infraTheme.glow} hover:brightness-110`
+                        }`}
+                        style={{ height: rackMaxU * U_HEIGHT + 48 }}
+                    >
+                        <div className="absolute inset-0 opacity-[0.03] bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
+                        <div className="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_bottom,transparent_95%,#fff_5%)] bg-[size:100%_24px]"></div>
+
+                        <div className="flex justify-between items-center relative z-10">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Infra Module</span>
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${infraTheme.text} animate-pulse`}></div>
+                                <span className={`text-[10px] font-black font-mono ${infraTheme.text}`}>
+                                    {rack.type.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center flex-1 my-4 relative z-10 gap-3">
+                            <div className="p-4 rounded-full bg-slate-950/40 border border-slate-800/80 flex items-center justify-center shadow-lg">
+                                <SelectedIcon className={`w-10 h-10 ${infraTheme.text}`} />
+                            </div>
+                            <div className="text-center px-4">
+                                <h3 className="text-2xl font-black font-mono text-slate-100 tracking-wider uppercase drop-shadow">{rack.name}</h3>
+                                <p className="text-xs text-slate-400 font-bold mt-1.5 bg-slate-950/30 px-3 py-1 rounded-full border border-slate-800/30 inline-block">
+                                    {infraTheme.label}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 flex justify-between items-center text-xs font-mono relative z-10">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[9px] text-slate-500 uppercase font-sans font-bold">Specs</span>
+                                <span className="text-slate-300 font-bold">{capacityText}</span>
+                            </div>
+                            <div className="h-6 w-px bg-slate-800"></div>
+                            <div className="flex flex-col gap-0.5 items-end">
+                                <span className="text-[9px] text-slate-500 uppercase font-sans font-bold">Weight</span>
+                                <span className="text-slate-300 font-bold">
+                                    {(rack.weight || 0).toLocaleString()} kg
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div key={rack.id} className="flex items-end gap-2 shrink-0 relative">

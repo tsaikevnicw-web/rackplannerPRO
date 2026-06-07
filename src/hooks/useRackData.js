@@ -3,7 +3,13 @@ import { getNicCount, getSwitchPortCount, getFabricGroup, getServerCategory } fr
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
 export function useRackData(alertModalRef) {
-    const [racks, setRacks] = useState([{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 20000 }]);
+    const [racks, setRacks] = useState([
+        { id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 24000, slotIndex: 4, weight: 150 },
+        { id: 'rack-cooling-1', name: 'INROW-COOL-01', type: 'Cooling', coolingCapacity: 75000, power: 4500, weight: 320, slotIndex: 3 },
+        { id: 'rack-ups-1', name: 'UPS-CABINET-01', type: 'UPS', powerCapacity: 120000, weight: 850, slotIndex: 1 },
+        { id: 'rack-battery-1', name: 'BATTERY-BANK-01', type: 'Battery', batteryCapacity: 100000, weight: 1200, slotIndex: 2 },
+        { id: 'rack-switchboard-1', name: 'SWITCHBOARD-01', type: 'Switchboard', weight: 420, slotIndex: 0 }
+    ]);
     const [devices, setDevices] = useState([]);
 
     // 自動管理水冷 (LC) 連線與斷開

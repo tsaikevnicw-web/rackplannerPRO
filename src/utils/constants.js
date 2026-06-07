@@ -1,4 +1,4 @@
-import { Server, Droplets, HardDrive, Network, Cpu, Zap, LayoutGrid } from 'lucide-react';
+import { Server, Droplets, HardDrive, Network, Cpu, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer } from 'lucide-react';
 
 export const DEFAULT_RACK_U_COUNT = 48;
 export const U_HEIGHT = 24;
@@ -64,4 +64,17 @@ export const DEVICE_TEMPLATES = [
             { type: 'Blank', name: '空白擋板', size: 1, icon: LayoutGrid, theme: 'slate', power: 0 },
         ]
     }
+];
+
+export const CONTAINER_INFRA_TEMPLATES = [
+    { type: 'General', name: 'IT 機櫃', icon: Server, theme: 'blue', uCount: 48, powerLimit: 24000, weight: 150 },
+    { type: 'CDU', name: '水冷分配單元 (CDU)', icon: Droplets, theme: 'cyan', coolingCapacity: 150000, power: 2500, weight: 350 },
+    { type: 'Cooling', name: '列間空調 (In-Row)', icon: Droplets, theme: 'emerald', coolingCapacity: 75000, power: 4500, weight: 320 },
+    { type: 'UPS', name: 'UPS 動力主櫃', icon: Zap, theme: 'orange', powerCapacity: 120000, weight: 850 },
+    { type: 'Battery', name: '鋰電池機櫃', icon: LayoutGrid, theme: 'purple', batteryCapacity: 100000, weight: 1200 },
+    { type: 'Switchboard', name: '低壓配電總櫃', icon: Settings, theme: 'slate', weight: 420 },
+    { type: 'PowerPanel', name: '分配電盤', icon: Zap, theme: 'orange', weight: 120 },
+    { type: 'FireSuppression', name: '氣體消防系統', icon: ShieldAlert, theme: 'orange', weight: 250 },
+    { type: 'Monitoring', name: '監控中心主櫃', icon: Eye, theme: 'blue', weight: 180 },
+    { type: 'EnvControl', name: '環境控制系統', icon: Thermometer, theme: 'emerald', weight: 150 }
 ];
