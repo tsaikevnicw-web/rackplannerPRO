@@ -222,7 +222,7 @@ const AppContent = () => {
                     let targetContainerId = null;
                     if (viewMode === 'container') {
                         for (const container of containers) {
-                            const maxSlots = container.type === '20ft' ? 10 : 20;
+                            const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
                             for (let i = 0; i < maxSlots; i++) {
                                 if (!racks.some(r => (r.containerId || 'container-1') === container.id && r.slotIndex === i)) {
                                     targetSlotIndex = i;
@@ -286,7 +286,9 @@ const AppContent = () => {
         ? racks.filter(r => r.id === activeRackId) 
         : (projectInfo?.isCdcProject && viewMode === 'overview')
             ? racks.filter(r => (r.containerId || 'container-1') === activeCid && r.slotIndex !== null && r.slotIndex !== undefined)
-            : racks;
+            : (viewMode === 'overview' && !projectInfo?.isCdcProject)
+                ? racks.filter(r => r.type === 'General' || r.type === 'ORv3' || !r.type)
+                : racks;
 
     if (hideNonItCabinets && viewMode === 'overview') {
         tempRacks = tempRacks.filter(r => r.type === 'General' || !r.type);
@@ -374,7 +376,7 @@ const AppContent = () => {
                                                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                                                 }`}
                                             >
-                                                {container.name} ({container.type === '20ft' ? '20呎' : '40呎'})
+                                                {container.name} ({container.type === '20ft' ? '20呎' : (container.type === '40ft' ? '40呎' : `自訂 ${container.customLength || 20}格`)})
                                             </button>
                                         ))}
                                     </div>

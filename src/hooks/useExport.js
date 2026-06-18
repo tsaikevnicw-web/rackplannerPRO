@@ -270,7 +270,7 @@ export function useExport(
             const position = projectInfo?.isCdcProject
                 ? (rack.slotIndex !== null && rack.slotIndex !== undefined 
                     ? `Slot ${rack.slotIndex + 1}` 
-                    : "備用棧板")
+                    : "未分配")
                 : "一般佈局";
                 
             let capacityParam = '-';

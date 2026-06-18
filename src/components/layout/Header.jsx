@@ -48,10 +48,10 @@ const Header = () => {
             totalWeightLimit += container.weightLimit;
             totalPowerLimit += container.powerLimit;
             
-            const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : 3800);
+            const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : (container.type === '40ft' ? 3800 : (container.customLength ? container.customLength * 190 : 3800)));
             totalWeight += selfW;
             
-            const maxSlots = container.type === '20ft' ? 10 : 20;
+            const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
             const activeRacks = racks.filter(r => {
                 const cId = r.containerId || 'container-1';
                 return cId === container.id && r.slotIndex !== null && r.slotIndex !== undefined && r.slotIndex < maxSlots;

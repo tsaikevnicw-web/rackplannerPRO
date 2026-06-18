@@ -73,6 +73,17 @@ const Sidebar = () => {
                                     <Box className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
                                     <span>40呎貨櫃 (20格)</span>
                                 </div>
+                                <div
+                                    draggable
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData('newContainerType', 'custom');
+                                        e.dataTransfer.effectAllowed = 'copyMove';
+                                    }}
+                                    className="p-2 bg-indigo-950/45 hover:bg-indigo-900/40 border border-indigo-500/35 hover:border-indigo-400/50 rounded-xl cursor-grab active:cursor-grabbing text-xs font-semibold text-indigo-300 text-center flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all shadow-inner group"
+                                >
+                                    <Box className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                                    <span>自訂長度貨櫃 (可更動)</span>
+                                </div>
                             </div>
                         </div>
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2.5 py-1 mb-1">貨櫃基礎元件</div>

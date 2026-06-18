@@ -45,13 +45,13 @@ const ContainerView = () => {
     };
 
     const getSingleContainerStats = (container) => {
-        const maxSlots = container.type === '20ft' ? 10 : 20;
+        const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
         const activeRacks = racks.filter(r => {
             const cId = r.containerId || 'container-1';
             return cId === container.id && r.slotIndex !== null && r.slotIndex !== undefined && r.slotIndex < maxSlots;
         });
 
-        const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : 3800);
+        const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : (container.type === '40ft' ? 3800 : (container.customLength ? container.customLength * 95 : 3800)));
         let totalWeight = selfW;
         let totalItPower = 0;
         let totalCoolingPower = 0;
@@ -195,12 +195,13 @@ const ContainerView = () => {
                 id: `container-${Date.now()}`,
                 name: `貨櫃-${nextLetter}`,
                 type: newContainerType,
+                customLength: newContainerType === 'custom' ? 20 : undefined,
                 powerLimit: 500000,
                 weightLimit: 30000,
                 pueBase: 1.15
             };
             setContainers(prev => [...prev, newContainer]);
-            showAlert(`已新增一個可規畫的 ${newContainerType === '20ft' ? '20呎' : '40呎'} 貨櫃 (貨櫃-${nextLetter})！`, '新增成功', 'success');
+            showAlert(`已新增一個可規畫的 ${newContainerType === '20ft' ? '20呎' : (newContainerType === '40ft' ? '40呎' : '自訂長度')} 貨櫃 (貨櫃-${nextLetter})！`, '新增成功', 'success');
         }
     };
 
@@ -211,21 +212,13 @@ const ContainerView = () => {
             showAlert('必須保留至少一個貨櫃！', '提示', 'warning');
             return;
         }
-        if (window.confirm('確定要刪除此貨櫃嗎？其內部的所有機櫃將會移回未分配區。')) {
-            setRacks(prev => prev.map(r => {
+        if (window.confirm('確定要刪除此貨櫃嗎？其內部所有的機櫃將會被同步刪除。')) {
+            setRacks(prev => prev.filter(r => {
                 const cId = r.containerId || 'container-1';
-                if (cId === containerId) {
-                    return { ...r, containerId: null, slotIndex: null };
-                }
-                return r;
+                return cId !== containerId;
             }));
             setContainers(prev => prev.filter(c => c.id !== containerId));
         }
-    };
-
-    // 移除機櫃的 slotIndex (移至未分配區)
-    const handleUnassignRack = (rackId) => {
-        setRacks(prev => prev.map(r => r.id === rackId ? { ...r, containerId: null, slotIndex: null } : r));
     };
 
     // 徹底刪除機櫃
@@ -252,19 +245,7 @@ const ContainerView = () => {
         }
     };
 
-    // 分類機櫃 - 未分配機櫃
-    const activeContainerIds = new Set(containers.map(c => c.id));
-    const unassignedRacks = racks.filter(r => {
-        const cId = r.containerId || 'container-1';
-        const inActiveContainer = activeContainerIds.has(cId);
-        const hasSlot = r.slotIndex !== null && r.slotIndex !== undefined;
-        
-        if (!inActiveContainer || !hasSlot) return true;
-        
-        const container = containers.find(c => c.id === cId);
-        const maxSlots = container.type === '20ft' ? 10 : 20;
-        return r.slotIndex >= maxSlots;
-    });
+
 
     // 取得元件圖示
     const getCabinetIcon = (type) => {
@@ -308,7 +289,7 @@ const ContainerView = () => {
             `}</style>
 
             {containers.map((container, cIdx) => {
-                const maxSlots = container.type === '20ft' ? 10 : 20;
+                const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
                 
                 const containerRacks = Array.from({ length: maxSlots }).map((_, idx) => {
                     return racks.find(r => (r.containerId || 'container-1') === container.id && r.slotIndex === idx) || null;
@@ -335,28 +316,59 @@ const ContainerView = () => {
                                     value={container.type}
                                     onChange={(e) => {
                                         const newType = e.target.value;
-                                        if (newType === '20ft') {
-                                            const hasOutofBounds = racks.some(r => (r.containerId || 'container-1') === container.id && r.slotIndex >= 10);
-                                            if (hasOutofBounds) {
-                                                if (!window.confirm('此貨櫃中索引 10 以上的插槽已有放置設備，切換至 20呎 將會將這些設備移至未分配區，確定要切換嗎？')) {
-                                                    return;
-                                                }
-                                                setRacks(prev => prev.map(r => {
-                                                    const cId = r.containerId || 'container-1';
-                                                    if (cId === container.id && r.slotIndex >= 10) {
-                                                        return { ...r, containerId: null, slotIndex: null };
-                                                    }
-                                                    return r;
-                                                }));
+                                        let limitSlots = 20;
+                                        if (newType === '20ft') limitSlots = 10;
+                                        else if (newType === '40ft') limitSlots = 20;
+                                        else limitSlots = Math.floor((container.customLength || 40) / 2);
+
+                                        const hasOutofBounds = racks.some(r => (r.containerId || 'container-1') === container.id && r.slotIndex >= limitSlots);
+                                        if (hasOutofBounds) {
+                                            if (!window.confirm(`切換規格至該長度將會將超出 ${limitSlots} 的機櫃刪除，確定要切換嗎？`)) {
+                                                return;
                                             }
+                                            setRacks(prev => prev.filter(r => {
+                                                const cId = r.containerId || 'container-1';
+                                                return !(cId === container.id && r.slotIndex >= limitSlots);
+                                            }));
                                         }
-                                        setContainers(prev => prev.map(c => c.id === container.id ? { ...c, type: newType } : c));
+                                        setContainers(prev => prev.map(c => c.id === container.id ? { ...c, type: newType, customLength: newType === 'custom' ? (c.customLength || 40) : undefined } : c));
                                     }}
                                     className="bg-indigo-950/40 border border-indigo-500/30 text-indigo-400 text-[10px] font-bold rounded px-2.5 py-0.5 outline-none cursor-pointer hover:bg-indigo-900/40 hover:border-indigo-400/50 transition-colors"
                                 >
                                     <option value="20ft" className="bg-[#0b1523] text-slate-300">20呎 (10格)</option>
                                     <option value="40ft" className="bg-[#0b1523] text-slate-300">40呎 (20格)</option>
+                                    <option value="custom" className="bg-[#0b1523] text-slate-300">自訂長度</option>
                                 </select>
+                                
+                                {container.type === 'custom' && (
+                                    <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-700/60 rounded-lg px-2 py-0.5 shadow-inner" title="自訂貨櫃長度 (呎)">
+                                        <span className="text-[10px] font-bold text-slate-400 select-none uppercase tracking-wider">長度</span>
+                                        <input
+                                            type="number"
+                                            min={2}
+                                            max={200}
+                                            step={2}
+                                            value={container.customLength || 40}
+                                            onChange={(e) => {
+                                                const newFeet = Math.max(2, parseInt(e.target.value) || 2);
+                                                const newSlots = Math.floor(newFeet / 2);
+                                                const hasOutofBounds = racks.some(r => (r.containerId || 'container-1') === container.id && r.slotIndex >= newSlots);
+                                                if (hasOutofBounds) {
+                                                    if (!window.confirm(`縮減長度至 ${newFeet} 呎 (${newSlots} 格) 將會把超出範圍的機櫃刪除，確定嗎？`)) {
+                                                        return;
+                                                    }
+                                                    setRacks(prev => prev.filter(r => {
+                                                        const cId = r.containerId || 'container-1';
+                                                        return !(cId === container.id && r.slotIndex >= newSlots);
+                                                    }));
+                                                }
+                                                setContainers(prev => prev.map(c => c.id === container.id ? { ...c, customLength: newFeet } : c));
+                                            }}
+                                            className="bg-transparent border-none outline-none text-xs text-slate-200 focus:ring-0 p-0 w-12 text-center font-mono font-bold"
+                                        />
+                                        <span className="text-[10px] text-slate-500 font-bold select-none">呎</span>
+                                    </div>
+                                )}
                                 
                                 <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-700/60 rounded-lg px-2 py-0.5 shadow-inner" title="貨櫃自重 (Tare Weight)">
                                     <span className="text-[10px] font-bold text-slate-400 select-none uppercase tracking-wider">自重</span>
@@ -551,13 +563,6 @@ const ContainerView = () => {
                                                         {/* Hover 浮出快捷選單 */}
                                                         <div className="absolute -top-2 -right-2 hidden group-hover:flex gap-1 z-10 bg-slate-950/90 p-0.5 rounded border border-slate-700">
                                                             <button
-                                                                onClick={() => handleUnassignRack(rack.id)}
-                                                                className="p-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-slate-400 hover:text-white"
-                                                                title="移出貨櫃 (保留配置)"
-                                                            >
-                                                                <LogOut className="w-2.5 h-2.5" />
-                                                            </button>
-                                                            <button
                                                                 onClick={(e) => handleDeleteRack(rack.id, e)}
                                                                 className="p-1 bg-red-950/80 hover:bg-red-900 border border-red-800 rounded text-red-400 hover:text-red-200"
                                                                 title="徹底刪除"
@@ -594,71 +599,6 @@ const ContainerView = () => {
                     </div>
                 );
             })}
-
-            {/* 貨櫃外：未分配機櫃備用區 */}
-            <div className="w-full max-w-7xl mx-auto bg-slate-900/30 border border-slate-800/80 rounded-2xl p-5 shadow-lg">
-                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                        機櫃備用棧板 (Unassigned Racks Bay)
-                        <span className="px-2 py-0.5 bg-slate-800 text-[10px] text-slate-400 font-mono rounded-md">{unassignedRacks.length} 個未分配</span>
-                    </h4>
-                    <span className="text-[9px] text-slate-500">此區機櫃不會列入貨櫃的總重與 PUE 計算，拖曳即可放入貨櫃中，點選後可按 Del 鍵或 Ctrl+C 複製</span>
-                </div>
-
-                {unassignedRacks.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-slate-600 border border-dashed border-slate-800/80 rounded-xl">
-                        沒有未分配的機櫃。可以從左側拖曳新機櫃放入貨櫃網格中。
-                    </div>
-                ) : (
-                    <div className="flex flex-wrap gap-3">
-                        {unassignedRacks.map(rack => {
-                            const stats = getRackStats(rack);
-                            const isActive = rack.id === activeRackId;
-
-                            return (
-                                <div
-                                    key={rack.id}
-                                    draggable
-                                    onDragStart={(e) => handleRackDragStart(e, rack.id)}
-                                    onClick={() => {
-                                        setActiveRackId(rack.id);
-                                        setSelectedIds([rack.id]);
-                                    }}
-                                    onDoubleClick={() => handleDoubleClickRack(rack)}
-                                    className={`w-28 p-2 rounded-xl border bg-[#0b1523]/80 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 transition-all duration-200 group relative ${
-                                        isActive ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-700'
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[9px] font-bold text-slate-300 truncate max-w-[80px]">{rack.name}</span>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${
-                                            rack.type === 'Cooling' || rack.type === 'CDU' ? 'bg-emerald-500' :
-                                            rack.type === 'UPS' || rack.type === 'PowerPanel' ? 'bg-orange-500' :
-                                            rack.type === 'Battery' ? 'bg-purple-500' :
-                                            rack.type === 'Switchboard' ? 'bg-slate-400' :
-                                            rack.type === 'FireSuppression' ? 'bg-rose-500' :
-                                            rack.type === 'Monitoring' ? 'bg-blue-400' :
-                                            rack.type === 'EnvControl' ? 'bg-teal-500' :
-                                            'bg-blue-500'
-                                        }`}></div>
-                                    </div>
-                                    <div className="text-[8px] text-slate-500 font-mono mb-2">{rack.type}</div>
-                                    <div className="text-[8px] font-mono text-slate-400 flex justify-between">
-                                        <span>重: {stats.weight}kg</span>
-                                        <button
-                                            onClick={(e) => handleDeleteRack(rack.id, e)}
-                                            className="hidden group-hover:block text-red-500 hover:text-red-400 shrink-0 ml-1"
-                                            title="徹底刪除"
-                                        >
-                                            <Trash2 className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
         </div>
     );
 };

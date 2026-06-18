@@ -403,12 +403,12 @@ const CablesOverlay = () => {
                     const rackAXCenter = rackACoords.x + rackACoords.w / 2;
                     const leftChannelAX = rackACoords.x + 16;
                     const rightChannelAX = rackACoords.x + rackACoords.w - 16;
-                    const channelAX = x1 < rackAXCenter ? leftChannelAX : rightChannelAX;
+                    const channelAX = rightChannelAX; // Force to route along the right side
 
                     const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
                     const leftChannelBX = rackBCoords.x + 16;
                     const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
-                    const channelBX = x2 < rackBXCenter ? leftChannelBX : rightChannelBX;
+                    const channelBX = rightChannelBX; // Force to route along the right side
 
                     if (devA.rackId === devB.rackId) {
                         // Same rack
