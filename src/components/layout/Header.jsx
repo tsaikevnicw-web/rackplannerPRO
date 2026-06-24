@@ -117,8 +117,21 @@ const Header = () => {
 
     const handleAddRackClick = () => {
         const newId = `rack-${Date.now()}`;
-        setRacks([...racks, { id: newId, name: `RACK-${String(racks.length + 1).padStart(3, '0')}`, type: 'General', uCount: 48 }]);
+        const itRacks = racks.filter(r => r.type === 'General' || r.type === 'ORv3');
+        let maxNum = 0;
+        itRacks.forEach(r => {
+            const match = r.name.match(/^RACK-(\d+)$/i);
+            if (match) {
+                const num = parseInt(match[1], 10);
+                if (num > maxNum) maxNum = num;
+            }
+        });
+        const nextNum = Math.max(maxNum + 1, itRacks.length + 1);
+        const newName = `RACK-${String(nextNum).padStart(3, '0')}`;
+
+        setRacks([...racks, { id: newId, name: newName, type: 'General', uCount: 48 }]);
         setActiveRackId(newId);
+        setSelectedId(newId);
         if (viewMode === 'network') setViewMode('overview');
     };
 
@@ -280,8 +293,17 @@ const Header = () => {
                                 onChange={(e) => { setActiveRackId(e.target.value); setSelectedId(e.target.value); }}
                                 className="bg-slate-800/80 border-none text-sm text-white focus:ring-0 cursor-pointer outline-none pl-2 pr-6 py-1 rounded-lg"
                             >
-                                {racks.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                {racks
+                                    .filter(r => r.type === 'General' || r.type === 'ORv3')
+                                    .map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                                }
                             </select>
+                            <button
+                                onClick={handleAddRackClick}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 whitespace-nowrap ml-1 mr-1"
+                            >
+                                + 新增機櫃
+                            </button>
                         </div>
                     )}
                     {viewMode === 'container' ? (

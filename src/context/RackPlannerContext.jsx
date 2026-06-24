@@ -79,6 +79,20 @@ export const RackPlannerProvider = ({ children }) => {
         });
     }, [racks, devices]);
 
+    // 當切換到單櫃編輯模式時，若目前選中的是基礎設施櫃 (Cooling, UPS 等)，自動切換至第一個 IT 機櫃 (General 或 ORv3)
+    useEffect(() => {
+        if (viewMode === 'single') {
+            const activeRack = racks.find(r => r.id === activeRackId);
+            if (activeRack && activeRack.type !== 'General' && activeRack.type !== 'ORv3') {
+                const firstItRack = racks.find(r => r.type === 'General' || r.type === 'ORv3');
+                if (firstItRack) {
+                    setActiveRackId(firstItRack.id);
+                    setSelectedIds([firstItRack.id]);
+                }
+            }
+        }
+    }, [viewMode, activeRackId, racks]);
+
     const undo = useCallback(() => {
         if (historyState.index > 0) {
             isUndoRedoAction.current = true;
