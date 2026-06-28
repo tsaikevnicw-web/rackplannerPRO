@@ -99,6 +99,209 @@ const RightPanel = () => {
                     </div>
 
                     <div className={sectionCls}>
+                        <label className="block text-xs font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                            <Network className="w-3.5 h-3.5 text-cyan-400" /> 批次變更錨點走線與顏色
+                        </label>
+                        <div className="space-y-3">
+                            {/* EW NIC */}
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), ew_nic: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 EW NIC 走線方向`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇走線方向...</option>
+                                       <option value="right">➡️ 右側走線</option>
+                                       <option value="left">⬅️ 左側走線</option>
+                                    </select>
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), ew_nic: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 EW NIC 線路顏色`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇顏色...</option>
+                                       <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                       <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                       <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                       <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                       <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                       <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                       <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                       <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* PCIe Slot */}
+                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), pcie_slot: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 PCIe Slot 走線方向`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇走線方向...</option>
+                                       <option value="right">➡️ 右側走線</option>
+                                       <option value="left">⬅️ 左側走線</option>
+                                    </select>
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), pcie_slot: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 PCIe Slot 線路顏色`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇顏色...</option>
+                                       <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                       <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                       <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                       <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                       <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                       <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                       <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                       <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* S-NIC-M */}
+                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), s_nic_m: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 S-NIC-M 走線方向`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇走線方向...</option>
+                                       <option value="right">➡️ 右側走線</option>
+                                       <option value="left">⬅️ 左側走線</option>
+                                    </select>
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), s_nic_m: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 S-NIC-M 線路顏色`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇顏色...</option>
+                                       <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                       <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                       <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                       <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                       <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                       <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                       <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                       <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* BMC */}
+                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), bmc: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 BMC 走線方向`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇走線方向...</option>
+                                       <option value="right">➡️ 右側走線</option>
+                                       <option value="left">⬅️ 左側走線</option>
+                                    </select>
+                                    <select 
+                                        value="" 
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                selectedDevices.forEach(dev => {
+                                                    handleUpdateDevice(dev.id, {
+                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), bmc: e.target.value }
+                                                    });
+                                                });
+                                                showAlert(`已批次修改 BMC 線路顏色`, '成功', 'success');
+                                            }
+                                        }} 
+                                        className={selectCls}
+                                    >
+                                       <option value="">選擇顏色...</option>
+                                       <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                       <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                       <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                       <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                       <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                       <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                       <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                       <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={sectionCls}>
                         <div>
                             <label className="block text-xs font-bold text-emerald-400 mb-1.5">修改拓撲群組 (Topology Group)</label>
                             <input 
@@ -427,6 +630,149 @@ const RightPanel = () => {
                                 className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
                                 placeholder="預設為 10 KG..."
                             />
+                        </div>
+                        <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                            <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
+                            </label>
+                            <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                {/* EW NIC */}
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select
+                                            value={selectedDevice.anchorCableSides?.ew_nic || 'right'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                        >
+                                            <option value="right">➡️ 右側走線</option>
+                                            <option value="left">⬅️ 左側走線</option>
+                                        </select>
+                                        <select
+                                            value={selectedDevice.anchorCableColors?.ew_nic || '#22c55e'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                            style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
+                                        >
+                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
+                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* PCIe Slot */}
+                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                    <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select
+                                            value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                        >
+                                            <option value="right">➡️ 右側走線</option>
+                                            <option value="left">⬅️ 左側走線</option>
+                                        </select>
+                                        <select
+                                            value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                            style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                        >
+                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* S-NIC-M */}
+                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                    <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select
+                                            value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                        >
+                                            <option value="right">➡️ 右側走線</option>
+                                            <option value="left">⬅️ 左側走線</option>
+                                        </select>
+                                        <select
+                                            value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                            style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
+                                        >
+                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
+                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* BMC */}
+                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                    <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select
+                                            value={selectedDevice.anchorCableSides?.bmc || 'right'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                        >
+                                            <option value="right">➡️ 右側走線</option>
+                                            <option value="left">⬅️ 左側走線</option>
+                                        </select>
+                                        <select
+                                            value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
+                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
+                                            })}
+                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                            style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
+                                        >
+                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍 (預設)</option>
+                                            <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
+                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

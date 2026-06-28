@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
@@ -106,9 +106,36 @@ const RackView = ({ racksToRender }) => {
     
     const { handleDragStart, handleDrop, handleDragOver } = useRackInteractions();
 
+    const connectedToSelectedSet = useMemo(() => {
+        if (!selectedId || (selectedIds && selectedIds.length > 1)) return null;
+        const set = new Set();
+        devices.forEach(d => {
+            if (d.connections) {
+                Object.entries(d.connections).forEach(([localKey, targetKey]) => {
+                    if (targetKey) {
+                        const localFullId = `${d.id}-${localKey}`;
+                        const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
+                        if (d.id === selectedId || targetDevId === selectedId) {
+                            set.add(localFullId);
+                            set.add(targetKey);
+                        }
+                    }
+                });
+            }
+        });
+        return set;
+    }, [devices, selectedId, selectedIds]);
+
     const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
+        const isSwitchOrRouter = (dev.type || '').startsWith('Switch') || dev.type === 'Router';
+
+        let effectiveConnected = isConnected;
+        if (connectedToSelectedSet !== null && isSwitchOrRouter) {
+            effectiveConnected = connectedToSelectedSet.has(fullId);
+        }
+
         // 計算此 port 目前的連線總數（1 + __2 ~ __8）
         let connCount = 0;
         if (isConnected) {
@@ -121,20 +148,20 @@ const RackView = ({ racksToRender }) => {
         // Water cooling port color logic
         let waterConnectedColor = null;
         if (portKey === 'water_cold' || portKey === 'host_water_cold') {
-            waterConnectedColor = isConnected
+            waterConnectedColor = effectiveConnected
                 ? 'bg-blue-400 shadow-[0_0_10px_#60a5fa] border-blue-300'
                 : 'bg-blue-600 border-blue-500 shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]';
         } else if (portKey === 'water_hot' || portKey === 'host_water_hot') {
-            waterConnectedColor = isConnected
+            waterConnectedColor = effectiveConnected
                 ? 'bg-red-400 shadow-[0_0_10px_#f87171] border-red-300'
                 : 'bg-red-600 border-red-500 shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]';
         }
         
         const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
-        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+        const defaultBorder = effectiveConnected ? 'border-green-200' : 'border-slate-500';
         const borderClass = waterConnectedColor ? '' : defaultBorder;
 
-        const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60'));
+        const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : 'bg-slate-700 opacity-60'));
         const shapeClass = (portKey === 'water_cold' || portKey === 'water_hot') ? 'rounded-full' : 'rounded-[2px]';
 
         return (

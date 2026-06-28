@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
 import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
@@ -6,6 +6,26 @@ import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
     const { racks, devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
+
+    const connectedToSelectedSet = useMemo(() => {
+        if (!selectedId || (selectedIds && selectedIds.length > 1)) return null;
+        const set = new Set();
+        devices.forEach(d => {
+            if (d.connections) {
+                Object.entries(d.connections).forEach(([localKey, targetKey]) => {
+                    if (targetKey) {
+                        const localFullId = `${d.id}-${localKey}`;
+                        const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
+                        if (d.id === selectedId || targetDevId === selectedId) {
+                            set.add(localFullId);
+                            set.add(targetKey);
+                        }
+                    }
+                });
+            }
+        });
+        return set;
+    }, [devices, selectedId, selectedIds]);
 
     const getGroupKeys = (devs, prefix) => getGroupedDevices(devs, racks).map(g => `${prefix}-${g.name}`);
 
@@ -40,11 +60,17 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
     const renderPortAnchor = (dev, portKey, label, hoverClass, sizeClass = "w-2.5 h-2.5 shrink-0", colorOverride = null) => {
         const fullId = `${dev.id}-${portKey}`;
         const isConnected = connectedPortsSet.has(fullId);
+        const isSwitchOrRouter = (dev.type || '').startsWith('Switch') || dev.type === 'Router';
+
+        let effectiveConnected = isConnected;
+        if (connectedToSelectedSet !== null && isSwitchOrRouter) {
+            effectiveConnected = connectedToSelectedSet.has(fullId);
+        }
         
         const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
-        const defaultBorder = isConnected ? 'border-green-200' : 'border-slate-500';
+        const defaultBorder = effectiveConnected ? 'border-green-200' : 'border-slate-500';
 
-        const bgClass = colorOverride ? colorOverride : (isConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
+        const bgClass = colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
 
         return (
             <div

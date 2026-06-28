@@ -292,13 +292,30 @@ const CablesOverlay = () => {
         if (srcBase === 'water_hot'  || tgtBase === 'water_hot' ||
             srcBase === 'host_water_hot'  || tgtBase === 'host_water_hot')  return '#f87171';
 
-        // ── BMC 鈔點 → 藍色 ──
-        const isBMC = srcBase === 'bmc' || srcBase.startsWith('bmc')
-                   || tgtBase === 'bmc' || tgtBase.startsWith('bmc');
-        if (isBMC) return '#60a5fa';
-
         const devA = devices.find(d => d.id === devAId);
         const devB = devices.find(d => d.id === devBId);
+
+        const getAnchorCat = (key) => {
+            if (!key) return null;
+            const b = key.replace(/__\d+$/, '');
+            if (b.startsWith('cx8-') || b === 'cx8p') return 'ew_nic';
+            if (b.startsWith('pcie_slot_') || b.startsWith('ns_nic_')) return 'pcie_slot';
+            if (b.startsWith('super_nic_mgt')) return 's_nic_m';
+            if (b.startsWith('bmc')) return 'bmc';
+            return null;
+        };
+
+        const catA = getAnchorCat(portKey);
+        const catB = getAnchorCat(targetPortKey);
+
+        if (catA && devA?.anchorCableColors?.[catA]) return devA.anchorCableColors[catA];
+        if (catB && devB?.anchorCableColors?.[catB]) return devB.anchorCableColors[catB];
+
+        // ── BMC 錨點預設 → 藍色 ──
+        const isBMC = srcBase === 'bmc' || srcBase.startsWith('bmc')
+                   || tgtBase === 'bmc' || tgtBase.startsWith('bmc');
+        if (isBMC) return devA?.anchorCableColors?.bmc || devB?.anchorCableColors?.bmc || '#60a5fa';
+
         const types = [devA?.type, devB?.type].filter(Boolean);
 
         // ── 2U2N 專屬 Node 1 / Node 2 網路線顏色區分 (OPA/NIC) ──
@@ -313,8 +330,9 @@ const CablesOverlay = () => {
         if (types.some(t => t === 'Switch1G'))          return '#60a5fa';
 
         // Fallback: 依 portKey 前綴判斷
-        if (srcBase.startsWith('cx8-'))    return '#22c55e';
-        if (srcBase.startsWith('ns_nic_') || srcBase.startsWith('pcie_slot_')) return '#facc15';
+        if (srcBase.startsWith('cx8-'))    return devA?.anchorCableColors?.ew_nic || devB?.anchorCableColors?.ew_nic || '#22c55e';
+        if (srcBase.startsWith('ns_nic_') || srcBase.startsWith('pcie_slot_')) return devA?.anchorCableColors?.pcie_slot || devB?.anchorCableColors?.pcie_slot || '#facc15';
+        if (srcBase.startsWith('super_nic_mgt')) return devA?.anchorCableColors?.s_nic_m || devB?.anchorCableColors?.s_nic_m || '#a855f7';
         if (srcBase.startsWith('port-'))   return '#a855f7';
         return '#64748b';
     };
@@ -403,20 +421,71 @@ const CablesOverlay = () => {
                     const rackAXCenter = rackACoords.x + rackACoords.w / 2;
                     const leftChannelAX = rackACoords.x + 16;
                     const rightChannelAX = rackACoords.x + rackACoords.w - 16;
-                    const channelAX = rightChannelAX; // Force to route along the right side
+                    const getCableSide = (device, portId) => {
+                        if (!device || !portId) return 'right';
+                        const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
+                        const baseKey = rawPortKey.replace(/__\d+$/, '');
+
+                        const anchorSides = device.anchorCableSides || {};
+
+                        if (baseKey.startsWith('cx8-') || baseKey === 'cx8p') {
+                            return anchorSides.ew_nic || 'right';
+                        }
+                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) {
+                            return anchorSides.pcie_slot || 'right';
+                        }
+                        if (baseKey.startsWith('super_nic_mgt')) {
+                            return anchorSides.s_nic_m || 'right';
+                        }
+                        if (baseKey.startsWith('bmc')) {
+                            return anchorSides.bmc || 'right';
+                        }
+
+                        if (device.portCableSides && device.portCableSides[rawPortKey]) {
+                            return device.portCableSides[rawPortKey];
+                        }
+                        return device.cableSide || 'right';
+                    };
+
+                    const sideA = getCableSide(devA, startPortId);
+                    const channelAX = sideA === 'left' ? leftChannelAX : rightChannelAX;
 
                     const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
                     const leftChannelBX = rackBCoords.x + 16;
                     const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
-                    const channelBX = rightChannelBX; // Force to route along the right side
+
+                    const sideB = getCableSide(devB, endPortId);
+                    const channelBX = sideB === 'left' ? leftChannelBX : rightChannelBX;
 
                     if (devA.rackId === devB.rackId) {
-                        // Same rack
-                        if (channelAX === channelBX) {
+                        // Same rack routing optimization
+                        const isDevASwitch = (devA.type || '').startsWith('Switch') || devA.type === 'Router';
+                        const isDevBSwitch = (devB.type || '').startsWith('Switch') || devB.type === 'Router';
+
+                        let effectiveChannelA = channelAX;
+                        let effectiveChannelB = channelBX;
+
+                        if (isDevASwitch && !isDevBSwitch) {
+                            effectiveChannelA = sideB === 'left' ? leftChannelAX : rightChannelAX;
+                        } else if (isDevBSwitch && !isDevASwitch) {
+                            effectiveChannelB = sideA === 'left' ? leftChannelBX : rightChannelBX;
+                        } else if (sideA === 'left' && sideB === 'right') {
+                            const rawBKey = endPortId.includes('-') ? endPortId.substring(devB.id.length + 1) : endPortId;
+                            const baseBKey = rawBKey.replace(/__\d+$/, '');
+                            const bCustomized = devB.anchorCableSides?.[baseBKey] || devB.portCableSides?.[rawBKey];
+                            if (!bCustomized) effectiveChannelB = leftChannelBX;
+                        } else if (sideB === 'left' && sideA === 'right') {
+                            const rawAKey = startPortId.includes('-') ? startPortId.substring(devA.id.length + 1) : startPortId;
+                            const baseAKey = rawAKey.replace(/__\d+$/, '');
+                            const aCustomized = devA.anchorCableSides?.[baseAKey] || devA.portCableSides?.[rawAKey];
+                            if (!aCustomized) effectiveChannelA = leftChannelAX;
+                        }
+
+                        if (effectiveChannelA === effectiveChannelB) {
                             const points = [
                                 { x: x1, y: y1 },
-                                { x: channelAX, y: y1 },
-                                { x: channelAX, y: y2 },
+                                { x: effectiveChannelA, y: y1 },
+                                { x: effectiveChannelA, y: y2 },
                                 { x: x2, y: y2 }
                             ];
                             return drawRoundedPath(points, 8);
@@ -428,10 +497,10 @@ const CablesOverlay = () => {
                             
                             const points = [
                                 { x: x1, y: y1 },
-                                { x: channelAX, y: y1 },
-                                { x: channelAX, y: yCross },
-                                { x: channelBX, y: yCross },
-                                { x: channelBX, y: y2 },
+                                { x: effectiveChannelA, y: y1 },
+                                { x: effectiveChannelA, y: yCross },
+                                { x: effectiveChannelB, y: yCross },
+                                { x: effectiveChannelB, y: y2 },
                                 { x: x2, y: y2 }
                             ];
                             return drawRoundedPath(points, 8);
