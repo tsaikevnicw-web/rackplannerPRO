@@ -308,9 +308,20 @@ const AppContent = () => {
     };
 
     const executeDeleteRack = () => {
-        setRacks(prev => prev.filter(r => r.id !== deleteRackConfirm.rackId));
-        setDevices(prev => prev.filter(d => d.rackId !== deleteRackConfirm.rackId));
-        if (activeRackId === deleteRackConfirm.rackId) setActiveRackId(racks.find(r => r.id !== deleteRackConfirm.rackId)?.id || null);
+        const remaining = racks.filter(r => r.id !== deleteRackConfirm.rackId);
+        if (remaining.length === 0) {
+            const defaultRack = { id: 'rack-1', name: 'RACK-001', type: 'General', uCount: 48, powerLimit: 24000, slotIndex: null, weight: 150 };
+            setRacks([defaultRack]);
+            setDevices([]);
+            setActiveRackId(defaultRack.id);
+            showAlert('已自動重設並保留預設機櫃 RACK-001！', '提示', 'info');
+        } else {
+            setRacks(remaining);
+            setDevices(prev => prev.filter(d => d.rackId !== deleteRackConfirm.rackId));
+            if (activeRackId === deleteRackConfirm.rackId) {
+                setActiveRackId(remaining[0].id);
+            }
+        }
         setDeleteRackConfirm({ isOpen: false, rackId: null }); setSelectedId(null);
     };
 
