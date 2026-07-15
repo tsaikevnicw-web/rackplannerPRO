@@ -142,6 +142,8 @@ export const RackPlannerProvider = ({ children }) => {
     const [raModalState, setRaModalState] = useState({ isOpen: false, type: '' });
     const [isUserManualOpen, setIsUserManualOpen] = useState(false);
     const [isBugTrackerOpen, setIsBugTrackerOpen] = useState(false);
+    const [isNetworkCablingOpen, setIsNetworkCablingOpen] = useState(false);
+    const [isGeneratingCablePDF, setIsGeneratingCablePDF] = useState(false);
 
     // Scaling
     const [isFitToScreen, setIsFitToScreen] = useState(false);
@@ -205,6 +207,8 @@ export const RackPlannerProvider = ({ children }) => {
             clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
             isUserManualOpen, setIsUserManualOpen,
             isBugTrackerOpen, setIsBugTrackerOpen,
+            isNetworkCablingOpen, setIsNetworkCablingOpen,
+            isGeneratingCablePDF, setIsGeneratingCablePDF,
             isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
             isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
             rackContainerRef, mainAreaRef, fileInputRef,

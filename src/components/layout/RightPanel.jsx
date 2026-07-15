@@ -13,6 +13,47 @@ const RightPanel = () => {
 
     const selectedRack = racks.find(r => r.id === selectedId);
     const selectedDevice = devices.find(d => d.id === selectedId);
+
+    const renderCablingSubFields = (key, currentVal) => {
+        return (
+            <div className="col-span-2 ml-4 pl-2 border-l border-slate-700/60 my-1.5 grid grid-cols-2 gap-2 text-[10px]">
+                <div className="col-span-2 text-[9px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">網路規格及線路 (Cabling Specs)</div>
+                
+                <div>
+                    <label className="block text-slate-500 mb-0.5">NIC 收發器型號</label>
+                    <input type="text" placeholder="Model..." value={currentVal.transceiver_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'transceiver_model', e.target.value)}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                </div>
+                <div>
+                    <label className="block text-slate-500 mb-0.5">NIC 收發器數量</label>
+                    <input type="number" placeholder="Qty" value={currentVal.transceiver_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'transceiver_qty', parseInt(e.target.value) || '')}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                </div>
+
+                <div>
+                    <label className="block text-slate-500 mb-0.5">Switch 收發器型號</label>
+                    <input type="text" placeholder="Model..." value={currentVal.sw_transceiver_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'sw_transceiver_model', e.target.value)}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                </div>
+                <div>
+                    <label className="block text-slate-500 mb-0.5">Switch 收發器數量</label>
+                    <input type="number" placeholder="Qty" value={currentVal.sw_transceiver_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'sw_transceiver_qty', parseInt(e.target.value) || '')}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                </div>
+
+                <div>
+                    <label className="block text-slate-500 mb-0.5">線路型號 (Cable Model)</label>
+                    <input type="text" placeholder="Model..." value={currentVal.cable_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'cable_model', e.target.value)}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                </div>
+                <div>
+                    <label className="block text-slate-500 mb-0.5">線路數量 (Cable Qty)</label>
+                    <input type="number" placeholder="Qty" value={currentVal.cable_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'cable_qty', parseInt(e.target.value) || '')}
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                </div>
+            </div>
+        );
+    };
     
     const availableSwitches = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router')
         .sort((a, b) => {
@@ -792,31 +833,49 @@ const RightPanel = () => {
                                     className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                             </div>
 
-                            {getServerCategory(selectedDevice) !== null && (() => {
+                            {(getServerCategory(selectedDevice) !== null || selectedDevice.type === 'StorageServer') && (() => {
                                 const cat = getServerCategory(selectedDevice);
-                                const currentConfig = getServerConfig(selectedDevice);
-                                const handleServerConfigChange = (option) => {
-                                    let newSize = 1;
-                                    if (cat === 'General') {
-                                        newSize = parseInt(option) || 1;
-                                    } else if (cat === 'HighDensity') {
-                                        newSize = getHighDensitySize(option);
-                                    } else if (cat === 'AI') {
-                                        newSize = getAIServerSize(option);
+                                const isStorage = selectedDevice.type === 'StorageServer';
+                                const currentConfig = isStorage ? (selectedDevice.storageConfig || `${selectedDevice.size || 2}U`) : getServerConfig(selectedDevice);
+                                const handleConfigChange = (option) => {
+                                    if (isStorage) {
+                                        const newSize = parseInt(option) || 2;
+                                        handleUpdateDevice(selectedDevice.id, {
+                                            storageConfig: option,
+                                            size: newSize,
+                                            power: newSize === 1 ? 200 : (newSize === 2 ? 400 : 800)
+                                        });
+                                    } else {
+                                        let newSize = 1;
+                                        if (cat === 'General') {
+                                            newSize = parseInt(option) || 1;
+                                        } else if (cat === 'HighDensity') {
+                                            newSize = getHighDensitySize(option);
+                                        } else if (cat === 'AI') {
+                                            newSize = getAIServerSize(option);
+                                        }
+                                        handleUpdateDevice(selectedDevice.id, {
+                                            serverConfig: option,
+                                            size: newSize
+                                        });
                                     }
-                                    handleUpdateDevice(selectedDevice.id, {
-                                        serverConfig: option,
-                                        size: newSize
-                                    });
                                 };
 
                                 return (
                                     <div className="col-span-2 pt-2 border-t border-slate-800/50">
                                         <label className="block text-[11px] font-bold text-indigo-400 mb-1.5 flex items-center gap-1">
-                                            <Server className="w-3 h-3"/> 伺服器設定 (Server Config)
+                                            {isStorage ? <HardDrive className="w-3 h-3"/> : <Server className="w-3 h-3"/>}
+                                            {isStorage ? '儲存伺服器設定 (Storage Config)' : '伺服器設定 (Server Config)'}
                                         </label>
-                                        <select value={currentConfig || ''} onChange={(e) => handleServerConfigChange(e.target.value)} className={selectCls}>
-                                            {cat === 'General' && (
+                                        <select value={currentConfig || ''} onChange={(e) => handleConfigChange(e.target.value)} className={selectCls}>
+                                            {isStorage && (
+                                                <>
+                                                    <option value="1U">1U</option>
+                                                    <option value="2U">2U</option>
+                                                    <option value="4U">4U</option>
+                                                </>
+                                            )}
+                                            {!isStorage && cat === 'General' && (
                                                 <>
                                                     <option value="1U">1U</option>
                                                     <option value="2U">2U</option>
@@ -824,7 +883,7 @@ const RightPanel = () => {
                                                     <option value="4U">4U</option>
                                                 </>
                                             )}
-                                            {cat === 'HighDensity' && (
+                                            {!isStorage && cat === 'HighDensity' && (
                                                 <>
                                                     <option value="1U1N">1U1N</option>
                                                     <option value="1U2N">1U2N</option>
@@ -833,7 +892,7 @@ const RightPanel = () => {
                                                     <option value="2U4N">2U4N</option>
                                                 </>
                                             )}
-                                            {cat === 'AI' && (
+                                            {!isStorage && cat === 'AI' && (
                                                 <>
                                                     <option value="4U">4U</option>
                                                     <option value="5U">5U</option>
@@ -856,7 +915,7 @@ const RightPanel = () => {
                                 </div>
                             )}
 
-                            {(['Server5U', 'Server1U', 'Server2U', 'Storage1U', 'Storage2U', 'ServerGeneral', 'ServerHighDensity', 'ServerAI'].includes(selectedDevice.type) || getServerCategory(selectedDevice) !== null) && (() => {
+                            {(['Server5U', 'Server1U', 'Server2U', 'StorageServer', 'ServerGeneral', 'ServerHighDensity', 'ServerAI'].includes(selectedDevice.type) || getServerCategory(selectedDevice) !== null) && (() => {
                                 const hostCooling = selectedDevice.hardwareSpecs?.cooling?.host || 'AC';
                                 const gpuCooling  = selectedDevice.hardwareSpecs?.cooling?.gpu  || 'AC';
                                 const isAI = getServerCategory(selectedDevice) === 'AI';
@@ -919,54 +978,81 @@ const RightPanel = () => {
                                 );
                             })()}
 
-                            {getServerCategory(selectedDevice) !== 'HighDensity' && (
-                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
-                                    <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {getServerCategory(selectedDevice) === 'AI' && (
-                                            <div className="col-span-2">
-                                                <label className="block text-[10px] text-slate-500 mb-1">EW NIC 數量</label>
-                                                <input
-                                                    type="number"
-                                                    min={0}
-                                                    value={selectedDevice.hardwareSpecs?.cx8p?.qty !== undefined ? selectedDevice.hardwareSpecs.cx8p.qty : 8}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value);
-                                                        const v = Math.max(0, isNaN(val) ? 0 : val);
-                                                        handleHardwareSpecChange(selectedDevice.id, 'cx8p', 'qty', v);
-                                                    }}
-                                                    className="w-full bg-slate-900/80 border border-indigo-700/60 rounded-lg px-2 py-1.5 text-xs text-indigo-300 focus:border-indigo-500/60 focus:outline-none" />
-                                            </div>
-                                        )}
-                                        <div className="col-span-2">
-                                            {(() => {
-                                                const isGeneral = getServerCategory(selectedDevice) === 'General';
-                                                const pcieSlotQty = selectedDevice.hardwareSpecs?.pcieSlotQty?.qty || 2;
-                                                const maxSuperNicMgt = isGeneral ? pcieSlotQty : 2;
-                                                return (
-                                                    <>
-                                                        <label className="block text-[10px] text-slate-500 mb-1">Super NIC Mgt <span className="text-slate-600">(最多 {maxSuperNicMgt})</span></label>
-                                                        <input
-                                                            type="number" min={0} max={maxSuperNicMgt}
-                                                            value={superNicMgtCount}
-                                                            onChange={(e) => {
-                                                                const v = Math.min(maxSuperNicMgt, Math.max(0, parseInt(e.target.value) || 0));
-                                                                handleHardwareSpecChange(selectedDevice.id, 'super_nic_mgt', 'qty', v);
-                                                            }}
-                                                            className="w-full bg-slate-900/80 border border-violet-700/60 rounded-lg px-2 py-1.5 text-xs text-violet-300 focus:border-violet-500/60 focus:outline-none" />
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                             {getServerCategory(selectedDevice) !== 'HighDensity' && (
+                                 <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                     <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
+                                     <div className="grid grid-cols-2 gap-3">
+                                         {getServerCategory(selectedDevice) === 'AI' && (() => {
+                                             const currentVal = selectedDevice.hardwareSpecs?.cx8p || {};
+                                             const qty = currentVal.qty !== undefined ? currentVal.qty : 8;
+                                             return (
+                                                 <div className="col-span-2 bg-slate-900/40 p-2.5 rounded-lg border border-indigo-950/40 mt-1">
+                                                     <div className="mb-2">
+                                                         <label className="block text-[10px] text-slate-500 mb-1">EW NIC 數量</label>
+                                                         <input
+                                                             type="number"
+                                                             min={0}
+                                                             value={qty}
+                                                             onChange={(e) => {
+                                                                 const val = parseInt(e.target.value);
+                                                                 const v = Math.max(0, isNaN(val) ? 0 : val);
+                                                                 handleHardwareSpecChange(selectedDevice.id, 'cx8p', 'qty', v);
+                                                             }}
+                                                             className="w-full bg-slate-900/80 border border-indigo-700/60 rounded-lg px-2 py-1.5 text-xs text-indigo-300 focus:border-indigo-500/60 focus:outline-none" />
+                                                     </div>
+                                                     {qty > 0 && renderCablingSubFields('cx8p', currentVal)}
+                                                 </div>
+                                             );
+                                         })()}
+                                         <div className="col-span-2">
+                                             {(() => {
+                                                 const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
+                                                 return (
+                                                     <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 mt-1">
+                                                         <div className="mb-2">
+                                                             <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
+                                                             <input
+                                                                 type="number" value={1} disabled
+                                                                 className="w-full bg-slate-950/40 border border-slate-900 rounded-lg px-2 py-1.5 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                                         </div>
+                                                         {renderCablingSubFields('bmc', currentVal)}
+                                                     </div>
+                                                 );
+                                             })()}
+                                         </div>
+                                         <div className="col-span-2">
+                                             {(() => {
+                                                 const isGeneral = getServerCategory(selectedDevice) === 'General';
+                                                 const pcieSlotQty = selectedDevice.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                 const maxSuperNicMgt = isGeneral ? pcieSlotQty : 2;
+                                                 const currentVal = selectedDevice.hardwareSpecs?.super_nic_mgt || {};
+                                                 return (
+                                                     <div className="bg-slate-900/40 p-2.5 rounded-lg border border-violet-950/40 mt-1">
+                                                         <div className="mb-2">
+                                                             <label className="block text-[10px] text-slate-500 mb-1">Super NIC Mgt <span className="text-slate-600">(最多 {maxSuperNicMgt})</span></label>
+                                                             <input
+                                                                 type="number" min={0} max={maxSuperNicMgt}
+                                                                 value={superNicMgtCount}
+                                                                 onChange={(e) => {
+                                                                     const v = Math.min(maxSuperNicMgt, Math.max(0, parseInt(e.target.value) || 0));
+                                                                     handleHardwareSpecChange(selectedDevice.id, 'super_nic_mgt', 'qty', v);
+                                                                 }}
+                                                                 className="w-full bg-slate-900/80 border border-violet-700/60 rounded-lg px-2 py-1.5 text-xs text-violet-300 focus:border-violet-500/60 focus:outline-none" />
+                                                         </div>
+                                                         {superNicMgtCount > 0 && renderCablingSubFields('super_nic_mgt', currentVal)}
+                                                     </div>
+                                                 );
+                                             })()}
+                                         </div>
+                                     </div>
+                                 </div>
+                             )}
                         </div>
                     </div>
                 )}
 
                 {/* CDU Configuration */}
-                {selectedDevice.type === 'CDU4U' && (
+                {(selectedDevice.type === 'CDU4U' || selectedDevice.type === 'SideCDU' || selectedDevice.type === 'CDU') && (
                     <div className={sectionCls}>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -979,29 +1065,47 @@ const RightPanel = () => {
                                 <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
                                     className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                             </div>
-                            <div className="col-span-2 pt-2 border-t border-slate-800/50">
-                                <label className="block text-[11px] font-bold text-cyan-400 mb-1.5 flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-cyan-400"/> In Rack CDU 設定</label>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
-                                        <select value={selectedDevice.size || 4} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
-                                            <option value={4}>4U</option>
-                                            <option value={5}>5U</option>
-                                            <option value={6}>6U</option>
-                                            <option value={7}>7U</option>
-                                            <option value={8}>8U</option>
-                                            <option value={9}>9U</option>
-                                            <option value={10}>10U</option>
-                                        </select>
+                            {selectedDevice.type === 'CDU4U' && (
+                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                    <label className="block text-[11px] font-bold text-cyan-400 mb-1.5 flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-cyan-400"/> In Rack CDU 設定</label>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <div>
+                                            <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
+                                            <select value={selectedDevice.size || 4} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
+                                                <option value={4}>4U</option>
+                                                <option value={5}>5U</option>
+                                                <option value={6}>6U</option>
+                                                <option value={7}>7U</option>
+                                                <option value={8}>8U</option>
+                                                <option value={9}>9U</option>
+                                                <option value={10}>10U</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
+                            )}
+                            <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                                {(() => {
+                                    const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
+                                    return (
+                                        <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
+                                            <div className="mb-2">
+                                                <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
+                                                <input
+                                                    type="number" value={1} disabled
+                                                    className="w-full bg-slate-950/40 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                            </div>
+                                            {renderCablingSubFields('bmc', currentVal)}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
                 )}
 
                 {/* Switch Configuration */}
-                {((selectedDevice.type || '').startsWith('Switch')) && (() => {
+                {((selectedDevice.type || '').startsWith('Switch') || selectedDevice.type === 'Router') && (() => {
                     const occupiedPorts = new Set();
                     devices.forEach(d => {
                         if (d.connections) {
@@ -1019,12 +1123,12 @@ const RightPanel = () => {
                         <div className={sectionCls}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 設備功耗 (W)</label>
+                                    <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-400"/> 設備功耗 (W)</label>
                                     <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
                                         className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 設備報價 (USD)</label>
+                                    <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-400"/> 設備報價 (USD)</label>
                                     <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
                                         className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                                 </div>
@@ -1033,19 +1137,14 @@ const RightPanel = () => {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
-                                            <select value={selectedDevice.size || 1} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
-                                                <option value={1}>1U</option>
-                                                <option value={2}>2U</option>
-                                                <option value={3}>3U</option>
-                                                <option value={4}>4U</option>
-                                            </select>
+                                            <input type="number" min={1} value={selectedDevice.size} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none font-mono" />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] text-slate-400 mb-1">網路孔數 (Ports)</label>
-                                            <select 
-                                                value={getNicCount(selectedDevice, 'ports') || totalPortsCount} 
-                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', parseInt(e.target.value) || 48)} 
-                                                className={selectCls}
+                                            <label className="block text-[10px] text-slate-400 mb-1">連接埠總量 (Ports)</label>
+                                            <select
+                                                value={totalPortsCount}
+                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'portQty', 'qty', parseInt(e.target.value))}
+                                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none"
                                             >
                                                 <option value={8}>8 埠</option>
                                                 <option value={12}>12 埠</option>
@@ -1068,6 +1167,22 @@ const RightPanel = () => {
                                                 </span>
                                             </div>
                                         </div>
+                                        <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                                            {(() => {
+                                                const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
+                                                return (
+                                                    <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
+                                                        <div className="mb-2">
+                                                            <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
+                                                            <input
+                                                                type="number" value={1} disabled
+                                                                className="w-full bg-slate-950/40 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                                        </div>
+                                                        {renderCablingSubFields('bmc', currentVal)}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1087,6 +1202,21 @@ const RightPanel = () => {
                                     return (
                                         <div key={nodeKey}>
                                             <label className="block text-xs font-bold text-blue-400 mt-4 mb-3">Node {nodeNum} 硬體規格</label>
+                                            {(() => {
+                                                const nodeBmcKey = `bmc_${nodeKey}`;
+                                                const currentVal = (selectedDevice.hardwareSpecs || {})[nodeBmcKey] || {};
+                                                return (
+                                                    <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 mb-3 text-[10px]">
+                                                        <div className="mb-2 flex items-center justify-between">
+                                                            <label className="block text-[10px] text-slate-500">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
+                                                            <input
+                                                                type="number" value={1} disabled
+                                                                className="w-16 bg-slate-950/40 border border-slate-900 rounded px-1.5 py-0.5 text-[10px] text-slate-500 text-center cursor-not-allowed focus:outline-none" />
+                                                        </div>
+                                                        {renderCablingSubFields(nodeBmcKey, currentVal)}
+                                                    </div>
+                                                );
+                                            })()}
                                             <div className="grid grid-cols-[64px_1fr_60px] gap-2 mb-2 text-[10px] text-slate-600 font-bold uppercase tracking-wider">
                                                 <div></div>
                                                 <div>零組件 (Model)</div>
@@ -1115,13 +1245,21 @@ const RightPanel = () => {
                                                                 const slotKey = `pcie_slot_${slotIdx}_${nodeKey}`;
                                                                 const currentVal = (selectedDevice.hardwareSpecs || {})[slotKey] || { model: '', qty: '' };
                                                                 return (
-                                                                    <div key={slotKey} className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
-                                                                        <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
-                                                                        <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
-                                                                            className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
-                                                                        <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
-                                                                            className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
-                                                                    </div>
+                                                                    <React.Fragment key={slotKey}>
+                                                                        <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
+                                                                            <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
+                                                                            <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
+                                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                            <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
+                                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                                        </div>
+                                                                        {currentVal.qty > 0 && (
+                                                                            <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                                                                                <div></div>
+                                                                                {renderCablingSubFields(slotKey, currentVal)}
+                                                                            </div>
+                                                                        )}
+                                                                    </React.Fragment>
                                                                 );
                                                             })}
                                                         </React.Fragment>
@@ -1129,6 +1267,27 @@ const RightPanel = () => {
                                                 }
                                                 if (spec.key === 'ns_nic_2') {
                                                     return null;
+                                                }
+                                                if (spec.key === 'ocp') {
+                                                    const nodeSpecKey = `${spec.key}_${nodeKey}`;
+                                                    const ocpVal = (selectedDevice.hardwareSpecs || {})[nodeSpecKey] || { model: '', qty: '' };
+                                                    return (
+                                                        <React.Fragment key={nodeSpecKey}>
+                                                            <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
+                                                                <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
+                                                                <input type="text" placeholder="Model..." value={ocpVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'model', e.target.value)}
+                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                <input type="number" placeholder="Qty" value={ocpVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'qty', parseInt(e.target.value) || '')}
+                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                            </div>
+                                                            {ocpVal.qty > 0 && (
+                                                                <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                                                                    <div></div>
+                                                                    {renderCablingSubFields(nodeSpecKey, ocpVal)}
+                                                                </div>
+                                                            )}
+                                                        </React.Fragment>
+                                                    );
                                                 }
 
                                                 const nodeSpecKey = `${spec.key}_${nodeKey}`;
@@ -1177,13 +1336,21 @@ const RightPanel = () => {
                                                     const slotKey = `pcie_slot_${slotIdx}`;
                                                     const currentVal = (selectedDevice.hardwareSpecs || {})[slotKey] || { model: '', qty: '' };
                                                     return (
-                                                        <div key={slotKey} className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
-                                                            <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
-                                                            <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
-                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
-                                                            <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
-                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
-                                                        </div>
+                                                        <React.Fragment key={slotKey}>
+                                                            <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
+                                                                <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
+                                                                <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
+                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
+                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                            </div>
+                                                            {currentVal.qty > 0 && (
+                                                                <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                                                                    <div></div>
+                                                                    {renderCablingSubFields(slotKey, currentVal)}
+                                                                </div>
+                                                            )}
+                                                        </React.Fragment>
                                                     );
                                                 })}
                                             </React.Fragment>
@@ -1218,6 +1385,26 @@ const RightPanel = () => {
                                                     <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')}
                                                         className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                 </div>
+                                            </React.Fragment>
+                                        );
+                                    }
+
+                                    if (spec.key === 'ocp') {
+                                        return (
+                                            <React.Fragment key={spec.key}>
+                                                <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
+                                                    <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
+                                                    <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)}
+                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                    <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')}
+                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                </div>
+                                                {currentVal.qty > 0 && (
+                                                    <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                                                        <div></div>
+                                                        {renderCablingSubFields(spec.key, currentVal)}
+                                                    </div>
+                                                )}
                                             </React.Fragment>
                                         );
                                     }

@@ -46,8 +46,7 @@ export const DEVICE_TEMPLATES = [
     {
         isGroup: true, name: '磁碟陣列', icon: HardDrive, theme: 'emerald',
         subItems: [
-            { type: 'Storage1U', name: '1U 儲存伺服器', size: 1, icon: HardDrive, theme: 'emerald', power: 200 },
-            { type: 'Storage2U', name: '2U 儲存伺服器', size: 2, icon: HardDrive, theme: 'emerald', power: 400 },
+            { type: 'StorageServer', name: 'Storage Server', size: 2, icon: HardDrive, theme: 'emerald', power: 400, storageConfig: '2U' }
         ]
     },
     {

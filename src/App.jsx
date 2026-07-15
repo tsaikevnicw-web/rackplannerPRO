@@ -13,6 +13,7 @@ import { getFabricGroup } from './utils/helpers';
 import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTemplate, BookOpen } from 'lucide-react';
 import UserManualModal from './components/layout/UserManualModal';
 import IssueTrackerModal from './components/layout/IssueTrackerModal';
+import NetworkCablingModal from './components/layout/NetworkCablingModal';
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
@@ -27,7 +28,7 @@ const AppContent = () => {
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
-        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, containers,
+        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, isGeneratingCablePDF, containers,
         projectInfo, hideNonItCabinets
     } = useRackPlanner();
 
@@ -768,6 +769,16 @@ const AppContent = () => {
             )}
             <UserManualModal />
             <IssueTrackerModal />
+            <NetworkCablingModal />
+            {isGeneratingCablePDF && (
+                <div className="fixed inset-0 bg-[#020617]/85 backdrop-blur-md z-[10000] flex flex-col items-center justify-center text-white select-none">
+                    <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/60 border border-slate-700/50 shadow-2xl">
+                        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="text-lg font-bold tracking-wider mt-2">正在產生網路規格書 PDF</div>
+                        <div className="text-xs text-slate-400">正在處理機櫃設備線路明細與統計圖表，請稍候...</div>
+                    </div>
+                </div>
+            )}
             {isGeneratingPDF && (
                 <div className="fixed inset-0 bg-[#020617]/85 backdrop-blur-md z-[10000] flex flex-col items-center justify-center text-white select-none">
                     <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/60 border border-slate-700/50 shadow-2xl">

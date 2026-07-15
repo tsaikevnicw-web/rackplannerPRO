@@ -12,6 +12,7 @@ const Header = () => {
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
         isUserManualOpen, setIsUserManualOpen,
         isBugTrackerOpen, setIsBugTrackerOpen,
+        isNetworkCablingOpen, setIsNetworkCablingOpen,
         isExporting, fileInputRef,
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
@@ -226,9 +227,11 @@ const Header = () => {
                                     <button onClick={handleExportBOM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-500/15 hover:text-emerald-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Download className="w-4 h-4" /> 匯出 BOM 表 (.csv)
                                     </button>
-                                    <button onClick={handleExportCableRouting} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-500/15 hover:text-purple-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <Share2 className="w-4 h-4" /> 匯出網路線路表 (.csv)
+
+                                    <button onClick={() => { setIsNetworkCablingOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                        <Share2 className="w-4 h-4 text-indigo-400" /> 網路線路表
                                     </button>
+
                                     <button onClick={handlePrintPDF} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-amber-500/15 hover:text-amber-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                         <Printer className="w-4 h-4 text-amber-500 animate-pulse" /> 列印 PDF 規格書
                                     </button>

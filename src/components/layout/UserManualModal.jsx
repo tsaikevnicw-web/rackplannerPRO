@@ -283,6 +283,11 @@ const UserManualModal = () => {
                                             <td className="p-3">4U, 5U, 6U, 10U</td>
                                             <td className="p-3">大型 GPU 加速運算主機，最大支援 10U。</td>
                                         </tr>
+                                        <tr>
+                                            <td className="p-3 font-semibold text-slate-200">Storage Server</td>
+                                            <td className="p-3">1U, 2U, 4U</td>
+                                            <td className="p-3">儲存伺服器，排版比照通用伺服器，不顯示硬碟圖示與亮綠點，畫面乾淨清爽。</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -354,8 +359,8 @@ const UserManualModal = () => {
                                         * <span className="text-orange-400 font-semibold">InfiniBand / NDR</span>：採用**橘線**連線，標配 `MCA7K10` 主動式光纜。
                                     </li>
                                     <li>
-                                        <strong className="text-slate-300">BMC 埠欄位移除：</strong>
-                                        系統已全面移除手動輸入的「BMC孔數」欄位，簡化介面，防止因填寫不一致造成混亂。
+                                        <strong className="text-slate-300">BMC 網路管理埠與規格輸入：</strong>
+                                        為了整合管理網路，所有可拉線設備（通用、AI、儲存伺服器、交換器、路由器及 CDU）均載入 **BMC 網路孔數量**。數量固定為 `1` 埠唯讀，並提供完整收發器與線材規格填寫。高密度伺服器為每個 Node 獨立配置。
                                     </li>
                                 </ul>
                             </div>
@@ -582,14 +587,21 @@ const UserManualModal = () => {
                             </div>
 
                             <div className="space-y-3">
-                                <h3 className="text-sm font-bold text-slate-200">6.2 網路線路表 (Cable Routing) 匯出</h3>
+                                <h3 className="text-sm font-bold text-slate-200">6.2 網路線路表 (Network Cabling Specs) 視窗與 PDF 導出</h3>
                                 <p className="text-xs text-slate-400 leading-relaxed">
-                                    點選「檔案」 ➔ 「匯出網路線路表 (.csv)」會將專案中所有連線以「網路交換器」為核心進行整理：
+                                    點選頂部控制列或「檔案」 ➔ 「網路線路表」可彈出互動視窗，此功能整合了收發器、線材 BOM 與實體走線長度丈量資訊：
                                 </p>
                                 <ul className="list-disc pl-5 text-xs text-slate-400 space-y-1.5">
-                                    <li>自動依照網路用途 (Fabric Group) ➔ 網路角色 (Spine/Leaf) ➔ 交換器名稱排序。</li>
-                                    <li>詳列交換器上的 `Port 1` ~ `Port N` 實體埠口連接到了哪一台機櫃、哪一台伺服器的哪一個 PCIe Slot 或 OCP/BMC。</li>
-                                    <li>若對接端為 AI 伺服器，會自動依據其網路傳輸技術，在欄位中自動帶出建議的 Transceiver 與 Cable 型號，方便工程師按表施工。</li>
+                                    <li><strong className="text-slate-300">機櫃規格彙總表：</strong>自動加總顯示 NIC端收發器、Switch端收發器與線路型號之總用量。</li>
+                                    <li>
+                                        <strong className="text-slate-300">單櫃與全櫃總覽模式：</strong>
+                                        單櫃模式僅統計當前機櫃。若切換至總覽模式後點選此按鈕，系統會彙總<strong>全專案所有機櫃</strong>的規格與連線，並自動以機櫃名稱字母排序，在設備卡片上標明其所屬機櫃名稱。
+                                    </li>
+                                    <li>
+                                        <strong className="text-slate-300">動態跨機櫃併排走線丈量：</strong>
+                                        系統會依據起訖設備物理 U 數垂直高度與併排櫃位距離自動估算 Cable 長度（數值包含 1m 櫃內橫向與 1m buffer）。同櫃連線以高度差計算。跨櫃連線走櫃頂上方線槽，水平櫃距以「併排機櫃索引差 * 0.6m」進行估算。
+                                    </li>
+                                    <li><strong className="text-slate-300">製作網路規格書 (PDF)：</strong>提供 A4 規格書下載，內含精美總表與連線細節（包含長度），方便與發包文件整合印出。</li>
                                 </ul>
                             </div>
 
