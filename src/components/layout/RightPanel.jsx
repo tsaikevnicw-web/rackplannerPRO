@@ -1635,6 +1635,91 @@ const RightPanel = () => {
                         </div>
                     </div>
                 )}
+                {/* Power Shelf MSFT Configuration */}
+                {selectedDevice.type === 'PowerShelf' && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    附屬設備設定 (BOM Sub-items)
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 3</div>
+                                    {/* Checkbox Group */}
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {[
+                                            { key: 'powerShelfKit', label: 'Power Shelf Kit' },
+                                            { key: 'powerShelfEnclosure', label: 'Power Shelf Enclosure' },
+                                            { key: 'powerSupplyUnit', label: 'Power Supply Unit' },
+                                            { key: 'railForPowerShelf', label: 'Rail for Power shelf' },
+                                            { key: 'rackScm', label: 'Rack-SCM' },
+                                            { key: 'c13Module', label: 'C-13 Module' },
+                                            { key: 'psuFiller', label: 'PSU filler' }
+                                        ].map(sub => (
+                                            <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                    onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                />
+                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Custom Fields List */}
+                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                            自訂附屬設備 (Custom Sub-items)
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(selectedDevice.powerShelfCustom || ['']).map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => {
+                                                            const newCustom = [...(selectedDevice.powerShelfCustom || [''])];
+                                                            newCustom[idx] = e.target.value;
+                                                            handleUpdateDevice(selectedDevice.id, { powerShelfCustom: newCustom });
+                                                        }}
+                                                        placeholder="自行輸入設備名稱..."
+                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newCustom = [...(selectedDevice.powerShelfCustom || ['']), ''];
+                                                                handleUpdateDevice(selectedDevice.id, { powerShelfCustom: newCustom });
+                                                            }}
+                                                            className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                            title="新增欄位"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {(selectedDevice.powerShelfCustom || ['']).length > 1 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = (selectedDevice.powerShelfCustom || ['']).filter((_, i) => i !== idx);
+                                                                    handleUpdateDevice(selectedDevice.id, { powerShelfCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                title="刪除"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* Blank Spacer MSFT Configuration */}
                 {selectedDevice.type === 'Blank' && projectInfo?.designType === 'msft' && (
                     <div className={sectionCls}>
