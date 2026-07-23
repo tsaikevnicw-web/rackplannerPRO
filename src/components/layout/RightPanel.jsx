@@ -1039,149 +1039,169 @@ const RightPanel = () => {
                                     placeholder="預設為 10 KG..."
                                 />
                             </div>
-                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
-                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
-                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
-                                </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                    {/* EW NIC */}
-                                    <div className="space-y-1">
-                                        <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <select
-                                                value={selectedDevice.anchorCableSides?.ew_nic || 'right'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                            >
-                                                <option value="right">➡️ 右側走線</option>
-                                                <option value="left">⬅️ 左側走線</option>
-                                            </select>
-                                            <select
-                                                value={selectedDevice.anchorCableColors?.ew_nic || '#22c55e'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
-                                            >
-                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
-                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                            {(() => {
+                                const hasEwNicCable = getServerCategory(selectedDevice) === 'AI';
+                                const hasPcieCable = (selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage');
+                                const hasSNicCable = (selectedDevice.type || '').startsWith('Server') && projectInfo?.designType !== 'msft';
+                                const hasBmcCable = (selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage') || selectedDevice.hardwareSpecs?.bmc?.qty === 1 || ['CDU4U', 'SideCDU', 'CDU', 'UPS', 'PowerShelf', 'PDU'].includes(selectedDevice.type);
+                                const showAnchorSettings = hasEwNicCable || hasPcieCable || hasSNicCable || hasBmcCable;
 
-                                    {/* PCIe Slot */}
-                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                        <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <select
-                                                value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                            >
-                                                <option value="right">➡️ 右側走線</option>
-                                                <option value="left">⬅️ 左側走線</option>
-                                            </select>
-                                            <select
-                                                value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
-                                            >
-                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
-                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                if (!showAnchorSettings) return null;
 
-                                    {/* S-NIC-M */}
-                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                        <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <select
-                                                value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                            >
-                                                <option value="right">➡️ 右側走線</option>
-                                                <option value="left">⬅️ 左側走線</option>
-                                            </select>
-                                            <select
-                                                value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
-                                            >
-                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
-                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                return (
+                                    <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                                        <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                            <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
+                                        </label>
+                                        <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                            {/* EW NIC - Only for GPU/AI Servers */}
+                                            {hasEwNicCable && (
+                                                <div className="space-y-1">
+                                                    <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <select
+                                                            value={selectedDevice.anchorCableSides?.ew_nic || 'right'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value="right">➡️ 右側走線</option>
+                                                            <option value="left">⬅️ 左側走線</option>
+                                                        </select>
+                                                        <select
+                                                            value={selectedDevice.anchorCableColors?.ew_nic || '#22c55e'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
+                                                        >
+                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
+                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {/* BMC */}
-                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                        <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <select
-                                                value={selectedDevice.anchorCableSides?.bmc || 'right'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                            >
-                                                <option value="right">➡️ 右側走線</option>
-                                                <option value="left">⬅️ 左側走線</option>
-                                            </select>
-                                            <select
-                                                value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
-                                                })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
-                                            >
-                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍 (預設)</option>
-                                                <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
-                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                            </select>
+                                            {/* PCIe Slot - Only for Servers & Storage Devices */}
+                                            {hasPcieCable && (
+                                                <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                    <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <select
+                                                            value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value="right">➡️ 右側走線</option>
+                                                            <option value="left">⬅️ 左側走線</option>
+                                                        </select>
+                                                        <select
+                                                            value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                                        >
+                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* S-NIC-M - Only for Servers */}
+                                            {hasSNicCable && (
+                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                    <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <select
+                                                            value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value="right">➡️ 右側走線</option>
+                                                            <option value="left">⬅️ 左側走線</option>
+                                                        </select>
+                                                        <select
+                                                            value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
+                                                        >
+                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
+                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* BMC */}
+                                            {hasBmcCable && (
+                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                    <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <select
+                                                            value={selectedDevice.anchorCableSides?.bmc || 'right'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value="right">➡️ 右側走線</option>
+                                                            <option value="left">⬅️ 左側走線</option>
+                                                        </select>
+                                                        <select
+                                                            value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
+                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
+                                                            })}
+                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
+                                                        >
+                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍 (預設)</option>
+                                                            <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
+                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>

@@ -204,7 +204,7 @@ const PrintLayout = ({ isForDownload = false }) => {
 
             // Default fallbacks for unconfigured servers/storages
             if (getServerCategory(dev) === 'AI') {
-                return `AI 加速伺服器 (${dev.size || 5}U)`;
+                return `GPU 加速伺服器 (${dev.size || 5}U)`;
             } else if (type.startsWith('Storage')) {
                 return `高容量儲存伺服器 (${dev.size || 2}U)`;
             }

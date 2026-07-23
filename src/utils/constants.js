@@ -33,7 +33,7 @@ export const DEVICE_TEMPLATES = [
         subItems: [
             { type: 'ServerGeneral', name: 'General Purpose', size: 1, icon: Server, theme: 'blue', power: 300, serverConfig: '1U' },
             { type: 'ServerHighDensity', name: 'High Density', size: 1, icon: Server, theme: 'blue', power: 800, serverConfig: '1U1N' },
-            { type: 'ServerAI', name: 'AI Server', size: 5, icon: Server, theme: 'blue', power: 1500, serverConfig: '5U' },
+            { type: 'ServerAI', name: 'GPU Server', size: 5, icon: Server, theme: 'blue', power: 1500, serverConfig: '5U' },
         ]
     },
     {
