@@ -872,6 +872,120 @@ const RightPanel = () => {
                                 </div>
                             </div>
                         </>
+                    ) : (selectedDevice.type === 'PowerShelf' || selectedDevice.type === 'PDU') ? (
+                        <>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                                    <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
+                                    <span>{formatURange(selectedDevice.startU, selectedDevice.size)}</span>
+                                </div>
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5">設備設定 (U數)</label>
+                                <select
+                                    value={selectedDevice.size || 1}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                >
+                                    <option value={1}>1U</option>
+                                    <option value={2}>2U</option>
+                                    <option value={3}>3U</option>
+                                    <option value={4}>4U</option>
+                                    <option value={5}>5U</option>
+                                </select>
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                                    <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.weight !== undefined ? selectedDevice.weight : (selectedDevice.type === 'PowerShelf' ? 15 : 5)}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    placeholder="請輸入設備重量..."
+                                />
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1">
+                                    <Zap className="w-3.5 h-3.5 text-amber-400" /> 可提供電力瓦數 (Provided Power - W)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.powerProvided !== undefined ? selectedDevice.powerProvided : (selectedDevice.power || 0)}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value) || 0;
+                                        handleUpdateDevice(selectedDevice.id, { powerProvided: val, power: val });
+                                    }}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
+                                    placeholder="請輸入可提供電力瓦數 (W)..."
+                                />
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路孔與 Cable 設定
+                                </label>
+                                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
+                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                        />
+                                        <span className="text-[11px] text-slate-300">啟用 BMC 網路孔</span>
+                                    </label>
+                                    {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                            {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select
+                                                value={selectedDevice.anchorCableSides?.bmc || 'right'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                            >
+                                                <option value="right">➡️ 右側走線</option>
+                                                <option value="left">⬅️ 左側走線</option>
+                                            </select>
+                                            <select
+                                                value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
+                                            >
+                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
+                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
                             <div className="col-span-2">
