@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
-import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight } from 'lucide-react';
+import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus } from 'lucide-react';
 
 const RightPanel = () => {
     const { 
@@ -13,6 +13,17 @@ const RightPanel = () => {
 
     const selectedRack = racks.find(r => r.id === selectedId);
     const selectedDevice = devices.find(d => d.id === selectedId);
+
+    const formatURange = (startU, size) => {
+        if (!startU) return '';
+        if (size % 1 !== 0) {
+            return `U${startU} (${size}U)`;
+        }
+        if (size === 1) {
+            return `U${startU}`;
+        }
+        return `U${startU}-U${startU + size - 1}`;
+    };
 
     const renderCablingSubFields = (key, currentVal) => {
         return (
@@ -553,6 +564,130 @@ const RightPanel = () => {
                                     className={`${inputCls} font-mono`} 
                                 />
                             </div>
+                            {/* Rack attachments for MSFT */}
+                            {projectInfo?.designType === 'msft' && (
+                                <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                                    <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                        機櫃附屬設備設定 (BOM Sub-items)
+                                    </label>
+                                    <div className="space-y-4 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                        {/* Item 1 */}
+                                        <div>
+                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 1</div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {[
+                                                    { key: 'rackEnclosure', label: 'Rack enclosure' },
+                                                    { key: 'busbar', label: 'Busbar' },
+                                                    { key: 'sidePanel', label: 'Side Panel' },
+                                                    { key: 'leakManagement', label: 'Leak Management' }
+                                                ].map(sub => (
+                                                    <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!selectedRack[sub.key]}
+                                                            onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
+                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                        />
+                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Item 6 */}
+                                        <div className="pt-2 border-t border-slate-800/40">
+                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 6</div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {[
+                                                    { key: 'cableManagement', label: 'Cable Management' },
+                                                    { key: 'rackNut', label: 'NUT' },
+                                                    { key: 'rackScrew', label: 'SCREW' }
+                                                ].map(sub => (
+                                                    <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!selectedRack[sub.key]}
+                                                            onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
+                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                        />
+                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Item 8 */}
+                                        <div className="pt-2 border-t border-slate-800/40">
+                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 8</div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {[
+                                                    { key: 'ioCables', label: 'IO Cables' },
+                                                    { key: 'cat6Rj45', label: 'CAT-6 RJ45' },
+                                                    { key: 'rackGrounding', label: 'Rack Grounding' }
+                                                ].map(sub => (
+                                                    <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!selectedRack[sub.key]}
+                                                            onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
+                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                        />
+                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Fields List */}
+                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                                自訂附屬設備 (Custom Sub-items)
+                                            </label>
+                                            <div className="space-y-2">
+                                                {(selectedRack.rackCustom || ['']).map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={item}
+                                                            onChange={(e) => {
+                                                                const newCustom = [...(selectedRack.rackCustom || [''])];
+                                                                newCustom[idx] = e.target.value;
+                                                                handleUpdateRack(selectedRack.id, { rackCustom: newCustom });
+                                                            }}
+                                                            placeholder="自行輸入設備名稱..."
+                                                            className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        />
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = [...(selectedRack.rackCustom || ['']), ''];
+                                                                    handleUpdateRack(selectedRack.id, { rackCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                                title="新增欄位"
+                                                            >
+                                                                <Plus className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            {(selectedRack.rackCustom || ['']).length > 1 && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newCustom = (selectedRack.rackCustom || ['']).filter((_, i) => i !== idx);
+                                                                        handleUpdateRack(selectedRack.id, { rackCustom: newCustom });
+                                                                    }}
+                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                    title="刪除"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -566,7 +701,7 @@ const RightPanel = () => {
 
     const nic1Count = getNicCount(selectedDevice, 'ns_nic_1');
     const nic2Count = getNicCount(selectedDevice, 'ns_nic_2');
-    const superNicMgtCount = getNicCount(selectedDevice, 'super_nic_mgt');
+    const superNicMgtCount = getNicCount(selectedDevice, 'super_nic_mgt', projectInfo?.designType);
     const cx8NetworkType = selectedDevice.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
 
     const handleDragStartClone = (e) => {
@@ -626,196 +761,315 @@ const RightPanel = () => {
                         <label className="block text-xs font-bold text-slate-400 mb-1.5">設備名稱</label>
                         <input type="text" value={selectedDevice.customName} onChange={(e) => handleUpdateDevice(selectedDevice.id, { customName: e.target.value })} className={inputCls} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
-                        <div className="col-span-2">
-                            <label className="block text-[11px] font-bold text-emerald-400 mb-1.5">拓撲群組 (Topology Group)</label>
-                            <input type="text" value={selectedDevice.topologyGroup || racks.find(r => r.id === selectedDevice.rackId)?.name || ''} onChange={(e) => handleUpdateDevice(selectedDevice.id, { topologyGroup: e.target.value })} placeholder="預設為所在機櫃名稱"
-                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner placeholder:text-slate-600" />
-                        </div>
-                        {isSwitchOrRouter && (
-                            <>
-                                <div className="col-span-2">
-                                    <label className="block text-[11px] font-bold text-indigo-400 mb-1.5">網路用途 (Fabric Group)</label>
-                                    <select value={getFabricGroup(selectedDevice)} onChange={(e) => handleUpdateDevice(selectedDevice.id, { fabricGroup: e.target.value })}
-                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-inner">
-                                        <option value="East-West">East-West Fabric (東西向/運算網路)</option>
-                                        <option value="North-South">North-South Fabric (南北向/融合/管理網路)</option>
-                                    </select>
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="block text-[11px] font-bold text-purple-400 mb-1.5">網路角色 (Network Role)</label>
-                                    <select value={selectedDevice.networkRole || (selectedDevice.type === 'Router' || selectedDevice.type === 'Switch800G' ? 'Spine' : 'Leaf')} onChange={(e) => handleUpdateDevice(selectedDevice.id, { networkRole: e.target.value })}
-                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition-all shadow-inner">
-                                        <option value="Spine">Spine Layer (核心骨幹層)</option>
-                                        <option value="Leaf">Leaf Layer (邊緣存取層)</option>
-                                    </select>
-                                </div>
-                            </>
-                        )}
-                        <div className="col-span-2 border-t border-slate-800/50 pt-4">
-                            <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
-                            <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
-                                <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
-                                <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : `U${selectedDevice.startU}-U${selectedDevice.startU + selectedDevice.size - 1}`}</span>
+                    {selectedDevice.type === 'Blank' ? (
+                        <>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5">擋板設定 (U數)</label>
+                                <select
+                                    value={selectedDevice.size || 1}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseFloat(e.target.value) })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                >
+                                    <option value={0.5}>0.5U</option>
+                                    <option value={1}>1U</option>
+                                    <option value={1.5}>1.5U</option>
+                                    <option value={2}>2U</option>
+                                    <option value={2.5}>2.5U</option>
+                                    <option value={3}>3U</option>
+                                    <option value={3.5}>3.5U</option>
+                                    <option value={4}>4U</option>
+                                </select>
                             </div>
-                        </div>
-                        <div className="col-span-2 border-t border-slate-800/50 pt-4">
-                            <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
-                                <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
-                            </label>
-                            <input
-                                type="number"
-                                min={0}
-                                value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
-                                onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
-                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
-                                placeholder="預設為 10 KG..."
-                            />
-                        </div>
-                        <div className="col-span-2 border-t border-slate-800/50 pt-4">
-                            <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
-                                <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
-                            </label>
-                            <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                {/* EW NIC */}
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select
-                                            value={selectedDevice.anchorCableSides?.ew_nic || 'right'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                        >
-                                            <option value="right">➡️ 右側走線</option>
-                                            <option value="left">⬅️ 左側走線</option>
-                                        </select>
-                                        <select
-                                            value={selectedDevice.anchorCableColors?.ew_nic || '#22c55e'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                            style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
-                                        >
-                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
-                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* PCIe Slot */}
-                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                    <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select
-                                            value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                        >
-                                            <option value="right">➡️ 右側走線</option>
-                                            <option value="left">⬅️ 左側走線</option>
-                                        </select>
-                                        <select
-                                            value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                            style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
-                                        >
-                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
-                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* S-NIC-M */}
-                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                    <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select
-                                            value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                        >
-                                            <option value="right">➡️ 右側走線</option>
-                                            <option value="left">⬅️ 左側走線</option>
-                                        </select>
-                                        <select
-                                            value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                            style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
-                                        >
-                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
-                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* BMC */}
-                                <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                    <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select
-                                            value={selectedDevice.anchorCableSides?.bmc || 'right'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                        >
-                                            <option value="right">➡️ 右側走線</option>
-                                            <option value="left">⬅️ 左側走線</option>
-                                        </select>
-                                        <select
-                                            value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
-                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
-                                            })}
-                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                            style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
-                                        >
-                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍 (預設)</option>
-                                            <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
-                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                        </select>
-                                    </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                                    <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
+                                    <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : formatURange(selectedDevice.startU, selectedDevice.size)}</span>
                                 </div>
                             </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                                    <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    placeholder="預設為 10 KG..."
+                                />
+                            </div>
+                        </>
+                    ) : selectedDevice.type === 'UPS' ? (
+                        <>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                                    <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
+                                    <span>{formatURange(selectedDevice.startU, selectedDevice.size)}</span>
+                                </div>
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5">UPS 設定 (U數)</label>
+                                <select
+                                    value={selectedDevice.size || 2}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                >
+                                    <option value={1}>1U</option>
+                                    <option value={2}>2U</option>
+                                    <option value={3}>3U</option>
+                                    <option value={4}>4U</option>
+                                    <option value={5}>5U</option>
+                                </select>
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                                    <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.weight !== undefined ? selectedDevice.weight : 30}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    placeholder="預設為 30 KG..."
+                                />
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1">
+                                    <Zap className="w-3.5 h-3.5 text-amber-400" /> 電池容量 (Battery Capacity - Wh)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.batteryCapacity !== undefined ? selectedDevice.batteryCapacity : 0}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { batteryCapacity: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
+                                    placeholder="請輸入電池容量 (Wh)..."
+                                />
+                            </div>
+                            <div className="border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路管理埠
+                                </label>
+                                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
+                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                        />
+                                        <span className="text-[11px] text-slate-300">啟用 BMC 網路孔</span>
+                                    </label>
+                                    {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                            {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
+                            <div className="col-span-2">
+                                <label className="block text-[11px] font-bold text-emerald-400 mb-1.5">拓撲群組 (Topology Group)</label>
+                                <input type="text" value={selectedDevice.topologyGroup || racks.find(r => r.id === selectedDevice.rackId)?.name || ''} onChange={(e) => handleUpdateDevice(selectedDevice.id, { topologyGroup: e.target.value })} placeholder="預設為所在機櫃名稱"
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner placeholder:text-slate-600" />
+                            </div>
+                            {isSwitchOrRouter && (
+                                <>
+                                    <div className="col-span-2">
+                                        <label className="block text-[11px] font-bold text-indigo-400 mb-1.5">網路用途 (Fabric Group)</label>
+                                        {projectInfo?.designType === 'msft' ? (
+                                            <div className="w-full bg-slate-950/40 border border-slate-800 rounded-lg p-2 text-sm text-slate-400 font-semibold">
+                                                North-South Fabric (南北向/融合/管理網路)
+                                            </div>
+                                        ) : (
+                                            <select value={getFabricGroup(selectedDevice, projectInfo?.designType)} onChange={(e) => handleUpdateDevice(selectedDevice.id, { fabricGroup: e.target.value })}
+                                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-inner">
+                                                <option value="East-West">East-West Fabric (東西向/運算網路)</option>
+                                                <option value="North-South">North-South Fabric (南北向/融合/管理網路)</option>
+                                            </select>
+                                        )}
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-[11px] font-bold text-purple-400 mb-1.5">網路角色 (Network Role)</label>
+                                        <select value={selectedDevice.networkRole || (selectedDevice.type === 'Router' || selectedDevice.type === 'Switch800G' ? 'Spine' : 'Leaf')} onChange={(e) => handleUpdateDevice(selectedDevice.id, { networkRole: e.target.value })}
+                                            className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition-all shadow-inner">
+                                            <option value="Spine">Spine Layer (核心骨幹層)</option>
+                                            <option value="Leaf">Leaf Layer (邊緣存取層)</option>
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                                    <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
+                                    <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : formatURange(selectedDevice.startU, selectedDevice.size)}</span>
+                                </div>
+                            </div>
+                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                                    <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
+                                    onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    placeholder="預設為 10 KG..."
+                                />
+                            </div>
+                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    {/* EW NIC */}
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-emerald-400">EW NIC 走線與顏色</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select
+                                                value={selectedDevice.anchorCableSides?.ew_nic || 'right'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                            >
+                                                <option value="right">➡️ 右側走線</option>
+                                                <option value="left">⬅️ 左側走線</option>
+                                            </select>
+                                            <select
+                                                value={selectedDevice.anchorCableColors?.ew_nic || '#22c55e'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
+                                            >
+                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
+                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* PCIe Slot */}
+                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                        <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select
+                                                value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                            >
+                                                <option value="right">➡️ 右側走線</option>
+                                                <option value="left">⬅️ 左側走線</option>
+                                            </select>
+                                            <select
+                                                value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                            >
+                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* S-NIC-M */}
+                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                        <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select
+                                                value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                            >
+                                                <option value="right">➡️ 右側走線</option>
+                                                <option value="left">⬅️ 左側走線</option>
+                                            </select>
+                                            <select
+                                                value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
+                                            >
+                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
+                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* BMC */}
+                                    <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                                        <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select
+                                                value={selectedDevice.anchorCableSides?.bmc || 'right'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                            >
+                                                <option value="right">➡️ 右側走線</option>
+                                                <option value="left">⬅️ 左側走線</option>
+                                            </select>
+                                            <select
+                                                value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
+                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
+                                                })}
+                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
+                                            >
+                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍 (預設)</option>
+                                                <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
+                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Power / Price / Ports */}
@@ -833,9 +1087,9 @@ const RightPanel = () => {
                                     className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                             </div>
 
-                            {(getServerCategory(selectedDevice) !== null || selectedDevice.type === 'StorageServer') && (() => {
+                            {(getServerCategory(selectedDevice) !== null || (selectedDevice.type || '').startsWith('Storage')) && (() => {
                                 const cat = getServerCategory(selectedDevice);
-                                const isStorage = selectedDevice.type === 'StorageServer';
+                                const isStorage = (selectedDevice.type || '').startsWith('Storage');
                                 const currentConfig = isStorage ? (selectedDevice.storageConfig || `${selectedDevice.size || 2}U`) : getServerConfig(selectedDevice);
                                 const handleConfigChange = (option) => {
                                     if (isStorage) {
@@ -915,7 +1169,7 @@ const RightPanel = () => {
                                 </div>
                             )}
 
-                            {(['Server5U', 'Server1U', 'Server2U', 'StorageServer', 'ServerGeneral', 'ServerHighDensity', 'ServerAI'].includes(selectedDevice.type) || getServerCategory(selectedDevice) !== null) && (() => {
+                            {(['Server5U', 'Server1U', 'Server2U', 'StorageServer', 'StorageJBOD', 'StorageJBOF', 'ServerGeneral', 'ServerHighDensity', 'ServerAI'].includes(selectedDevice.type) || getServerCategory(selectedDevice) !== null) && (() => {
                                 const hostCooling = selectedDevice.hardwareSpecs?.cooling?.host || 'AC';
                                 const gpuCooling  = selectedDevice.hardwareSpecs?.cooling?.gpu  || 'AC';
                                 const isAI = getServerCategory(selectedDevice) === 'AI';
@@ -1020,6 +1274,7 @@ const RightPanel = () => {
                                                  );
                                              })()}
                                          </div>
+                                          {projectInfo?.designType !== 'msft' && (
                                          <div className="col-span-2">
                                              {(() => {
                                                  const isGeneral = getServerCategory(selectedDevice) === 'General';
@@ -1044,6 +1299,7 @@ const RightPanel = () => {
                                                  );
                                              })()}
                                          </div>
+                                          )}
                                      </div>
                                  </div>
                              )}
@@ -1051,6 +1307,464 @@ const RightPanel = () => {
                     </div>
                 )}
 
+                {/* ServerGeneral MSFT Configuration */}
+                {selectedDevice.type === 'ServerGeneral' && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    附屬設備設定 (BOM Sub-items)
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    {/* Checkbox Group */}
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {[
+                                            { key: 'computeNode', label: 'Compute Node' },
+                                            { key: 'slideRailForNode', label: 'Slide Rail for Node' },
+                                            { key: 'screwForNodeRail', label: 'Screw for Node Rail' },
+                                            { key: 'nutForNodeRail', label: 'NUT for Node Rail' }
+                                        ].map(sub => (
+                                            <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                    onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                />
+                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Custom Fields List */}
+                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                            自訂附屬設備 (Custom Sub-items)
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(selectedDevice.serverGeneralCustom || ['']).map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => {
+                                                            const newCustom = [...(selectedDevice.serverGeneralCustom || [''])];
+                                                            newCustom[idx] = e.target.value;
+                                                            handleUpdateDevice(selectedDevice.id, { serverGeneralCustom: newCustom });
+                                                        }}
+                                                        placeholder="自行輸入設備名稱..."
+                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newCustom = [...(selectedDevice.serverGeneralCustom || ['']), ''];
+                                                                handleUpdateDevice(selectedDevice.id, { serverGeneralCustom: newCustom });
+                                                            }}
+                                                            className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                            title="新增欄位"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {(selectedDevice.serverGeneralCustom || ['']).length > 1 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = (selectedDevice.serverGeneralCustom || ['']).filter((_, i) => i !== idx);
+                                                                    handleUpdateDevice(selectedDevice.id, { serverGeneralCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                title="刪除"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Switch MSFT Configuration */}
+                {selectedDevice.type.startsWith('Switch') && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Mutually Exclusive Checkboxes for Switch Tag */}
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    交換器標籤 (Switch Tag - 二選一)
+                                </label>
+                                <div className="flex gap-4 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDevice.switchTag === 'tor'}
+                                            onChange={() => handleUpdateDevice(selectedDevice.id, { switchTag: 'tor' })}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                        />
+                                        <span className="text-xs text-slate-300">TOR Switch</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDevice.switchTag === 'mgmt'}
+                                            onChange={() => handleUpdateDevice(selectedDevice.id, { switchTag: 'mgmt' })}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                        />
+                                        <span className="text-xs text-slate-300">Management Switch</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Sub-items block depending on switchTag */}
+                            {selectedDevice.switchTag && (
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                        附屬設備設定 (BOM Sub-items)
+                                    </label>
+                                    <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                        {/* Checkbox Group */}
+                                        <div className="grid grid-cols-2 gap-2.5">
+                                            {selectedDevice.switchTag === 'tor' ? (
+                                                [
+                                                    { key: 'tor', label: 'TOR' },
+                                                    { key: 'eiaAdapter2U', label: 'EIA 19” Adapter 2U' },
+                                                    { key: 'mountingKitTor', label: 'Mounting kit for TOR' },
+                                                    { key: 'powerCordTor', label: 'Power cord for TOR' },
+                                                    { key: 'sleeveC13', label: 'Sleeve C13' }
+                                                ].map(sub => (
+                                                    <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                        />
+                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                    </label>
+                                                ))
+                                            ) : (
+                                                [
+                                                    { key: 'managementSwitch', label: 'Management Switch' },
+                                                    { key: 'eiaAdapter1U', label: 'EIA 19” Adapter 1U' },
+                                                    { key: 'mountingKitMgmt', label: 'Mounting kit for MGMT' },
+                                                    { key: 'powerCordMgmt', label: 'Power cord for MGMT' },
+                                                    { key: 'sleeveC13', label: 'Sleeve C13' }
+                                                ].map(sub => (
+                                                    <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                        />
+                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                    </label>
+                                                ))
+                                            )}
+                                        </div>
+
+                                        {/* Custom Fields List */}
+                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                                自訂附屬設備 (Custom Sub-items)
+                                            </label>
+                                            <div className="space-y-2">
+                                                {(selectedDevice.switchCustom || ['']).map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={item}
+                                                            onChange={(e) => {
+                                                                const newCustom = [...(selectedDevice.switchCustom || [''])];
+                                                                newCustom[idx] = e.target.value;
+                                                                handleUpdateDevice(selectedDevice.id, { switchCustom: newCustom });
+                                                            }}
+                                                            placeholder="自行輸入設備名稱..."
+                                                            className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        />
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = [...(selectedDevice.switchCustom || ['']), ''];
+                                                                    handleUpdateDevice(selectedDevice.id, { switchCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                                title="新增欄位"
+                                                            >
+                                                                <Plus className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            {(selectedDevice.switchCustom || ['']).length > 1 && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newCustom = (selectedDevice.switchCustom || ['']).filter((_, i) => i !== idx);
+                                                                        handleUpdateDevice(selectedDevice.id, { switchCustom: newCustom });
+                                                                    }}
+                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                    title="刪除"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+                {/* Blank Spacer MSFT Configuration */}
+                {selectedDevice.type === 'Blank' && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    附屬設備設定 (BOM Sub-items)
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 7</div>
+                                    {/* Checkbox Group */}
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {[
+                                            { key: 'oneOu', label: '1OU' },
+                                            { key: 'ouEia', label: 'OU-EIA' }
+                                        ].map(sub => (
+                                            <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                    onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                />
+                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Custom Fields List */}
+                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                            自訂附屬設備 (Custom Sub-items)
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(selectedDevice.blankCustom || ['']).map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => {
+                                                            const newCustom = [...(selectedDevice.blankCustom || [''])];
+                                                            newCustom[idx] = e.target.value;
+                                                            handleUpdateDevice(selectedDevice.id, { blankCustom: newCustom });
+                                                        }}
+                                                        placeholder="自行輸入設備名稱..."
+                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newCustom = [...(selectedDevice.blankCustom || ['']), ''];
+                                                                handleUpdateDevice(selectedDevice.id, { blankCustom: newCustom });
+                                                            }}
+                                                            className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                            title="新增欄位"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {(selectedDevice.blankCustom || ['']).length > 1 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = (selectedDevice.blankCustom || ['']).filter((_, i) => i !== idx);
+                                                                    handleUpdateDevice(selectedDevice.id, { blankCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                title="刪除"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Storage JBOD MSFT Configuration */}
+                {selectedDevice.type === 'StorageJBOD' && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    附屬設備設定 (BOM Sub-items)
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 9</div>
+                                    {/* Checkbox Group */}
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {[
+                                            { key: 'jbod', label: 'JBOD' },
+                                            { key: 'railForJbod', label: 'Rail for JBOD' },
+                                            { key: 'halfOuBlank', label: '0.5OU Blank' }
+                                        ].map(sub => (
+                                            <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                    onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                />
+                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Custom Fields List */}
+                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                            自訂附屬設備 (Custom Sub-items)
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(selectedDevice.jbodCustom || ['']).map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => {
+                                                            const newCustom = [...(selectedDevice.jbodCustom || [''])];
+                                                            newCustom[idx] = e.target.value;
+                                                            handleUpdateDevice(selectedDevice.id, { jbodCustom: newCustom });
+                                                        }}
+                                                        placeholder="自行輸入設備名稱..."
+                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newCustom = [...(selectedDevice.jbodCustom || ['']), ''];
+                                                                handleUpdateDevice(selectedDevice.id, { jbodCustom: newCustom });
+                                                            }}
+                                                            className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                            title="新增欄位"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {(selectedDevice.jbodCustom || ['']).length > 1 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = (selectedDevice.jbodCustom || ['']).filter((_, i) => i !== idx);
+                                                                    handleUpdateDevice(selectedDevice.id, { jbodCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                title="刪除"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Storage JBOF MSFT Configuration */}
+                {selectedDevice.type === 'StorageJBOF' && projectInfo?.designType === 'msft' && (
+                    <div className={sectionCls}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
+                                    附屬設備設定 (BOM Sub-items)
+                                </label>
+                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 10</div>
+                                    {/* Checkbox Group */}
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {[
+                                            { key: 'jbof', label: 'JBOF' },
+                                            { key: 'railForJbof', label: 'Rail for JBOF' },
+                                            { key: 'halfOuBlank', label: '0.5OU Blank' }
+                                        ].map(sub => (
+                                            <label key={sub.key} className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
+                                                    onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
+                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                />
+                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Custom Fields List */}
+                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                            自訂附屬設備 (Custom Sub-items)
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(selectedDevice.jbofCustom || ['']).map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item}
+                                                        onChange={(e) => {
+                                                            const newCustom = [...(selectedDevice.jbofCustom || [''])];
+                                                            newCustom[idx] = e.target.value;
+                                                            handleUpdateDevice(selectedDevice.id, { jbofCustom: newCustom });
+                                                        }}
+                                                        placeholder="自行輸入設備名稱..."
+                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newCustom = [...(selectedDevice.jbofCustom || ['']), ''];
+                                                                handleUpdateDevice(selectedDevice.id, { jbofCustom: newCustom });
+                                                            }}
+                                                            className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-all border border-sky-500/20"
+                                                            title="新增欄位"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {(selectedDevice.jbofCustom || ['']).length > 1 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newCustom = (selectedDevice.jbofCustom || ['']).filter((_, i) => i !== idx);
+                                                                    handleUpdateDevice(selectedDevice.id, { jbofCustom: newCustom });
+                                                                }}
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                title="刪除"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* CDU Configuration */}
                 {(selectedDevice.type === 'CDU4U' || selectedDevice.type === 'SideCDU' || selectedDevice.type === 'CDU') && (
                     <div className={sectionCls}>

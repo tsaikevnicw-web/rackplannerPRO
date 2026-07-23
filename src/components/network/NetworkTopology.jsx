@@ -5,7 +5,7 @@ import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getS
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
-    const { racks, devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort } = useRackPlanner();
+    const { racks, devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort, projectInfo } = useRackPlanner();
 
     const connectedToSelectedSet = useMemo(() => {
         if (!selectedId || (selectedIds && selectedIds.length > 1)) return null;
@@ -435,27 +435,29 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                         {renderTreeSection(nsLeafDevs, 'bg-sky-500 shadow-[0_0_8px_#0ea5e9]', 'NS-Leaf', true)}
                     </div>
                 </div>
-                <div className="flex-1 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-max relative overflow-hidden">
-                    <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-purple-500/0 via-purple-500/60 to-purple-500/0 rounded-full"></div>
-                    <div className="border-b border-slate-700 pb-2 w-full flex items-center relative justify-center">
-                        <div className="text-[20px] font-bold text-slate-400 tracking-widest">EAST-WEST FABRIC</div>
-                        <button 
-                            onClick={() => toggleSection(['Spine', 'Leaf'])} 
-                            className="absolute right-0 text-sm flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-600"
-                        >
-                            {isSectionCollapsed(['Spine', 'Leaf']) ? <Maximize2 className="w-4 h-4"/> : <Minimize2 className="w-4 h-4"/>} 
-                            {isSectionCollapsed(['Spine', 'Leaf']) ? '一鍵展開' : '一鍵收起'}
-                        </button>
+                {projectInfo?.designType !== 'msft' && (
+                    <div className="flex-1 flex flex-col items-center gap-8 bg-[#0d1b2e]/80 p-8 rounded-3xl border border-slate-700/40 shadow-2xl min-w-max relative overflow-hidden">
+                        <div className="absolute left-0 top-6 bottom-6 w-[3px] bg-gradient-to-b from-purple-500/0 via-purple-500/60 to-purple-500/0 rounded-full"></div>
+                        <div className="border-b border-slate-700 pb-2 w-full flex items-center relative justify-center">
+                            <div className="text-[20px] font-bold text-slate-400 tracking-widest">EAST-WEST FABRIC</div>
+                            <button 
+                                onClick={() => toggleSection(['Spine', 'Leaf'])} 
+                                className="absolute right-0 text-sm flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-600"
+                            >
+                                {isSectionCollapsed(['Spine', 'Leaf']) ? <Maximize2 className="w-4 h-4"/> : <Minimize2 className="w-4 h-4"/>} 
+                                {isSectionCollapsed(['Spine', 'Leaf']) ? '一鍵展開' : '一鍵收起'}
+                            </button>
+                        </div>
+                        <div className="flex flex-col items-center w-full gap-4">
+                            <div className="flex items-center gap-2 text-[18px] font-bold text-purple-300 tracking-widest bg-purple-500/10 border border-purple-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
+                            {renderTreeSection(ewSpineDevs, 'bg-purple-500 shadow-[0_0_8px_#a855f7]', 'Spine')}
+                        </div>
+                        <div className="flex flex-col items-center w-full gap-4 max-w-full">
+                            <div className="flex items-center gap-2 text-[18px] font-bold text-emerald-300 tracking-widest bg-emerald-500/10 border border-emerald-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
+                            {renderTreeSection(ewLeafDevs, 'bg-emerald-500 shadow-[0_0_8px_#10b981]', 'Leaf', true)}
+                        </div>
                     </div>
-                    <div className="flex flex-col items-center w-full gap-4">
-                        <div className="flex items-center gap-2 text-[18px] font-bold text-purple-300 tracking-widest bg-purple-500/10 border border-purple-500/25 px-5 py-1.5 rounded-full">SPINE LAYER</div>
-                        {renderTreeSection(ewSpineDevs, 'bg-purple-500 shadow-[0_0_8px_#a855f7]', 'Spine')}
-                    </div>
-                    <div className="flex flex-col items-center w-full gap-4 max-w-full">
-                        <div className="flex items-center gap-2 text-[18px] font-bold text-emerald-300 tracking-widest bg-emerald-500/10 border border-emerald-500/25 px-5 py-1.5 rounded-full">LEAF LAYER</div>
-                        {renderTreeSection(ewLeafDevs, 'bg-emerald-500 shadow-[0_0_8px_#10b981]', 'Leaf', true)}
-                    </div>
-                </div>
+                )}
             </div>
             <div className="flex flex-col items-center w-full gap-6 px-8 mt-6 bg-[#0d1b2e]/60 py-8 rounded-3xl border border-slate-700/40 shadow-2xl relative overflow-hidden min-w-max">
                 <div className="absolute top-0 left-6 right-6 h-[3px] bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500/0 rounded-full"></div>

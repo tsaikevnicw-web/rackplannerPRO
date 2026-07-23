@@ -139,7 +139,7 @@ export function useExport(
             const isSwitchOrRouter = (dev.type || '').startsWith('Switch') || dev.type === 'Router';
             let prefix = null;
             if (isSwitchOrRouter) {
-                const fabric = getFabricGroup(dev);
+                const fabric = getFabricGroup(dev, projectInfo?.designType);
                 const isSpine = dev.networkRole === 'Spine';
                 prefix = fabric === 'North-South' ? (isSpine ? 'NS-Spine' : 'NS-Leaf') : (isSpine ? 'Spine' : 'Leaf');
             } else if (dev.type !== 'Blank' && dev.type !== 'UPS' && dev.type !== 'SideCDU') {
@@ -288,6 +288,52 @@ export function useExport(
                 rack.price || 0
             ];
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+
+            if (projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'rackEnclosure', label: 'Rack enclosure' },
+                    { key: 'busbar', label: 'Busbar' },
+                    { key: 'sidePanel', label: 'Side Panel' },
+                    { key: 'leakManagement', label: 'Leak Management' },
+                    { key: 'cableManagement', label: 'Cable Management' },
+                    { key: 'rackNut', label: 'NUT' },
+                    { key: 'rackScrew', label: 'SCREW' },
+                    { key: 'ioCables', label: 'IO Cables' },
+                    { key: 'cat6Rj45', label: 'CAT-6 RJ45' },
+                    { key: 'rackGrounding', label: 'Rack Grounding' }
+                ];
+                subKeys.forEach(sub => {
+                    if (rack[sub.key]) {
+                        const subRow = [
+                            rack.name,
+                            `${position} (附屬)`,
+                            sub.label,
+                            0,
+                            0,
+                            '-',
+                            0
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (rack.rackCustom && Array.isArray(rack.rackCustom)) {
+                    rack.rackCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rack.name,
+                                `${position} (附屬)`,
+                                trimmed,
+                                0,
+                                0,
+                                '-',
+                                0
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
         });
         
         csv += "\n\n機櫃內部 IT 設備清單 (Cabinet Devices List)\n";
@@ -358,6 +404,205 @@ export function useExport(
                 formatHw(hw.hdd), formatHw(hw.psu54v), formatHw(hw.psu12v), otherVal
             ];
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+
+            if (dev.type === 'PowerShelf' && projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'powerShelfKit', label: 'Power Shelf Kit' },
+                    { key: 'powerShelfEnclosure', label: 'Power Shelf Enclosure' },
+                    { key: 'powerSupplyUnit', label: 'Power Supply Unit' },
+                    { key: 'railForPowerShelf', label: 'Rail for Power shelf' },
+                    { key: 'rackScm', label: 'Rack-SCM' },
+                    { key: 'c13Module', label: 'C-13 Module' },
+                    { key: 'psuFiller', label: 'PSU filler' }
+                ];
+                subKeys.forEach(sub => {
+                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                        const subRow = [
+                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                            '', '', '', '', '', '', '', '', '', ''
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (dev.powerShelfCustom && Array.isArray(dev.powerShelfCustom)) {
+                    dev.powerShelfCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
+
+            if (dev.type === 'ServerGeneral' && projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'computeNode', label: 'Compute Node' },
+                    { key: 'slideRailForNode', label: 'Slide Rail for Node' },
+                    { key: 'screwForNodeRail', label: 'Screw for Node Rail' },
+                    { key: 'nutForNodeRail', label: 'NUT for Node Rail' }
+                ];
+                subKeys.forEach(sub => {
+                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                        const subRow = [
+                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                            '', '', '', '', '', '', '', '', '', ''
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (dev.serverGeneralCustom && Array.isArray(dev.serverGeneralCustom)) {
+                    dev.serverGeneralCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
+
+            if (dev.type === 'Blank' && projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'oneOu', label: '1OU' },
+                    { key: 'ouEia', label: 'OU-EIA' }
+                ];
+                subKeys.forEach(sub => {
+                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                        const subRow = [
+                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                            '', '', '', '', '', '', '', '', '', ''
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (dev.blankCustom && Array.isArray(dev.blankCustom)) {
+                    dev.blankCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
+
+            if (dev.type === 'StorageJBOD' && projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'jbod', label: 'JBOD' },
+                    { key: 'railForJbod', label: 'Rail for JBOD' },
+                    { key: 'halfOuBlank', label: '0.5OU Blank' }
+                ];
+                subKeys.forEach(sub => {
+                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                        const subRow = [
+                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                            '', '', '', '', '', '', '', '', '', ''
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (dev.jbodCustom && Array.isArray(dev.jbodCustom)) {
+                    dev.jbodCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
+
+            if (dev.type === 'StorageJBOF' && projectInfo?.designType === 'msft') {
+                const subKeys = [
+                    { key: 'jbof', label: 'JBOF' },
+                    { key: 'railForJbof', label: 'Rail for JBOF' },
+                    { key: 'halfOuBlank', label: '0.5OU Blank' }
+                ];
+                subKeys.forEach(sub => {
+                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                        const subRow = [
+                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                            '', '', '', '', '', '', '', '', '', ''
+                        ];
+                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                    }
+                });
+                if (dev.jbofCustom && Array.isArray(dev.jbofCustom)) {
+                    dev.jbofCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
+            if ((dev.type || '').startsWith('Switch') && projectInfo?.designType === 'msft') {
+                const switchTag = dev.switchTag;
+                if (switchTag === 'tor') {
+                    const subKeys = [
+                        { key: 'tor', label: 'TOR' },
+                        { key: 'eiaAdapter2U', label: 'EIA 19” Adapter 2U' },
+                        { key: 'mountingKitTor', label: 'Mounting kit for TOR' },
+                        { key: 'powerCordTor', label: 'Power cord for TOR' },
+                        { key: 'sleeveC13', label: 'Sleeve C13' }
+                    ];
+                    subKeys.forEach(sub => {
+                        if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                            const subRow = [
+                                rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                } else if (switchTag === 'mgmt') {
+                    const subKeys = [
+                        { key: 'managementSwitch', label: 'Management Switch' },
+                        { key: 'eiaAdapter1U', label: 'EIA 19” Adapter 1U' },
+                        { key: 'mountingKitMgmt', label: 'Mounting kit for MGMT' },
+                        { key: 'powerCordMgmt', label: 'Power cord for MGMT' },
+                        { key: 'sleeveC13', label: 'Sleeve C13' }
+                    ];
+                    subKeys.forEach(sub => {
+                        if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
+                            const subRow = [
+                                rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+                if (dev.switchCustom && Array.isArray(dev.switchCustom)) {
+                    dev.switchCustom.forEach(customItem => {
+                        const trimmed = (customItem || '').trim();
+                        if (trimmed) {
+                            const customRow = [
+                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
+                                '', '', '', '', '', '', '', '', '', ''
+                            ];
+                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        }
+                    });
+                }
+            }
         });
 
         csv += "\n\n網路線材與光模組統計 (Cables & Transceivers)\n類型,總數量\n";
@@ -401,7 +646,7 @@ export function useExport(
         csv += "交換器名稱,網路用途 (Fabric Group),網路角色 (Network Role),交換器孔位,對接機櫃名稱,對接設備名稱,對接設備孔位,Transceiver(NIC),Transceiver(SW),Cable型號,Cable數量\n";
         const switches = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router');
         switches.sort((a, b) => {
-            const fgA = getFabricGroup(a); const fgB = getFabricGroup(b);
+            const fgA = getFabricGroup(a, projectInfo?.designType); const fgB = getFabricGroup(b, projectInfo?.designType);
             if (fgA !== fgB) return fgA.localeCompare(fgB);
             const roleA = a.networkRole || ''; const roleB = b.networkRole || '';
             if (roleA !== roleB) return roleA.localeCompare(roleB);
@@ -424,7 +669,7 @@ export function useExport(
         });
 
         switches.forEach(sw => {
-            const fabricGroup = getFabricGroup(sw);
+            const fabricGroup = getFabricGroup(sw, projectInfo?.designType);
             const role = sw.networkRole || (sw.type === 'Router' || sw.type === 'Switch800G' ? 'Spine' : 'Leaf');
             const portCount = getSwitchPortCount(sw);
             let isFirstRowForSwitch = true;

@@ -181,11 +181,11 @@ const RackView3D = ({ racksToRender }) => {
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-1 min-w-0">
-                                                            <Icon className={`w-3 h-3 shrink-0 ${tStyle.text}`} />
-                                                            <span className="font-bold text-[9px] truncate">{dev.customName}</span>
+                                                            {dev.size >= 1 && <Icon className={`w-3 h-3 shrink-0 ${tStyle.text}`} />}
+                                                            {dev.size >= 1 && <span className="font-bold text-[9px] truncate">{dev.customName}</span>}
                                                             {isHighGravity && <span className="text-amber-500 text-[9px] shrink-0">⚠️</span>}
                                                         </div>
-                                                        <span className="text-[7px] text-slate-500 font-mono shrink-0 ml-1 bg-slate-900/60 px-1 py-0.2 rounded">{dev.size}U</span>
+                                                        {dev.size >= 1 && <span className="text-[7px] text-slate-500 font-mono shrink-0 ml-1 bg-slate-900/60 px-1 py-0.2 rounded">{dev.size}U</span>}
                                                     </div>
                                                 );
                                             })}

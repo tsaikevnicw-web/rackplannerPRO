@@ -164,7 +164,7 @@ const Header = () => {
                 </div>
 
                 {/* Project Name Input & Info Button */}
-                <div className="flex items-center gap-3 flex-1 max-w-lg mx-8">
+                <div className="flex items-center gap-3 flex-1 max-w-2xl mx-8">
                     <div className="flex-1 relative flex items-center bg-[#09111c] rounded-xl border-2 border-indigo-500/50 hover:border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.15)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all px-4 py-2 gap-3">
                         <span className="text-xs font-bold text-indigo-400 select-none uppercase tracking-widest whitespace-nowrap bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">專案名稱</span>
                         <input
@@ -183,6 +183,34 @@ const Header = () => {
                         <Info className="w-4 h-4 text-indigo-400 animate-pulse" />
                         專案資訊
                     </button>
+                    {/* Design Classification Indicator */}
+                    {(() => {
+                        const designType = projectInfo?.designType || 'common';
+                        let badgeClass = '';
+                        let dotClass = '';
+                        let text = '';
+
+                        if (designType === 'cdc') {
+                            badgeClass = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]';
+                            dotClass = 'bg-emerald-400 shadow-[0_0_8px_#10b981]';
+                            text = 'CDC 貨櫃';
+                        } else if (designType === 'msft') {
+                            badgeClass = 'bg-sky-500/15 border-sky-500/30 text-sky-400 shadow-[0_0_12px_rgba(14,165,233,0.2)]';
+                            dotClass = 'bg-sky-400 shadow-[0_0_8px_#0ea5e9]';
+                            text = 'MSFT 設計';
+                        } else {
+                            badgeClass = 'bg-slate-800/80 border-slate-700 text-slate-300';
+                            dotClass = 'bg-slate-500';
+                            text = 'Common Design';
+                        }
+
+                        return (
+                            <div className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-black tracking-wide uppercase whitespace-nowrap transition-all duration-300 select-none ${badgeClass}`}>
+                                <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
+                                <span>{text}</span>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -586,27 +614,91 @@ const Header = () => {
 
                         {/* Modal Content */}
                         <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar bg-[#0d1b2e] text-slate-300 text-sm">
-                            {/* CDC Project Toggle */}
-                            <div className="flex items-center justify-between p-4 bg-[#14233c]/40 rounded-xl border border-slate-700/60 hover:border-slate-600 transition-all">
-                                <div className="flex flex-col gap-0.5 pr-4">
-                                    <span className="text-sm font-bold text-slate-200">是否為 CDC (貨櫃資料中心) 專案</span>
-                                    <span className="text-xs text-slate-400">啟用後，總覽頁面將會以貨櫃為單位進行切換與篩選，且支援貨櫃層級的指標估算。</span>
+                            {/* 專案設計分類 (Project Design Classification) */}
+                            <div className="p-4 bg-[#14233c]/40 rounded-xl border border-slate-700/60 space-y-3">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-sm font-bold text-slate-200">專案設計分類 (Design Classification)</span>
+                                    <span className="text-xs text-slate-400">請選擇此專案採用的系統設計規範（只能三選一）：</span>
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                                    <input
-                                        type="checkbox"
-                                        checked={projectInfo?.isCdcProject || false}
-                                        onChange={(e) => {
-                                            const isChecked = e.target.checked;
-                                            setProjectInfo({ ...projectInfo, isCdcProject: isChecked });
-                                            if (!isChecked && viewMode === 'container') {
-                                                setViewMode('overview');
-                                            }
-                                        }}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-650"></div>
-                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                                    {/* Common Design */}
+                                    <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-all select-none ${
+                                        (projectInfo?.designType || 'common') === 'common'
+                                            ? 'bg-indigo-600/15 border-indigo-500/70 text-slate-100 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]'
+                                            : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700/80 hover:text-slate-300'
+                                    }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={(projectInfo?.designType || 'common') === 'common'}
+                                            onChange={() => {
+                                                setProjectInfo({
+                                                    ...projectInfo,
+                                                    designType: 'common',
+                                                    isCdcProject: false
+                                                });
+                                                if (viewMode === 'container') {
+                                                    setViewMode('overview');
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold">Common Design</span>
+                                            <span className="text-[10px] opacity-75">標準系統設計</span>
+                                        </div>
+                                    </label>
+
+                                    {/* CDC */}
+                                    <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-all select-none ${
+                                        (projectInfo?.designType || 'common') === 'cdc'
+                                            ? 'bg-indigo-600/15 border-indigo-500/70 text-slate-100 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]'
+                                            : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700/80 hover:text-slate-300'
+                                    }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={(projectInfo?.designType || 'common') === 'cdc'}
+                                            onChange={() => {
+                                                setProjectInfo({
+                                                    ...projectInfo,
+                                                    designType: 'cdc',
+                                                    isCdcProject: true
+                                                });
+                                            }}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold">CDC</span>
+                                            <span className="text-[10px] opacity-75">貨櫃式資料中心</span>
+                                        </div>
+                                    </label>
+
+                                    {/* MSFT */}
+                                    <label className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-all select-none ${
+                                        (projectInfo?.designType || 'common') === 'msft'
+                                            ? 'bg-indigo-600/15 border-indigo-500/70 text-slate-100 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]'
+                                            : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700/80 hover:text-slate-300'
+                                    }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={(projectInfo?.designType || 'common') === 'msft'}
+                                            onChange={() => {
+                                                setProjectInfo({
+                                                    ...projectInfo,
+                                                    designType: 'msft',
+                                                    isCdcProject: false
+                                                });
+                                                if (viewMode === 'container') {
+                                                    setViewMode('overview');
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold">MSFT</span>
+                                            <span className="text-[10px] opacity-75">微軟專案設計</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

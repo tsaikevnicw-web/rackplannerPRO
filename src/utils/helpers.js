@@ -13,13 +13,15 @@ export const getIconByType = (type) => {
     return Server;
 };
 
-export const getFabricGroup = (dev) => {
+export const getFabricGroup = (dev, designType) => {
+    if (designType === 'msft') return 'North-South';
     if (dev.fabricGroup) return dev.fabricGroup;
     if (dev.type === 'Switch1G' || dev.type === 'Switch10G' || dev.type === 'Router') return 'North-South';
     return 'East-West';
 };
 
-export const getNicCount = (dev, key) => {
+export const getNicCount = (dev, key, designType) => {
+    if (key === 'super_nic_mgt' && designType === 'msft') return 0;
     if (key === 'ns_nic_1') {
         const val = parseInt(dev.hardwareSpecs?.['pcie_slot_1']?.qty);
         if (!isNaN(val)) return val;
@@ -168,6 +170,8 @@ export const getDeviceWeight = (dev) => {
     if (type === 'Server2U') return 25;
     if (type.startsWith('Server')) return size * 15;
     if (type.startsWith('Switch') || type === 'Router') return 10;
+    if (type === 'PowerShelf') return 15;
+    if (type === 'PDU') return 5;
     if (type.startsWith('UPS')) return 50;
     if (type.startsWith('CDU')) return 60;
     return size * 5; // Fallback

@@ -26,6 +26,7 @@ export const RackPlannerProvider = ({ children }) => {
     ]);
     const [projectInfo, setProjectInfo] = useState({
         partners: [''],
+        designType: 'common',
         isCdcProject: false,
         location: '',
         deliveryDate: '',
@@ -119,7 +120,7 @@ export const RackPlannerProvider = ({ children }) => {
     const canRedo = historyState.index < historyState.history.length - 1;
 
     const [draggedItem, setDraggedItem] = useState(null);
-    const [expandedGroups, setExpandedGroups] = useState({ '伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, '其他設備': false });
+    const [expandedGroups, setExpandedGroups] = useState({ '伺服器': true, 'CDU': true, '磁碟陣列': false, '網路設備': false, 'Power Device': false, '其他設備': false });
     const [expandedNetGroups, setExpandedNetGroups] = useState({});
 
     // Menu States
@@ -179,7 +180,11 @@ export const RackPlannerProvider = ({ children }) => {
                         setProjectName(parsedData.projectName);
                     }
                     if (parsedData.projectInfo !== undefined) {
-                        setProjectInfo(parsedData.projectInfo);
+                        const loadedInfo = { ...parsedData.projectInfo };
+                        if (!loadedInfo.designType) {
+                            loadedInfo.designType = loadedInfo.isCdcProject ? 'cdc' : 'common';
+                        }
+                        setProjectInfo(loadedInfo);
                     }
                     if (parsedData.containers !== undefined) {
                         setContainers(parsedData.containers);

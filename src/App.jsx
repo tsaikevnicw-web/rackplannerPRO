@@ -34,11 +34,11 @@ const AppContent = () => {
 
     const [activeOverviewContainerId, setActiveOverviewContainerId] = React.useState(null);
 
-    const activeCid = activeOverviewContainerId || containers[0]?.id || 'container-1';
+    const activeCid = activeOverviewContainerId || containers?.[0]?.id || 'container-1';
 
     useEffect(() => {
-        if (containers.length > 0 && !containers.some(c => c.id === activeOverviewContainerId)) {
-            setActiveOverviewContainerId(containers[0].id);
+        if (containers?.length > 0 && !containers.some(c => c.id === activeOverviewContainerId)) {
+            setActiveOverviewContainerId(containers[0]?.id);
         }
     }, [containers, activeOverviewContainerId]);
 
@@ -295,10 +295,10 @@ const AppContent = () => {
         tempRacks = tempRacks.filter(r => r.type === 'General' || !r.type);
     }
     const racksToRender = tempRacks;
-    const nsSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole === 'Spine');
-    const nsLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'North-South' && d.networkRole !== 'Spine');
-    const ewSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'East-West' && d.networkRole === 'Spine');
-    const ewLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d) === 'East-West' && d.networkRole !== 'Spine');
+    const nsSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'North-South' && d.networkRole === 'Spine');
+    const nsLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'North-South' && d.networkRole !== 'Spine');
+    const ewSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'East-West' && d.networkRole === 'Spine');
+    const ewLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'East-West' && d.networkRole !== 'Spine');
     const epDevs = devices.filter(d => !(d.type || '').startsWith('Switch') && d.type !== 'Router' && d.type !== 'Blank' && d.type !== 'UPS');
 
     const executeClear = () => {

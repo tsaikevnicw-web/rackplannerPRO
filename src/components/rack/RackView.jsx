@@ -498,13 +498,13 @@ const RackView = ({ racksToRender }) => {
                                     `}
                                     style={{ height: dev.size * U_HEIGHT - 2, bottom: (dev.startU - 1) * U_HEIGHT + 1 }}
                                 >
-                                    {/* 金屬掛耳 */}
-                                    <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-b from-slate-700 to-slate-800 border-r border-slate-900 flex flex-col justify-around py-1.5 shrink-0 z-30 rounded-l-sm shadow-[1px_0_3px_rgba(0,0,0,0.5)]">
-                                        <div className="w-2 h-2 rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50"></div>
+                                    {/* 金混掛耳 */}
+                                    <div className={`absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-b from-slate-700 to-slate-800 border-r border-slate-900 flex flex-col justify-around shrink-0 z-30 rounded-l-sm shadow-[1px_0_3px_rgba(0,0,0,0.5)] ${dev.size < 1 ? 'py-0.5' : 'py-1.5'}`}>
+                                        <div className={`${dev.size < 1 ? 'w-1 h-1' : 'w-2 h-2'} rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50`}></div>
                                         {dev.size > 1 && <div className="w-2 h-2 rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50"></div>}
                                     </div>
-                                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-b from-slate-700 to-slate-800 border-l border-slate-900 flex flex-col justify-around py-1.5 shrink-0 z-30 rounded-r-sm shadow-[-1px_0_3px_rgba(0,0,0,0.5)]">
-                                        <div className="w-2 h-2 rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50"></div>
+                                    <div className={`absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-b from-slate-700 to-slate-800 border-l border-slate-900 flex flex-col justify-around shrink-0 z-30 rounded-r-sm shadow-[-1px_0_3px_rgba(0,0,0,0.5)] ${dev.size < 1 ? 'py-0.5' : 'py-1.5'}`}>
+                                        <div className={`${dev.size < 1 ? 'w-1 h-1' : 'w-2 h-2'} rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50`}></div>
                                         {dev.size > 1 && <div className="w-2 h-2 rounded-full bg-slate-950 mx-auto shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border border-slate-600/50"></div>}
                                     </div>
 
@@ -515,8 +515,8 @@ const RackView = ({ racksToRender }) => {
 
                                         {/* 左側：Icon 與名稱 */}
                                         <div className="flex items-center flex-1 min-w-0 h-full relative z-10 overflow-hidden pl-3 pr-2">
-                                            <Icon className={`w-4 h-4 mr-2 opacity-90 shrink-0 drop-shadow-md ${tStyle.text}`} />
-                                            <div className="font-bold text-sm tracking-wide truncate drop-shadow-md flex items-center gap-1.5">
+                                            <Icon className={`${dev.size < 1 ? 'w-3 h-3 mr-1.5' : 'w-4 h-4 mr-2'} opacity-90 shrink-0 drop-shadow-md ${tStyle.text}`} />
+                                            <div className={`font-bold tracking-wide truncate drop-shadow-md flex items-center gap-1.5 ${dev.size < 1 ? 'text-[9px] leading-none' : 'text-sm'}`}>
                                                 <span>{dev.customName}</span>
                                                 {isHighGravity && (
                                                     <span 
@@ -932,6 +932,21 @@ const RackView = ({ racksToRender }) => {
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {(dev.type === 'PowerShelf' || dev.type === 'PDU' || dev.type === 'UPS') && (() => {
+                                                const hasBmc = dev.hardwareSpecs?.bmc?.qty === 1;
+                                                if (!hasBmc) return null;
+                                                return (
+                                                    <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="flex gap-0.5">
+                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

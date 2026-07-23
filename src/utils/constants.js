@@ -46,7 +46,9 @@ export const DEVICE_TEMPLATES = [
     {
         isGroup: true, name: '磁碟陣列', icon: HardDrive, theme: 'emerald',
         subItems: [
-            { type: 'StorageServer', name: 'Storage Server', size: 2, icon: HardDrive, theme: 'emerald', power: 400, storageConfig: '2U' }
+            { type: 'StorageServer', name: 'Storage Server', size: 2, icon: HardDrive, theme: 'emerald', power: 400, storageConfig: '2U' },
+            { type: 'StorageJBOD', name: 'JBOD', size: 4, icon: HardDrive, theme: 'emerald', power: 400, storageConfig: '4U' },
+            { type: 'StorageJBOF', name: 'JBOF', size: 2, icon: HardDrive, theme: 'emerald', power: 400, storageConfig: '2U' }
         ]
     },
     {
@@ -57,9 +59,16 @@ export const DEVICE_TEMPLATES = [
         ]
     },
     {
+        isGroup: true, name: 'Power Device', icon: Zap, theme: 'orange',
+        subItems: [
+            { type: 'PowerShelf', name: 'Power Shelf', size: 1, icon: Zap, theme: 'orange', power: 0, weight: 15 },
+            { type: 'PDU', name: 'PDU', size: 1, icon: Zap, theme: 'orange', power: 0, weight: 5 },
+            { type: 'UPS', name: '不斷電系統', size: 2, icon: Zap, theme: 'orange', power: 0, weight: 30 }
+        ]
+    },
+    {
         isGroup: true, name: '其他設備', icon: LayoutGrid, theme: 'slate',
         subItems: [
-            { type: 'UPS', name: '不斷電系統', size: 2, icon: Zap, theme: 'orange', power: 0 },
             { type: 'Blank', name: '空白擋板', size: 1, icon: LayoutGrid, theme: 'slate', power: 0 },
         ]
     }

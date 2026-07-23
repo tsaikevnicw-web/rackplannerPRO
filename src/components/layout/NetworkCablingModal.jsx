@@ -36,7 +36,7 @@ const getCabledSpecsForDevice = (dev) => {
             }
         });
     } else {
-        if (hw.bmc) {
+        if (hw.bmc && (dev.type !== 'PowerShelf' && dev.type !== 'PDU' || hw.bmc.qty === 1)) {
             addSpec('BMC', hw.bmc, 'bmc');
         }
     }
