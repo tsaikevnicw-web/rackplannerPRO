@@ -280,7 +280,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                         const ewNicCount = dev.hardwareSpecs?.cx8p?.qty !== undefined ? dev.hardwareSpecs.cx8p.qty : 8;
                         return (
                             <div className="flex flex-col gap-2">
-                                {ewNicCount > 0 && (
+                                {ewNicCount > 0 && projectInfo?.designType !== 'msft' && (
                                     <div className="flex justify-center">
                                         <span className="text-[10px] font-bold font-mono text-slate-400 mr-2 mt-0.5">EW NIC</span>
                                         <div className="flex flex-wrap justify-center gap-1 max-w-[200px]">

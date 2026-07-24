@@ -682,7 +682,7 @@ const RackView = ({ racksToRender }) => {
                                                 const ewNicCount = dev.hardwareSpecs?.cx8p?.qty !== undefined ? dev.hardwareSpecs.cx8p.qty : 8;
                                                 return (
                                                     <div className="flex flex-col justify-center gap-1 border-l border-white/20 pl-3 shrink-0 h-full w-full">
-                                                        {ewNicCount > 0 && (
+                                                        {ewNicCount > 0 && projectInfo?.designType !== 'msft' && (
                                                             <div className="flex items-center justify-end gap-2 w-full">
                                                                 <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">EW NIC</div>
                                                                 <div className="flex gap-0.5 flex-wrap max-w-[120px] justify-end">
