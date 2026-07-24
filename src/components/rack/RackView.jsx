@@ -178,7 +178,7 @@ const RackView = ({ racksToRender }) => {
                     e.preventDefault();
                     e.stopPropagation();
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div') || document.querySelector('.main-canvas');
+                    const rackContainer = document.querySelector('.rack-container')?.parentElement || document.querySelector('.main-canvas > div > div') || document.querySelector('.main-canvas');
                     const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0 };
                     const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
 

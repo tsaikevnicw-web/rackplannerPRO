@@ -6,11 +6,17 @@ const CablesOverlay = () => {
     const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
+    const getCanvasContainer = () => {
+        return document.querySelector('.rack-container')?.parentElement || 
+               document.querySelector('.main-canvas > div > div') || 
+               document.querySelector('.main-canvas');
+    };
+
     useEffect(() => {
         let animationFrameId;
 
         const updateCoords = () => {
-            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+            const rackContainer = getCanvasContainer();
             if (rackContainer) {
                 const ports = document.querySelectorAll('[data-port-id]');
                 const groups = document.querySelectorAll('[data-group-anchor]');
@@ -79,7 +85,7 @@ const CablesOverlay = () => {
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (drawing) {
-                const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+                const rackContainer = getCanvasContainer();
                 if (!rackContainer) return;
                 
                 const containerRect = rackContainer.getBoundingClientRect();
@@ -153,30 +159,10 @@ const CablesOverlay = () => {
 
             possiblePorts.push('bmc');
 
-            const occupiedPorts = new Set();
-            devices.forEach(d => {
-                if (d.connections) {
-                    Object.entries(d.connections).forEach(([key, tg]) => {
-                        if (tg && tg.startsWith(`${targetDevId}-`)) {
-                            occupiedPorts.add(tg.substring(targetDevId.length + 1));
-                        }
-                    });
-                }
-                if (d.id === targetDevId && d.connections) {
-                    Object.keys(d.connections).forEach(key => {
-                        if (d.connections[key]) {
-                            occupiedPorts.add(key);
-                        }
-                    });
-                }
-            });
-
-            for (const portKey of possiblePorts) {
-                if (!occupiedPorts.has(portKey)) {
-                    return portKey;
-                }
+            const occupied = new Set(Object.keys(targetDev.connections || {}));
+            for (const p of possiblePorts) {
+                if (!occupied.has(p)) return p;
             }
-
             return null;
         };
 
@@ -252,12 +238,8 @@ const CablesOverlay = () => {
         };
     }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode, devices]);
 
-    // During PDF generation, cables are driven strictly by showCables flag
-    // (ignore selectedId so rack screenshots are cable-free and topo is fully visible)
-    if (isGeneratingPDF) {
-        if (!showCables) return null;
-    } else {
-        if (!showCables && !selectedId && !drawing) return null;
+    if (isGeneratingPDF && !showCables) {
+        return null;
     }
 
     const GROUP_COLORS = [
