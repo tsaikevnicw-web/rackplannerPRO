@@ -88,7 +88,7 @@ const CablesOverlay = () => {
                 const currentX = (e.clientX - containerRect.left) / currentScale;
                 const currentY = (e.clientY - containerRect.top) / currentScale;
 
-                setDrawing(prev => ({ ...prev, currentX, currentY }));
+                setDrawing(prev => (prev && prev.sourceId ? { ...prev, currentX, currentY } : null));
             }
         };
 
@@ -380,6 +380,10 @@ const CablesOverlay = () => {
     };
 
     const generatePath = (startCoord, endCoord, startPortId = null, endPortId = null) => {
+        if (!startCoord || !endCoord || typeof startCoord.x !== 'number' || typeof startCoord.y !== 'number' || typeof endCoord.x !== 'number' || typeof endCoord.y !== 'number' || isNaN(startCoord.x) || isNaN(startCoord.y) || isNaN(endCoord.x) || isNaN(endCoord.y)) {
+            return '';
+        }
+
         let x1 = startCoord.x;
         let y1 = startCoord.y;
         let x2 = endCoord.x;
@@ -654,7 +658,7 @@ const CablesOverlay = () => {
                 );
             })}
 
-            {drawing && drawing.startX !== drawing.currentX && (
+            {drawing && drawing.sourceId && typeof drawing.startX === 'number' && typeof drawing.startY === 'number' && (drawing.startX !== drawing.currentX || drawing.startY !== drawing.currentY) && (
                 <g>
                     <path 
                         d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 

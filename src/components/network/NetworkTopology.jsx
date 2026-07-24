@@ -85,15 +85,13 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                 onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const rect = e.target.getBoundingClientRect();
-                    const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div') || document.querySelector('.main-canvas');
                     const containerRect = rackContainer ? rackContainer.getBoundingClientRect() : { left: 0, top: 0 };
-                    const scrollParent = document.querySelector('.main-canvas');
-                    const sLeft = scrollParent ? scrollParent.scrollLeft : 0;
-                    const sTop = scrollParent ? scrollParent.scrollTop : 0;
+                    const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
 
-                    const startX = rect.left + rect.width / 2 - containerRect.left + sLeft;
-                    const startY = rect.top + rect.height / 2 - containerRect.top + sTop;
+                    const startX = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
+                    const startY = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
                     setDrawing({ sourceId: dev.id, sourcePortKey: portKey, startX, startY, currentX: startX, currentY: startY });
                 }}
                 onMouseUp={(e) => {
