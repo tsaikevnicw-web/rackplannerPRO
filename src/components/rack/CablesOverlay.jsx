@@ -418,9 +418,18 @@ const CablesOverlay = () => {
                 const rackBCoords = localCoords[`rack-${devB.rackId}`];
                 
                 if (rackACoords && rackBCoords) {
-                    const rackAXCenter = rackACoords.x + rackACoords.w / 2;
-                    const leftChannelAX = rackACoords.x + 16;
-                    const rightChannelAX = rackACoords.x + rackACoords.w - 16;
+                    const isMsft = projectInfo?.designType === 'msft';
+
+                    const getCableChannelCategory = (device, portId) => {
+                        if (!device || !portId) return 'other';
+                        const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
+                        const baseKey = rawPortKey.replace(/__\d+$/, '');
+
+                        if (baseKey.startsWith('bmc')) return 'bmc';
+                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_') || baseKey.startsWith('cx8-') || baseKey === 'cx8p' || baseKey.startsWith('super_nic_mgt')) return 'pcie';
+                        return 'other';
+                    };
+
                     const getCableSide = (device, portId) => {
                         if (!device || !portId) return 'right';
                         const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
@@ -428,34 +437,39 @@ const CablesOverlay = () => {
 
                         const anchorSides = device.anchorCableSides || {};
 
-                        if (baseKey.startsWith('cx8-') || baseKey === 'cx8p') {
-                            return anchorSides.ew_nic || 'right';
-                        }
-                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) {
-                            return anchorSides.pcie_slot || 'right';
-                        }
-                        if (baseKey.startsWith('super_nic_mgt')) {
-                            return anchorSides.s_nic_m || 'right';
-                        }
-                        if (baseKey.startsWith('bmc')) {
-                            return anchorSides.bmc || 'right';
-                        }
+                        if (baseKey.startsWith('cx8-') || baseKey === 'cx8p') return anchorSides.ew_nic || 'right';
+                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) return anchorSides.pcie_slot || 'right';
+                        if (baseKey.startsWith('super_nic_mgt')) return anchorSides.s_nic_m || 'right';
+                        if (baseKey.startsWith('bmc')) return anchorSides.bmc || 'right';
 
-                        if (device.portCableSides && device.portCableSides[rawPortKey]) {
-                            return device.portCableSides[rawPortKey];
-                        }
+                        if (device.portCableSides && device.portCableSides[rawPortKey]) return device.portCableSides[rawPortKey];
                         return device.cableSide || 'right';
                     };
 
-                    const sideA = getCableSide(devA, startPortId);
-                    const channelAX = sideA === 'left' ? leftChannelAX : rightChannelAX;
+                    const getChannelX = (rackCoords, side, cat) => {
+                        const baseLeft = rackCoords.x + 16;
+                        const baseRight = rackCoords.x + rackCoords.w - 16;
 
-                    const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
-                    const leftChannelBX = rackBCoords.x + 16;
-                    const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
+                        if (!isMsft) return side === 'left' ? baseLeft : baseRight;
+
+                        if (side === 'left') {
+                            if (cat === 'bmc') return baseLeft - 6;
+                            if (cat === 'pcie') return baseLeft;
+                            return baseLeft + 6;
+                        } else {
+                            if (cat === 'bmc') return baseRight + 6;
+                            if (cat === 'pcie') return baseRight;
+                            return baseRight - 6;
+                        }
+                    };
+
+                    const sideA = getCableSide(devA, startPortId);
+                    const catA = getCableChannelCategory(devA, startPortId);
+                    const channelAX = getChannelX(rackACoords, sideA, catA);
 
                     const sideB = getCableSide(devB, endPortId);
-                    const channelBX = sideB === 'left' ? leftChannelBX : rightChannelBX;
+                    const catB = getCableChannelCategory(devB, endPortId);
+                    const channelBX = getChannelX(rackBCoords, sideB, catB);
 
                     if (devA.rackId === devB.rackId) {
                         // Same rack routing optimization
@@ -466,23 +480,26 @@ const CablesOverlay = () => {
                         let effectiveChannelB = channelBX;
 
                         if (isDevASwitch && !isDevBSwitch) {
-                            effectiveChannelA = sideB === 'left' ? leftChannelAX : rightChannelAX;
+                            effectiveChannelA = getChannelX(rackACoords, sideB, catB);
                         } else if (isDevBSwitch && !isDevASwitch) {
-                            effectiveChannelB = sideA === 'left' ? leftChannelBX : rightChannelBX;
+                            effectiveChannelB = getChannelX(rackBCoords, sideA, catA);
                         } else if (sideA === 'left' && sideB === 'right') {
                             const rawBKey = endPortId.includes('-') ? endPortId.substring(devB.id.length + 1) : endPortId;
                             const baseBKey = rawBKey.replace(/__\d+$/, '');
                             const bCustomized = devB.anchorCableSides?.[baseBKey] || devB.portCableSides?.[rawBKey];
-                            if (!bCustomized) effectiveChannelB = leftChannelBX;
+                            if (!bCustomized) effectiveChannelB = getChannelX(rackBCoords, 'left', catB);
                         } else if (sideB === 'left' && sideA === 'right') {
                             const rawAKey = startPortId.includes('-') ? startPortId.substring(devA.id.length + 1) : startPortId;
                             const baseAKey = rawAKey.replace(/__\d+$/, '');
                             const aCustomized = devA.anchorCableSides?.[baseAKey] || devA.portCableSides?.[rawAKey];
-                            if (!aCustomized) effectiveChannelA = leftChannelAX;
+                            if (!aCustomized) effectiveChannelA = getChannelX(rackACoords, 'left', catA);
                         }
 
-                        if (effectiveChannelA === effectiveChannelB) {
-                            const points = [
+                        if (Math.abs(effectiveChannelA - effectiveChannelB) < 3) {
+                            const points = isMsft ? [
+                                { x: effectiveChannelA, y: y1 },
+                                { x: effectiveChannelA, y: y2 }
+                            ] : [
                                 { x: x1, y: y1 },
                                 { x: effectiveChannelA, y: y1 },
                                 { x: effectiveChannelA, y: y2 },
@@ -495,7 +512,12 @@ const CablesOverlay = () => {
                                 ? (rackACoords.y + 48)
                                 : (rackACoords.y + rackACoords.h - 16);
                             
-                            const points = [
+                            const points = isMsft ? [
+                                { x: effectiveChannelA, y: y1 },
+                                { x: effectiveChannelA, y: yCross },
+                                { x: effectiveChannelB, y: yCross },
+                                { x: effectiveChannelB, y: y2 }
+                            ] : [
                                 { x: x1, y: y1 },
                                 { x: effectiveChannelA, y: y1 },
                                 { x: effectiveChannelA, y: yCross },
@@ -508,7 +530,12 @@ const CablesOverlay = () => {
                     } else {
                         // Different racks: route via overhead tray
                         const overheadY = Math.min(rackACoords.y, rackBCoords.y) - 24;
-                        const points = [
+                        const points = isMsft ? [
+                            { x: channelAX, y: y1 },
+                            { x: channelAX, y: overheadY },
+                            { x: channelBX, y: overheadY },
+                            { x: channelBX, y: y2 }
+                        ] : [
                             { x: x1, y: y1 },
                             { x: channelAX, y: y1 },
                             { x: channelAX, y: overheadY },
