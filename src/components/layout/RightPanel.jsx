@@ -1040,7 +1040,7 @@ const RightPanel = () => {
                                 />
                             </div>
                             {(() => {
-                                const hasEwNicCable = getServerCategory(selectedDevice) === 'AI';
+                                const hasEwNicCable = getServerCategory(selectedDevice) === 'AI' && projectInfo?.designType !== 'msft';
                                 const hasPcieCable = (selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage');
                                 const hasSNicCable = (selectedDevice.type || '').startsWith('Server') && projectInfo?.designType !== 'msft';
                                 const hasBmcCable = (selectedDevice.type || '').startsWith('Server') || (selectedDevice.type || '').startsWith('Storage') || selectedDevice.hardwareSpecs?.bmc?.qty === 1 || ['CDU4U', 'SideCDU', 'CDU', 'UPS', 'PowerShelf', 'PDU'].includes(selectedDevice.type);
@@ -1293,7 +1293,7 @@ const RightPanel = () => {
                                 );
                             })()}
 
-                            {getServerCategory(selectedDevice) === 'AI' && (
+                            {getServerCategory(selectedDevice) === 'AI' && projectInfo?.designType !== 'msft' && (
                                 <div className="col-span-2 pt-2 border-t border-slate-800/50">
                                     <label className="block text-[11px] font-bold text-indigo-400 mb-1.5">EW NIC Network Type</label>
                                     <select value={cx8NetworkType} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8NetworkType', 'type', e.target.value)} className={selectCls}>
@@ -1370,7 +1370,7 @@ const RightPanel = () => {
                                  <div className="col-span-2 pt-2 border-t border-slate-800/50">
                                      <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
                                      <div className="grid grid-cols-2 gap-3">
-                                         {getServerCategory(selectedDevice) === 'AI' && (() => {
+                                         {getServerCategory(selectedDevice) === 'AI' && projectInfo?.designType !== 'msft' && (() => {
                                              const currentVal = selectedDevice.hardwareSpecs?.cx8p || {};
                                              const qty = currentVal.qty !== undefined ? currentVal.qty : 8;
                                              return (
