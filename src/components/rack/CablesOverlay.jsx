@@ -6,17 +6,11 @@ const CablesOverlay = () => {
     const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
-    const getCanvasContainer = () => {
-        return document.querySelector('.rack-container')?.parentElement || 
-               document.querySelector('.main-canvas > div > div') || 
-               document.querySelector('.main-canvas');
-    };
-
     useEffect(() => {
         let animationFrameId;
 
         const updateCoords = () => {
-            const rackContainer = getCanvasContainer();
+            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
             if (rackContainer) {
                 const ports = document.querySelectorAll('[data-port-id]');
                 const groups = document.querySelectorAll('[data-group-anchor]');
@@ -85,7 +79,7 @@ const CablesOverlay = () => {
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (drawing) {
-                const rackContainer = getCanvasContainer();
+                const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
                 if (!rackContainer) return;
                 
                 const containerRect = rackContainer.getBoundingClientRect();
@@ -94,7 +88,7 @@ const CablesOverlay = () => {
                 const currentX = (e.clientX - containerRect.left) / currentScale;
                 const currentY = (e.clientY - containerRect.top) / currentScale;
 
-                setDrawing(prev => (prev && prev.sourceId ? { ...prev, currentX, currentY } : null));
+                setDrawing(prev => ({ ...prev, currentX, currentY }));
             }
         };
 
@@ -159,10 +153,30 @@ const CablesOverlay = () => {
 
             possiblePorts.push('bmc');
 
-            const occupied = new Set(Object.keys(targetDev.connections || {}));
-            for (const p of possiblePorts) {
-                if (!occupied.has(p)) return p;
+            const occupiedPorts = new Set();
+            devices.forEach(d => {
+                if (d.connections) {
+                    Object.entries(d.connections).forEach(([key, tg]) => {
+                        if (tg && tg.startsWith(`${targetDevId}-`)) {
+                            occupiedPorts.add(tg.substring(targetDevId.length + 1));
+                        }
+                    });
+                }
+                if (d.id === targetDevId && d.connections) {
+                    Object.keys(d.connections).forEach(key => {
+                        if (d.connections[key]) {
+                            occupiedPorts.add(key);
+                        }
+                    });
+                }
+            });
+
+            for (const portKey of possiblePorts) {
+                if (!occupiedPorts.has(portKey)) {
+                    return portKey;
+                }
             }
+
             return null;
         };
 
@@ -238,8 +252,12 @@ const CablesOverlay = () => {
         };
     }, [drawing, setDrawing, handleConnectionChange, isFitToScreen, scaleFactor, viewMode, devices]);
 
-    if (isGeneratingPDF && !showCables) {
-        return null;
+    // During PDF generation, cables are driven strictly by showCables flag
+    // (ignore selectedId so rack screenshots are cable-free and topo is fully visible)
+    if (isGeneratingPDF) {
+        if (!showCables) return null;
+    } else {
+        if (!showCables && !selectedId) return null;
     }
 
     const GROUP_COLORS = [
@@ -265,8 +283,8 @@ const CablesOverlay = () => {
             }
         }
 
-        const srcBase = portKey ? String(portKey).replace(/__\d+$/, '') : '';
-        const tgtBase = targetPortKey ? String(targetPortKey).replace(/__\d+$/, '') : '';
+        const srcBase = portKey.replace(/__\d+$/, '');
+        const tgtBase = targetPortKey.replace(/__\d+$/, '');
 
         // ── 水冷管優先判斷（GPU water_cold/hot 和 Host host_water_cold/hot） ──
         if (srcBase === 'water_cold' || tgtBase === 'water_cold' ||
@@ -274,11 +292,11 @@ const CablesOverlay = () => {
         if (srcBase === 'water_hot'  || tgtBase === 'water_hot' ||
             srcBase === 'host_water_hot'  || tgtBase === 'host_water_hot')  return '#f87171';
 
-        const devA = devices ? devices.find(d => d.id === devAId) : null;
-        const devB = devices ? devices.find(d => d.id === devBId) : null;
+        const devA = devices.find(d => d.id === devAId);
+        const devB = devices.find(d => d.id === devBId);
 
         const getAnchorCat = (key) => {
-            if (!key || typeof key !== 'string') return null;
+            if (!key) return null;
             const b = key.replace(/__\d+$/, '');
             if (b.startsWith('cx8-') || b === 'cx8p') return 'ew_nic';
             if (b.startsWith('pcie_slot_') || b.startsWith('ns_nic_')) return 'pcie_slot';
@@ -362,10 +380,6 @@ const CablesOverlay = () => {
     };
 
     const generatePath = (startCoord, endCoord, startPortId = null, endPortId = null) => {
-        if (!startCoord || !endCoord || typeof startCoord.x !== 'number' || typeof startCoord.y !== 'number' || typeof endCoord.x !== 'number' || typeof endCoord.y !== 'number' || isNaN(startCoord.x) || isNaN(startCoord.y) || isNaN(endCoord.x) || isNaN(endCoord.y)) {
-            return '';
-        }
-
         let x1 = startCoord.x;
         let y1 = startCoord.y;
         let x2 = endCoord.x;
@@ -392,7 +406,10 @@ const CablesOverlay = () => {
         }
 
         // Optimized cabling routing path calculation
-        if (viewMode !== 'network' && isCableRoutingOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
+        const isMsft = projectInfo?.designType === 'msft';
+        const isOptimized = isCableRoutingOptimized || isMsft;
+
+        if (viewMode !== 'network' && isOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
             const devAId = startPortId.includes('-') ? startPortId.substring(0, startPortId.indexOf('-')) : startPortId;
             const devBId = endPortId.includes('-') ? endPortId.substring(0, endPortId.indexOf('-')) : endPortId;
             
@@ -404,18 +421,9 @@ const CablesOverlay = () => {
                 const rackBCoords = localCoords[`rack-${devB.rackId}`];
                 
                 if (rackACoords && rackBCoords) {
-                    const isMsft = projectInfo?.designType === 'msft';
-
-                    const getCableChannelCategory = (device, portId) => {
-                        if (!device || !portId) return 'other';
-                        const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
-                        const baseKey = rawPortKey.replace(/__\d+$/, '');
-
-                        if (baseKey.startsWith('bmc')) return 'bmc';
-                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_') || baseKey.startsWith('cx8-') || baseKey === 'cx8p' || baseKey.startsWith('super_nic_mgt')) return 'pcie';
-                        return 'other';
-                    };
-
+                    const rackAXCenter = rackACoords.x + rackACoords.w / 2;
+                    const leftChannelAX = isMsft ? (rackACoords.x - 12) : (rackACoords.x + 16);
+                    const rightChannelAX = isMsft ? (rackACoords.x + rackACoords.w + 12) : (rackACoords.x + rackACoords.w - 16);
                     const getCableSide = (device, portId) => {
                         if (!device || !portId) return 'right';
                         const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
@@ -423,39 +431,34 @@ const CablesOverlay = () => {
 
                         const anchorSides = device.anchorCableSides || {};
 
-                        if (baseKey.startsWith('cx8-') || baseKey === 'cx8p') return anchorSides.ew_nic || 'right';
-                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) return anchorSides.pcie_slot || 'right';
-                        if (baseKey.startsWith('super_nic_mgt')) return anchorSides.s_nic_m || 'right';
-                        if (baseKey.startsWith('bmc')) return anchorSides.bmc || 'right';
+                        if (baseKey.startsWith('cx8-') || baseKey === 'cx8p') {
+                            return anchorSides.ew_nic || 'right';
+                        }
+                        if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) {
+                            return anchorSides.pcie_slot || 'right';
+                        }
+                        if (baseKey.startsWith('super_nic_mgt')) {
+                            return anchorSides.s_nic_m || 'right';
+                        }
+                        if (baseKey.startsWith('bmc')) {
+                            return anchorSides.bmc || 'right';
+                        }
 
-                        if (device.portCableSides && device.portCableSides[rawPortKey]) return device.portCableSides[rawPortKey];
+                        if (device.portCableSides && device.portCableSides[rawPortKey]) {
+                            return device.portCableSides[rawPortKey];
+                        }
                         return device.cableSide || 'right';
                     };
 
-                    const getChannelX = (rackCoords, side, cat) => {
-                        const baseLeft = rackCoords.x + 16;
-                        const baseRight = rackCoords.x + rackCoords.w - 16;
-
-                        if (!isMsft) return side === 'left' ? baseLeft : baseRight;
-
-                        if (side === 'left') {
-                            if (cat === 'bmc') return baseLeft - 6;
-                            if (cat === 'pcie') return baseLeft;
-                            return baseLeft + 6;
-                        } else {
-                            if (cat === 'bmc') return baseRight + 6;
-                            if (cat === 'pcie') return baseRight;
-                            return baseRight - 6;
-                        }
-                    };
-
                     const sideA = getCableSide(devA, startPortId);
-                    const catA = getCableChannelCategory(devA, startPortId);
-                    const channelAX = getChannelX(rackACoords, sideA, catA);
+                    const channelAX = sideA === 'left' ? leftChannelAX : rightChannelAX;
+
+                    const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
+                    const leftChannelBX = isMsft ? (rackBCoords.x - 12) : (rackBCoords.x + 16);
+                    const rightChannelBX = isMsft ? (rackBCoords.x + rackBCoords.w + 12) : (rackBCoords.x + rackBCoords.w - 16);
 
                     const sideB = getCableSide(devB, endPortId);
-                    const catB = getCableChannelCategory(devB, endPortId);
-                    const channelBX = getChannelX(rackBCoords, sideB, catB);
+                    const channelBX = sideB === 'left' ? leftChannelBX : rightChannelBX;
 
                     if (devA.rackId === devB.rackId) {
                         // Same rack routing optimization
@@ -466,26 +469,23 @@ const CablesOverlay = () => {
                         let effectiveChannelB = channelBX;
 
                         if (isDevASwitch && !isDevBSwitch) {
-                            effectiveChannelA = getChannelX(rackACoords, sideB, catB);
+                            effectiveChannelA = sideB === 'left' ? leftChannelAX : rightChannelAX;
                         } else if (isDevBSwitch && !isDevASwitch) {
-                            effectiveChannelB = getChannelX(rackBCoords, sideA, catA);
+                            effectiveChannelB = sideA === 'left' ? leftChannelBX : rightChannelBX;
                         } else if (sideA === 'left' && sideB === 'right') {
                             const rawBKey = endPortId.includes('-') ? endPortId.substring(devB.id.length + 1) : endPortId;
                             const baseBKey = rawBKey.replace(/__\d+$/, '');
                             const bCustomized = devB.anchorCableSides?.[baseBKey] || devB.portCableSides?.[rawBKey];
-                            if (!bCustomized) effectiveChannelB = getChannelX(rackBCoords, 'left', catB);
+                            if (!bCustomized) effectiveChannelB = leftChannelBX;
                         } else if (sideB === 'left' && sideA === 'right') {
                             const rawAKey = startPortId.includes('-') ? startPortId.substring(devA.id.length + 1) : startPortId;
                             const baseAKey = rawAKey.replace(/__\d+$/, '');
                             const aCustomized = devA.anchorCableSides?.[baseAKey] || devA.portCableSides?.[rawAKey];
-                            if (!aCustomized) effectiveChannelA = getChannelX(rackACoords, 'left', catA);
+                            if (!aCustomized) effectiveChannelA = leftChannelAX;
                         }
 
-                        if (Math.abs(effectiveChannelA - effectiveChannelB) < 3) {
-                            const points = isMsft ? [
-                                { x: effectiveChannelA, y: y1 },
-                                { x: effectiveChannelA, y: y2 }
-                            ] : [
+                        if (effectiveChannelA === effectiveChannelB) {
+                            const points = [
                                 { x: x1, y: y1 },
                                 { x: effectiveChannelA, y: y1 },
                                 { x: effectiveChannelA, y: y2 },
@@ -495,15 +495,10 @@ const CablesOverlay = () => {
                         } else {
                             const rackCenterY = rackACoords.y + rackACoords.h / 2;
                             const yCross = (y1 + y2) / 2 < rackCenterY 
-                                ? (rackACoords.y + 48)
-                                : (rackACoords.y + rackACoords.h - 16);
+                                ? (rackACoords.y + (isMsft ? -12 : 48))
+                                : (rackACoords.y + rackACoords.h + (isMsft ? 12 : -16));
                             
-                            const points = isMsft ? [
-                                { x: effectiveChannelA, y: y1 },
-                                { x: effectiveChannelA, y: yCross },
-                                { x: effectiveChannelB, y: yCross },
-                                { x: effectiveChannelB, y: y2 }
-                            ] : [
+                            const points = [
                                 { x: x1, y: y1 },
                                 { x: effectiveChannelA, y: y1 },
                                 { x: effectiveChannelA, y: yCross },
@@ -515,13 +510,8 @@ const CablesOverlay = () => {
                         }
                     } else {
                         // Different racks: route via overhead tray
-                        const overheadY = Math.min(rackACoords.y, rackBCoords.y) - 24;
-                        const points = isMsft ? [
-                            { x: channelAX, y: y1 },
-                            { x: channelAX, y: overheadY },
-                            { x: channelBX, y: overheadY },
-                            { x: channelBX, y: y2 }
-                        ] : [
+                        const overheadY = Math.min(rackACoords.y, rackBCoords.y) - (isMsft ? 28 : 24);
+                        const points = [
                             { x: x1, y: y1 },
                             { x: channelAX, y: y1 },
                             { x: channelAX, y: overheadY },
@@ -640,7 +630,7 @@ const CablesOverlay = () => {
                 );
             })}
 
-            {drawing && drawing.sourceId && typeof drawing.startX === 'number' && typeof drawing.startY === 'number' && (drawing.startX !== drawing.currentX || drawing.startY !== drawing.currentY) && (
+            {drawing && drawing.startX !== drawing.currentX && (
                 <g>
                     <path 
                         d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
