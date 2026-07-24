@@ -154,13 +154,31 @@ const Header = () => {
         <header className="bg-[#0b1523] border-b border-slate-700/40 flex flex-col shrink-0 relative z-[150] shadow-2xl">
             {/* Top Row: Logo + File Controls */}
             <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/25">
-                <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-white rounded-lg shadow-[0_0_12px_rgba(255,255,255,0.15)]">
+                <div 
+                    className="relative group flex items-center gap-2.5 cursor-pointer py-1 px-1.5 rounded-lg hover:bg-slate-800/40 transition-all"
+                    title="Inventec Corp Kevin Tsai <Tsai.KevinC.W@inventec.com>"
+                >
+                    <div className="p-1.5 bg-white rounded-lg shadow-[0_0_12px_rgba(255,255,255,0.15)] transition-transform group-hover:scale-105">
                         <Server className="w-4 h-4 text-[#D71422]" />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono">
+                    <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono select-none">
                         RACK<span className="text-[#D71422]">PLANNER</span> <span className="text-[10px] text-slate-400 align-top">PRO</span>
                     </h1>
+
+                    {/* Author Info Hover Card */}
+                    <div className="absolute top-full left-0 mt-2 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[250]">
+                        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl text-xs whitespace-nowrap min-w-[270px] text-slate-200">
+                            <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                👨‍💻 開發者資訊 (Author Info)
+                            </div>
+                            <div className="font-semibold text-slate-100">
+                                Inventec Corp Kevin Tsai
+                            </div>
+                            <div className="text-[11px] text-sky-400 font-mono mt-0.5">
+                                Tsai.KevinC.W@inventec.com
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Project Name Input & Info Button */}
