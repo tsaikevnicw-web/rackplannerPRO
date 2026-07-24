@@ -257,7 +257,7 @@ const CablesOverlay = () => {
     if (isGeneratingPDF) {
         if (!showCables) return null;
     } else {
-        if (!showCables && !selectedId) return null;
+        if (!showCables && !selectedId && !drawing) return null;
     }
 
     const GROUP_COLORS = [
@@ -283,8 +283,8 @@ const CablesOverlay = () => {
             }
         }
 
-        const srcBase = portKey.replace(/__\d+$/, '');
-        const tgtBase = targetPortKey.replace(/__\d+$/, '');
+        const srcBase = portKey ? String(portKey).replace(/__\d+$/, '') : '';
+        const tgtBase = targetPortKey ? String(targetPortKey).replace(/__\d+$/, '') : '';
 
         // ── 水冷管優先判斷（GPU water_cold/hot 和 Host host_water_cold/hot） ──
         if (srcBase === 'water_cold' || tgtBase === 'water_cold' ||
@@ -292,11 +292,11 @@ const CablesOverlay = () => {
         if (srcBase === 'water_hot'  || tgtBase === 'water_hot' ||
             srcBase === 'host_water_hot'  || tgtBase === 'host_water_hot')  return '#f87171';
 
-        const devA = devices.find(d => d.id === devAId);
-        const devB = devices.find(d => d.id === devBId);
+        const devA = devices ? devices.find(d => d.id === devAId) : null;
+        const devB = devices ? devices.find(d => d.id === devBId) : null;
 
         const getAnchorCat = (key) => {
-            if (!key) return null;
+            if (!key || typeof key !== 'string') return null;
             const b = key.replace(/__\d+$/, '');
             if (b.startsWith('cx8-') || b === 'cx8p') return 'ew_nic';
             if (b.startsWith('pcie_slot_') || b.startsWith('ns_nic_')) return 'pcie_slot';
