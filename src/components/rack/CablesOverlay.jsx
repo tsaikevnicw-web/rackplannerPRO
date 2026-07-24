@@ -3,7 +3,7 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
 
 const CablesOverlay = () => {
-    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized } = useRackPlanner();
+    const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized, projectInfo } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
 
     useEffect(() => {
@@ -406,10 +406,7 @@ const CablesOverlay = () => {
         }
 
         // Optimized cabling routing path calculation
-        const isMsft = projectInfo?.designType === 'msft';
-        const isOptimized = isCableRoutingOptimized || isMsft;
-
-        if (viewMode !== 'network' && isOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
+        if (viewMode !== 'network' && isCableRoutingOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
             const devAId = startPortId.includes('-') ? startPortId.substring(0, startPortId.indexOf('-')) : startPortId;
             const devBId = endPortId.includes('-') ? endPortId.substring(0, endPortId.indexOf('-')) : endPortId;
             
@@ -422,8 +419,8 @@ const CablesOverlay = () => {
                 
                 if (rackACoords && rackBCoords) {
                     const rackAXCenter = rackACoords.x + rackACoords.w / 2;
-                    const leftChannelAX = isMsft ? (rackACoords.x - 12) : (rackACoords.x + 16);
-                    const rightChannelAX = isMsft ? (rackACoords.x + rackACoords.w + 12) : (rackACoords.x + rackACoords.w - 16);
+                    const leftChannelAX = rackACoords.x + 16;
+                    const rightChannelAX = rackACoords.x + rackACoords.w - 16;
                     const getCableSide = (device, portId) => {
                         if (!device || !portId) return 'right';
                         const rawPortKey = portId.includes('-') ? portId.substring(device.id.length + 1) : portId;
@@ -454,8 +451,8 @@ const CablesOverlay = () => {
                     const channelAX = sideA === 'left' ? leftChannelAX : rightChannelAX;
 
                     const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
-                    const leftChannelBX = isMsft ? (rackBCoords.x - 12) : (rackBCoords.x + 16);
-                    const rightChannelBX = isMsft ? (rackBCoords.x + rackBCoords.w + 12) : (rackBCoords.x + rackBCoords.w - 16);
+                    const leftChannelBX = rackBCoords.x + 16;
+                    const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
 
                     const sideB = getCableSide(devB, endPortId);
                     const channelBX = sideB === 'left' ? leftChannelBX : rightChannelBX;
@@ -494,9 +491,13 @@ const CablesOverlay = () => {
                             return drawRoundedPath(points, 8);
                         } else {
                             const rackCenterY = rackACoords.y + rackACoords.h / 2;
+                            const isMsft = projectInfo?.designType === 'msft';
+                            const topCrossY = isMsft ? (rackACoords.y + 10) : (rackACoords.y + 48);
+                            const bottomCrossY = isMsft ? (rackACoords.y + rackACoords.h - 10) : (rackACoords.y + rackACoords.h - 16);
+
                             const yCross = (y1 + y2) / 2 < rackCenterY 
-                                ? (rackACoords.y + (isMsft ? -12 : 48))
-                                : (rackACoords.y + rackACoords.h + (isMsft ? 12 : -16));
+                                ? topCrossY
+                                : bottomCrossY;
                             
                             const points = [
                                 { x: x1, y: y1 },
@@ -510,7 +511,7 @@ const CablesOverlay = () => {
                         }
                     } else {
                         // Different racks: route via overhead tray
-                        const overheadY = Math.min(rackACoords.y, rackBCoords.y) - (isMsft ? 28 : 24);
+                        const overheadY = Math.min(rackACoords.y, rackBCoords.y) - 24;
                         const points = [
                             { x: x1, y: y1 },
                             { x: channelAX, y: y1 },
