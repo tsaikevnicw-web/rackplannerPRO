@@ -2076,7 +2076,11 @@ const RightPanel = () => {
                                             <label className="block text-[10px] text-slate-400 mb-1">連接埠總量 (Ports)</label>
                                             <select
                                                 value={totalPortsCount}
-                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'portQty', 'qty', parseInt(e.target.value))}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 48;
+                                                    handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', val);
+                                                    handleHardwareSpecChange(selectedDevice.id, 'portQty', 'qty', val);
+                                                }}
                                                 className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none"
                                             >
                                                 <option value={8}>8 埠</option>
@@ -2086,6 +2090,7 @@ const RightPanel = () => {
                                                 <option value={32}>32 埠</option>
                                                 <option value={48}>48 埠</option>
                                                 <option value={64}>64 埠</option>
+                                                <option value={128}>128 埠</option>
                                             </select>
                                         </div>
                                         <div className="col-span-2">

@@ -36,8 +36,11 @@ export const getNicCount = (dev, key, designType) => {
 };
 
 export const getSwitchPortCount = (dev) => {
-    const val = parseInt(dev.hardwareSpecs?.ports?.qty);
-    if (!isNaN(val)) return val;
+    if (!dev) return 48;
+    const portsVal = parseInt(dev.hardwareSpecs?.ports?.qty);
+    if (!isNaN(portsVal) && portsVal > 0) return portsVal;
+    const portQtyVal = parseInt(dev.hardwareSpecs?.portQty?.qty);
+    if (!isNaN(portQtyVal) && portQtyVal > 0) return portQtyVal;
     if (dev.type === 'Switch1G') return 48;
     if (dev.type === 'Switch400G1U' || dev.type === 'Switch400G') return 32;
     if (dev.type === 'Switch800G') return 64;
