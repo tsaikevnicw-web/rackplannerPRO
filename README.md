@@ -3,7 +3,7 @@
   AUTHOR CRYPTOGRAPHIC VERIFICATION & COPYRIGHT FOOTPRINT
   AUTHOR: Kevin Tsai (Tsai, Kevin C.W.)
   ORGANIZATION: Inventec Corp. (英業達股份有限公司)
-  CONTACT EMAIL: Tsai.KevinC.W@inventec.com / ppilkimo@hotmail.com
+  CONTACT EMAIL: Tsai.KevinC.W@inventec.com
   REPOSITORY: https://github.com/tsaikevnicw-web/rackplannerPRO
   DIGITAL SIGNATURE HASH: SHA256-INVENTEC-KEVIN-TSAI-RACKPLANNER-PRO-2026-08-07
   PROPRIETARY NOTICE: Copyright (c) 2026 Kevin Tsai (Inventec Corp.). All rights reserved.
@@ -40,10 +40,9 @@
 
 | 項目 (Item) | 官方認證資訊 (Official Credential) |
 | :--- | :--- |
-| **主要作者 (Lead Author)** | **Kevin Tsai (蔡政偉 / Tsai, Kevin C.W.)** |
+| **作者 (Author)** | **Kevin Tsai (Tsai, Kevin C.W.)** |
 | **所屬機構 (Organization)** | **Inventec Corp. (英業達股份有限公司)** |
 | **工作郵件 (Enterprise Mail)** | `Tsai.KevinC.W@inventec.com` |
-| **個人郵件 (Personal Mail)** | `ppilkimo@hotmail.com` |
 | **GitHub 專案 (Repository)** | [https://github.com/tsaikevnicw-web/rackplannerPRO](https://github.com/tsaikevnicw-web/rackplannerPRO) |
 | **數位雜湊驗證碼 (SHA256 Hash)** | `45cd46e2844e416b42db247852326e592af281d1` |
 
@@ -199,13 +198,12 @@ rackplannerPRO/
 
 <div align="center" style="background-color: #0b1523; padding: 20px; border-radius: 12px; border: 1px solid #1e293b;">
 
-### 👨‍💻 System Architect & Author (系統總架構師與作者)
+### 👨‍💻 System Architect & Author
 
-### **Kevin Tsai (蔡政偉 / Tsai, Kevin C.W.)**
+### **Kevin Tsai (Tsai, Kevin C.W.)**
 **Inventec Corp. (英業達股份有限公司)**
 
 📧 **Enterprise Email**: [Tsai.KevinC.W@inventec.com](mailto:Tsai.KevinC.W@inventec.com)  
-✉️ **Personal Email**: [ppilkimo@hotmail.com](mailto:ppilkimo@hotmail.com)  
 🌐 **GitHub Repository**: [https://github.com/tsaikevnicw-web/rackplannerPRO](https://github.com/tsaikevnicw-web/rackplannerPRO)
 
 ---
@@ -227,5 +225,5 @@ permission of the author (Kevin Tsai / Inventec Corp.) is strictly prohibited.
   VERIFICATION CHECKSUM:
   SHA256: 45cd46e2844e416b42db247852326e592af281d1
   SIGNED_BY: Kevin Tsai <Tsai.KevinC.W@inventec.com>
-  TIMESTAMP: 2026-08-07T22:11:00+08:00
+  TIMESTAMP: 2026-08-07T22:24:00+08:00
 -->
