@@ -29,6 +29,33 @@ body, html, #root {
   scrollbar-color: #1e3a5f #060c16;
 }
 
+/* ── Airflow Stream Animations ── */
+@keyframes windFlowLeft {
+  0% { transform: translateX(20px); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateX(-20px); opacity: 0.2; }
+}
+@keyframes windFlowRight {
+  0% { transform: translateX(-20px); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateX(20px); opacity: 0.2; }
+}
+@keyframes windFlowUp {
+  0% { transform: translateY(14px); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-14px); opacity: 0.2; }
+}
+@keyframes windFlowDown {
+  0% { transform: translateY(-14px); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateY(14px); opacity: 0.2; }
+}
+
+.animate-wind-left { animation: windFlowLeft 1.2s ease-in-out infinite; }
+.animate-wind-right { animation: windFlowRight 1.2s ease-in-out infinite; }
+.animate-wind-up { animation: windFlowUp 1.2s ease-in-out infinite; }
+.animate-wind-down { animation: windFlowDown 1.2s ease-in-out infinite; }
+
 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 4px; }

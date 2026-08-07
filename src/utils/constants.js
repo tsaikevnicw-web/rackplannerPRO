@@ -1,4 +1,4 @@
-import { Server, Droplets, HardDrive, Network, Cpu, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer } from 'lucide-react';
+import { Server, Droplets, HardDrive, Network, Cpu, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, ArrowDown, ArrowUp } from 'lucide-react';
 
 export const DEFAULT_RACK_U_COUNT = 48;
 export const U_HEIGHT = 24;
@@ -75,6 +75,8 @@ export const DEVICE_TEMPLATES = [
 ];
 
 export const CONTAINER_INFRA_TEMPLATES = [
+    { type: 'ColdAisleZone', name: '冷通道模組 (Cold Aisle)', icon: ArrowDown, theme: 'blue', isZone: true },
+    { type: 'HotAisleZone', name: '熱通道模組 (Hot Aisle)', icon: ArrowUp, theme: 'orange', isZone: true },
     { type: 'General', name: 'IT 機櫃', icon: Server, theme: 'blue', uCount: 48, powerLimit: 24000, weight: 150 },
     { type: 'CDU', name: '水冷分配單元 (CDU)', icon: Droplets, theme: 'cyan', coolingCapacity: 150000, power: 2500, weight: 350 },
     { type: 'Cooling', name: '列間空調 (In-Row)', icon: Droplets, theme: 'emerald', coolingCapacity: 75000, power: 4500, weight: 320 },

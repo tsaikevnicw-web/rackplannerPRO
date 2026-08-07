@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
-import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus } from 'lucide-react';
+import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus, Compass, Thermometer } from 'lucide-react';
 
 const RightPanel = () => {
     const { 
@@ -462,6 +462,7 @@ const RightPanel = () => {
     }
 
     if (selectedRack && !selectedDevice) {
+        const isAisleZone = selectedRack.isZone || selectedRack.type === 'ColdAisleZone' || selectedRack.type === 'HotAisleZone';
         const isCDUOrCooling = projectInfo?.isCdcProject && (selectedRack.type === 'CDU' || selectedRack.type === 'Cooling');
         const isOtherInfra = projectInfo?.isCdcProject && ['UPS', 'Battery', 'Switchboard', 'PowerPanel', 'FireSuppression', 'Monitoring', 'EnvControl'].includes(selectedRack.type);
 
@@ -472,7 +473,7 @@ const RightPanel = () => {
                         <div className="p-1 bg-indigo-500/15 rounded-lg border border-indigo-500/30">
                             <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
                         </div>
-                        機櫃設定
+                        {isAisleZone ? '通道設定' : '機櫃設定'}
                     </h2>
                     <button onClick={() => setSelectedId(null)} className="text-slate-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-700/60" title="關閉面板">
                         <X className="w-4 h-4" />
@@ -481,12 +482,51 @@ const RightPanel = () => {
 
                 <div className="flex gap-3 mb-6">
                     <button onClick={() => setDeleteRackConfirm({ isOpen: true, rackId: selectedRack.id })} className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 py-2.5 rounded-xl transition-colors text-sm font-medium border border-rose-500/25 shadow-sm">
-                        <Trash2 className="w-4 h-4" /> 刪除機櫃
+                        <Trash2 className="w-4 h-4" /> {isAisleZone ? '刪除通道模組' : '刪除機櫃'}
                     </button>
                 </div>
 
                 <div className={sectionCls}>
-                    {isCDUOrCooling ? (
+                    {isAisleZone ? (
+                        <>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5">通道名稱 (Zone Name)</label>
+                                <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    <Compass className="w-3.5 h-3.5 text-sky-400" />
+                                    風向設定 (Airflow Direction)
+                                </label>
+                                <select
+                                    value={selectedRack.airflowMode || 'down'}
+                                    onChange={(e) => handleUpdateRack(selectedRack.id, { airflowMode: e.target.value })}
+                                    className={selectCls}
+                                >
+                                    <option value="up">⬆️ 向上 (Up)</option>
+                                    <option value="down">⬇️ 向下 (Down)</option>
+                                    <option value="left">⬅️ 向左 (Left)</option>
+                                    <option value="right">➡️ 向右 (Right)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                    <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+                                    通道溫度 (Temperature)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={selectedRack.zoneTemp !== undefined ? selectedRack.zoneTemp : (selectedRack.type === 'ColdAisleZone' ? '22' : '35')}
+                                        onChange={(e) => handleUpdateRack(selectedRack.id, { zoneTemp: e.target.value })}
+                                        placeholder={selectedRack.type === 'ColdAisleZone' ? '22' : '35'}
+                                        className={inputCls}
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none">°C</span>
+                                </div>
+                            </div>
+                        </>
+                    ) : isCDUOrCooling ? (
                         <>
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>

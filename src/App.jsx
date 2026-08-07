@@ -286,14 +286,38 @@ const AppContent = () => {
     let tempRacks = viewMode === 'single' 
         ? racks.filter(r => r.id === activeRackId) 
         : (projectInfo?.isCdcProject && viewMode === 'overview')
-            ? racks.filter(r => (r.containerId || 'container-1') === activeCid && r.slotIndex !== null && r.slotIndex !== undefined)
+            ? racks.filter(r => (r.containerId || 'container-1') === activeCid && !r.isZone && r.type !== 'ColdAisleZone' && r.type !== 'HotAisleZone')
             : (viewMode === 'overview' && !projectInfo?.isCdcProject)
-                ? racks.filter(r => r.type === 'General' || r.type === 'ORv3' || !r.type)
+                ? racks.filter(r => (r.type === 'General' || r.type === 'ORv3' || !r.type) && !r.isZone && r.type !== 'ColdAisleZone' && r.type !== 'HotAisleZone')
                 : racks;
 
     if (hideNonItCabinets && viewMode === 'overview') {
         tempRacks = tempRacks.filter(r => r.type === 'General' || !r.type);
     }
+
+    // 依據插槽編號 (slotIndex) -> 畫布 X 座標 (posX) -> 名稱對機櫃進行排序，確保總覽畫面與插槽順序完全一致
+    tempRacks = [...tempRacks].sort((a, b) => {
+        const cIdA = a.containerId || 'container-1';
+        const cIdB = b.containerId || 'container-1';
+        if (cIdA !== cIdB) return cIdA.localeCompare(cIdB);
+
+        const hasSlotA = a.slotIndex !== null && a.slotIndex !== undefined;
+        const hasSlotB = b.slotIndex !== null && b.slotIndex !== undefined;
+        if (hasSlotA && hasSlotB) {
+            return a.slotIndex - b.slotIndex;
+        }
+        if (hasSlotA) return -1;
+        if (hasSlotB) return 1;
+
+        const posXA = a.posX !== undefined ? a.posX : 9999;
+        const posXB = b.posX !== undefined ? b.posX : 9999;
+        if (posXA !== posXB) {
+            return posXA - posXB;
+        }
+
+        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+    });
+
     const racksToRender = tempRacks;
     const nsSpineDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'North-South' && d.networkRole === 'Spine');
     const nsLeafDevs = devices.filter(d => ((d.type || '').startsWith('Switch') || d.type === 'Router') && getFabricGroup(d, projectInfo?.designType) === 'North-South' && d.networkRole !== 'Spine');

@@ -103,7 +103,8 @@ const Sidebar = () => {
                                     powerCapacity: item.powerCapacity,
                                     batteryCapacity: item.batteryCapacity,
                                     power: item.power || 0,
-                                    weight: item.weight || 200
+                                    weight: item.weight || 200,
+                                    isZone: item.isZone
                                 };
                                 e.dataTransfer.setData('cabinet', JSON.stringify(payload));
                                 e.dataTransfer.effectAllowed = 'copyMove';
