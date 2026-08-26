@@ -14,6 +14,7 @@ import { X, AlertTriangle, CheckCircle2, Info, Eraser, Trash2, Unplug, LayoutTem
 import UserManualModal from './components/layout/UserManualModal';
 import IssueTrackerModal from './components/layout/IssueTrackerModal';
 import NetworkCablingModal from './components/layout/NetworkCablingModal';
+import SystemTour from './components/layout/SystemTour';
 import exampleData from './data/exampleData.json';
 import example16Data from './data/example16Data.json';
 import example4Data from './data/example4Data.json';
@@ -29,7 +30,7 @@ const AppContent = () => {
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
         raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, isGeneratingCablePDF, containers,
-        projectInfo, hideNonItCabinets
+        projectInfo, hideNonItCabinets, isTourOpen, setIsTourOpen
     } = useRackPlanner();
 
     const [activeOverviewContainerId, setActiveOverviewContainerId] = React.useState(null);
@@ -385,7 +386,7 @@ const AppContent = () => {
                 <Header />
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />
-                <main ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#060c16] flex flex-col">
+                <main id="tour-canvas" data-tour="canvas" ref={mainAreaRef} className="flex-1 relative overflow-auto main-canvas bg-[#060c16] flex flex-col">
                     {viewMode === 'container' ? (
                         <ContainerView />
                     ) : (
@@ -805,6 +806,7 @@ const AppContent = () => {
             <UserManualModal />
             <IssueTrackerModal />
             <NetworkCablingModal />
+            <SystemTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
             {isGeneratingCablePDF && (
                 <div className="fixed inset-0 bg-[#020617]/85 backdrop-blur-md z-[10000] flex flex-col items-center justify-center text-white select-none">
                     <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/60 border border-slate-700/50 shadow-2xl">

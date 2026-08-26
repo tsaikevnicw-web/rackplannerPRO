@@ -91,4 +91,13 @@ const bugTrackerPlugin = () => {
 export default defineConfig({
   plugins: [react(), tailwindcss(), bugTrackerPlugin()],
   base: '/rackplannerPRO/',
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        preview: path.resolve(__dirname, 'preview.html'),
+      }
+    }
+  }
 })
+

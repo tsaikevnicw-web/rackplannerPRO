@@ -31,7 +31,7 @@ const Sidebar = () => {
     }
 
     return (
-        <aside className="w-64 bg-[#0b1523] border-r border-slate-700/40 flex flex-col shrink-0 z-20 shadow-[6px_0_24px_rgba(0,0,0,0.4)]">
+        <aside id="tour-sidebar" data-tour="sidebar" className="w-64 bg-[#0b1523] border-r border-slate-700/40 flex flex-col shrink-0 z-20 shadow-[6px_0_24px_rgba(0,0,0,0.4)]">
             <div className="px-4 py-3.5 border-b border-slate-700/40 flex justify-between items-center">
                 <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2.5">
                     <div className="p-1 bg-indigo-500/15 rounded-lg border border-indigo-500/30">

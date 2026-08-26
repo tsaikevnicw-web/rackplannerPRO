@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug, Cable, Plus, Minus, Info, X } from 'lucide-react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug, Cable, Plus, Minus, Info, X, Sparkles } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 
 const Header = () => {
@@ -13,6 +13,7 @@ const Header = () => {
         isUserManualOpen, setIsUserManualOpen,
         isBugTrackerOpen, setIsBugTrackerOpen,
         isNetworkCablingOpen, setIsNetworkCablingOpen,
+        isTourOpen, setIsTourOpen,
         isExporting, fileInputRef,
         handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
@@ -151,7 +152,7 @@ const Header = () => {
     };
 
     return (
-        <header className="bg-[#0b1523] border-b border-slate-700/40 flex flex-col shrink-0 relative z-[150] shadow-2xl">
+        <header id="tour-header" data-tour="header" className="bg-[#0b1523] border-b border-slate-700/40 flex flex-col shrink-0 relative z-[150] shadow-2xl">
             {/* Top Row: Logo + File Controls */}
             <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/25">
                 <div 
@@ -232,63 +233,77 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-
+                    {/* Demo Tour Button */}
                     <button
-                        onClick={handleExportImage}
-                        disabled={isExporting}
-                        className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 hover:border-orange-500/50 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => setIsTourOpen(true)}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border border-indigo-500/50 bg-gradient-to-r from-indigo-600/30 to-purple-600/30 text-indigo-300 hover:from-indigo-600/50 hover:to-purple-600/50 hover:text-white hover:border-indigo-400 shadow-md shadow-indigo-500/10"
+                        title="開啟系統功能自動導覽與介面介紹 (Demo)"
                     >
-                        <Monitor className="w-4 h-4" /> 截圖存檔
+                        <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                        <span>系統導覽</span>
                     </button>
 
                     <div className="w-px h-5 bg-slate-700/60"></div>
 
-                    <div className="relative">
+                    {/* File & Export Actions Target for Demo Tour */}
+                    <div id="tour-file-actions" data-tour="file-actions" className="flex items-center gap-2">
                         <button
-                            onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
+                            onClick={handleExportImage}
                             disabled={isExporting}
-                            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border ${
-                                isFileMenuOpen
-                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/25'
-                                    : 'border-slate-600/50 bg-slate-700/40 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500/60'
-                            } ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 hover:border-orange-500/50 ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <FileBox className="w-4 h-4" /> 檔案
+                            <Monitor className="w-4 h-4" /> 截圖存檔
                         </button>
 
-                        {isFileMenuOpen && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setIsFileMenuOpen(false)}></div>
-                                <div className="absolute right-0 top-full mt-2 w-58 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">專案存檔</div>
-                                    <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 cursor-pointer text-sm text-slate-300 transition-colors mx-1 rounded-lg">
-                                        <DownloadCloud className="w-4 h-4" /> 讀取專案檔 (.json)
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
-                                    </label>
-                                    <button onClick={handleSaveData} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <Save className="w-4 h-4" /> 儲存目前專案 (.json)
-                                    </button>
-                                    <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
-                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">報表與圖檔</div>
-                                    <button onClick={handleExportBOM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-500/15 hover:text-emerald-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <Download className="w-4 h-4" /> 匯出 BOM 表 (.csv)
-                                    </button>
+                        <div className="w-px h-5 bg-slate-700/60"></div>
 
-                                    <button onClick={() => { setIsNetworkCablingOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <Share2 className="w-4 h-4 text-indigo-400" /> 網路線路表
-                                    </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
+                                disabled={isExporting}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all border ${
+                                    isFileMenuOpen
+                                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/25'
+                                        : 'border-slate-600/50 bg-slate-700/40 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500/60'
+                                } ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <FileBox className="w-4 h-4" /> 檔案
+                            </button>
 
-                                    <button onClick={handlePrintPDF} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-amber-500/15 hover:text-amber-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <Printer className="w-4 h-4 text-amber-500 animate-pulse" /> 列印 PDF 規格書
-                                    </button>
-                                    <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
-                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
-                                    <button onClick={() => { setIsUserManualOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
-                                        <BookOpen className="w-4 h-4" /> 系統使用手冊
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                            {isFileMenuOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsFileMenuOpen(false)}></div>
+                                    <div id="tour-file-dropdown-menu" className="absolute right-0 top-full mt-2 w-58 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">專案存檔</div>
+                                        <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 cursor-pointer text-sm text-slate-300 transition-colors mx-1 rounded-lg">
+                                            <DownloadCloud className="w-4 h-4" /> 讀取專案檔 (.json)
+                                            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
+                                        </label>
+                                        <button onClick={handleSaveData} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <Save className="w-4 h-4" /> 儲存目前專案 (.json)
+                                        </button>
+                                        <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">報表與圖檔</div>
+                                        <button onClick={handleExportBOM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-500/15 hover:text-emerald-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <Download className="w-4 h-4" /> 匯出 BOM 表 (.csv)
+                                        </button>
+
+                                        <button onClick={() => { setIsNetworkCablingOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <Share2 className="w-4 h-4 text-indigo-400" /> 網路線路表
+                                        </button>
+
+                                        <button onClick={handlePrintPDF} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-amber-500/15 hover:text-amber-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <Printer className="w-4 h-4 text-amber-500 animate-pulse" /> 列印 PDF 規格書
+                                        </button>
+                                        <div className="h-px bg-slate-700/50 my-2 mx-3"></div>
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
+                                        <button onClick={() => { setIsUserManualOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <BookOpen className="w-4 h-4" /> 系統使用手冊
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

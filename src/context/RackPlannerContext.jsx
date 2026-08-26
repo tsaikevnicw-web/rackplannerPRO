@@ -145,6 +145,7 @@ export const RackPlannerProvider = ({ children }) => {
     const [isBugTrackerOpen, setIsBugTrackerOpen] = useState(false);
     const [isNetworkCablingOpen, setIsNetworkCablingOpen] = useState(false);
     const [isGeneratingCablePDF, setIsGeneratingCablePDF] = useState(false);
+    const [isTourOpen, setIsTourOpen] = useState(false);
 
     // Scaling
     const [isFitToScreen, setIsFitToScreen] = useState(false);
@@ -214,6 +215,7 @@ export const RackPlannerProvider = ({ children }) => {
             isBugTrackerOpen, setIsBugTrackerOpen,
             isNetworkCablingOpen, setIsNetworkCablingOpen,
             isGeneratingCablePDF, setIsGeneratingCablePDF,
+            isTourOpen, setIsTourOpen,
             isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
             isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
             rackContainerRef, mainAreaRef, fileInputRef,

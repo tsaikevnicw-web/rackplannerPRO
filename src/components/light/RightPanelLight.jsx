@@ -1,10 +1,11 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
+import { LIGHT_THEME_STYLES } from '../../themes/light/lightConstants';
+import { HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
 import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus, Compass, Thermometer } from 'lucide-react';
 
-const RightPanel = () => {
+const RightPanelLight = () => {
     const { 
         racks, devices, setDevices, selectedId, setSelectedId, selectedIds, setSelectedIds, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
         handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert,
@@ -27,40 +28,40 @@ const RightPanel = () => {
 
     const renderCablingSubFields = (key, currentVal) => {
         return (
-            <div className="col-span-2 ml-4 pl-2 border-l border-slate-700/60 my-1.5 grid grid-cols-2 gap-2 text-[10px]">
+            <div className="col-span-2 ml-4 pl-2 border-l border-slate-200 my-1.5 grid grid-cols-2 gap-2 text-[10px]">
                 <div className="col-span-2 text-[9px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">網路規格及線路 (Cabling Specs)</div>
                 
                 <div>
                     <label className="block text-slate-500 mb-0.5">NIC 收發器型號</label>
                     <input type="text" placeholder="Model..." value={currentVal.transceiver_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'transceiver_model', e.target.value)}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 focus:outline-none placeholder:text-slate-400" />
                 </div>
                 <div>
                     <label className="block text-slate-500 mb-0.5">NIC 收發器數量</label>
                     <input type="number" placeholder="Qty" value={currentVal.transceiver_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'transceiver_qty', parseInt(e.target.value) || '')}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 text-center focus:outline-none" />
                 </div>
 
                 <div>
                     <label className="block text-slate-500 mb-0.5">Switch 收發器型號</label>
                     <input type="text" placeholder="Model..." value={currentVal.sw_transceiver_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'sw_transceiver_model', e.target.value)}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 focus:outline-none placeholder:text-slate-400" />
                 </div>
                 <div>
                     <label className="block text-slate-500 mb-0.5">Switch 收發器數量</label>
                     <input type="number" placeholder="Qty" value={currentVal.sw_transceiver_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'sw_transceiver_qty', parseInt(e.target.value) || '')}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 text-center focus:outline-none" />
                 </div>
 
                 <div>
                     <label className="block text-slate-500 mb-0.5">線路型號 (Cable Model)</label>
                     <input type="text" placeholder="Model..." value={currentVal.cable_model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'cable_model', e.target.value)}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 focus:outline-none placeholder:text-slate-800" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 focus:outline-none placeholder:text-slate-400" />
                 </div>
                 <div>
                     <label className="block text-slate-500 mb-0.5">線路數量 (Cable Qty)</label>
                     <input type="number" placeholder="Qty" value={currentVal.cable_qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, key, 'cable_qty', parseInt(e.target.value) || '')}
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded px-1.5 py-0.5 text-[10px] text-slate-300 text-center focus:outline-none" />
+                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 text-center focus:outline-none" />
                 </div>
             </div>
         );
@@ -76,9 +77,9 @@ const RightPanel = () => {
         });
 
     /* ── Input / Select shared style ── */
-    const inputCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner placeholder:text-slate-600";
-    const selectCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner";
-    const sectionCls = "space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50";
+    const inputCls = "w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-2xs placeholder:text-slate-400 font-medium";
+    const selectCls = "w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-2xs font-medium";
+    const sectionCls = "space-y-3 bg-slate-50/70 p-3 rounded-lg border border-slate-200";
 
     // ── 批次編輯面板 ──
     if (selectedIds.length > 1) {
@@ -105,9 +106,9 @@ const RightPanel = () => {
         };
 
         return (
-            <aside id="tour-right-panel" data-tour="right-panel" className="w-[360px] bg-[#0b1523]/95 border-l border-slate-700/40 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
+            <aside className="w-[360px] bg-white border-l border-slate-200 p-4 flex flex-col overflow-y-auto z-20 shrink-0 light-scrollbar shadow-xs animate-in slide-in-from-right-4 duration-150">
                 <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2.5">
+                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2.5">
                         <div className="p-1 bg-indigo-500/15 rounded-lg border border-indigo-500/30">
                             <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
                         </div>
@@ -131,7 +132,7 @@ const RightPanel = () => {
 
                 <div className="space-y-6">
                     <div className={sectionCls}>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5">外觀主題 (Theme)</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">外觀主題 (Theme)</label>
                         <select 
                             value="" 
                             onChange={(e) => {
@@ -205,7 +206,7 @@ const RightPanel = () => {
                             </div>
 
                             {/* PCIe Slot */}
-                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                            <div className="space-y-1 border-t border-slate-200 pt-2.5">
                                 <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <select 
@@ -254,7 +255,7 @@ const RightPanel = () => {
                             </div>
 
                             {/* S-NIC-M */}
-                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                            <div className="space-y-1 border-t border-slate-200 pt-2.5">
                                 <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <select 
@@ -303,7 +304,7 @@ const RightPanel = () => {
                             </div>
 
                             {/* BMC */}
-                            <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
+                            <div className="space-y-1 border-t border-slate-200 pt-2.5">
                                 <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <select 
@@ -387,7 +388,7 @@ const RightPanel = () => {
                                             }
                                         }
                                     }}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" 
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" 
                                 />
                             </div>
                             <div>
@@ -404,7 +405,7 @@ const RightPanel = () => {
                                             }
                                         }
                                     }}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" 
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" 
                                 />
                             </div>
                         </div>
@@ -417,7 +418,7 @@ const RightPanel = () => {
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">Host Cooling</label>
+                                <label className="block text-[10px] text-slate-500 mb-1.5 font-semibold">Host Cooling</label>
                                 <select
                                     value=""
                                     onChange={(e) => {
@@ -434,7 +435,7 @@ const RightPanel = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">GPU Cooling</label>
+                                <label className="block text-[10px] text-slate-500 mb-1.5 font-semibold">GPU Cooling</label>
                                 <select
                                     value=""
                                     onChange={(e) => {
@@ -467,9 +468,9 @@ const RightPanel = () => {
         const isOtherInfra = projectInfo?.isCdcProject && ['UPS', 'Battery', 'Switchboard', 'PowerPanel', 'FireSuppression', 'Monitoring', 'EnvControl'].includes(selectedRack.type);
 
         return (
-            <aside id="tour-right-panel" data-tour="right-panel" className="w-[360px] bg-[#0b1523]/95 border-l border-slate-700/40 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
+            <aside className="w-[360px] bg-white border-l border-slate-200 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2.5">
+                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2.5">
                         <div className="p-1 bg-indigo-500/15 rounded-lg border border-indigo-500/30">
                             <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
                         </div>
@@ -490,11 +491,11 @@ const RightPanel = () => {
                     {isAisleZone ? (
                         <>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">通道名稱 (Zone Name)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">通道名稱 (Zone Name)</label>
                                 <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     <Compass className="w-3.5 h-3.5 text-sky-400" />
                                     風向設定 (Airflow Direction)
                                 </label>
@@ -510,7 +511,7 @@ const RightPanel = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     <Thermometer className="w-3.5 h-3.5 text-amber-400" />
                                     通道溫度 (Temperature)
                                 </label>
@@ -529,11 +530,11 @@ const RightPanel = () => {
                     ) : isCDUOrCooling ? (
                         <>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">機櫃名稱 (Rack Name)</label>
                                 <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     <Droplets className="w-3.5 h-3.5 text-cyan-400" />
                                     解熱能力 (Cooling Capacity - kW)
                                 </label>
@@ -545,7 +546,7 @@ const RightPanel = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     設備重量 (Weight - KG)
                                 </label>
                                 <input 
@@ -559,11 +560,11 @@ const RightPanel = () => {
                     ) : isOtherInfra ? (
                         <>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">機櫃名稱 (Rack Name)</label>
                                 <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     設備重量 (Weight - KG)
                                 </label>
                                 <input 
@@ -577,23 +578,23 @@ const RightPanel = () => {
                     ) : (
                         <>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃名稱 (Rack Name)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">機櫃名稱 (Rack Name)</label>
                                 <input type="text" value={selectedRack.name} onChange={(e) => handleUpdateRack(selectedRack.id, { name: e.target.value })} className={inputCls} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">機櫃類型 (Rack Type)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">機櫃類型 (Rack Type)</label>
                                 <select value={selectedRack.type || 'General'} onChange={(e) => handleUpdateRack(selectedRack.id, { type: e.target.value })} className={selectCls}>
                                     <option value="General">General (泛用型)</option>
                                     <option value="ORv3">ORv3 (開放運算計畫)</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">總 U 數 (Rack U)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">總 U 數 (Rack U)</label>
                                 <input type="number" value={selectedRack.uCount || DEFAULT_RACK_U_COUNT} onChange={(e) => handleUpdateRack(selectedRack.id, { uCount: parseInt(e.target.value) || 1 })} disabled={selectedRack.type === 'ORv3'} className={`${inputCls} font-mono disabled:opacity-40 disabled:cursor-not-allowed`} />
                                 {selectedRack.type === 'ORv3' && <p className="text-[10px] text-slate-500 mt-1">ORv3 規格固定為 44U</p>}
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
                                     <Zap className="w-3.5 h-3.5 text-amber-400" />
                                     機櫃電力限制 (Power Limit - W)
                                 </label>
@@ -606,14 +607,14 @@ const RightPanel = () => {
                             </div>
                             {/* Rack attachments for MSFT */}
                             {projectInfo?.designType === 'msft' && (
-                                <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                                <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-2">
                                     <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                         機櫃附屬設備設定 (BOM Sub-items)
                                     </label>
-                                    <div className="space-y-4 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="space-y-4 bg-white/60 p-3 rounded-lg border border-slate-200">
                                         {/* Item 1 */}
                                         <div>
-                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 1</div>
+                                            <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Item 1</div>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {[
                                                     { key: 'rackEnclosure', label: 'Rack enclosure' },
@@ -626,17 +627,17 @@ const RightPanel = () => {
                                                             type="checkbox"
                                                             checked={!!selectedRack[sub.key]}
                                                             onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                         />
-                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                        <span className="text-[11px] text-slate-700">{sub.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Item 6 */}
-                                        <div className="pt-2 border-t border-slate-800/40">
-                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 6</div>
+                                        <div className="pt-2 border-t border-slate-200/40">
+                                            <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Item 6</div>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {[
                                                     { key: 'cableManagement', label: 'Cable Management' },
@@ -648,17 +649,17 @@ const RightPanel = () => {
                                                             type="checkbox"
                                                             checked={!!selectedRack[sub.key]}
                                                             onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                         />
-                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                        <span className="text-[11px] text-slate-700">{sub.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Item 8 */}
-                                        <div className="pt-2 border-t border-slate-800/40">
-                                            <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Item 8</div>
+                                        <div className="pt-2 border-t border-slate-200/40">
+                                            <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Item 8</div>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {[
                                                     { key: 'ioCables', label: 'IO Cables' },
@@ -670,17 +671,17 @@ const RightPanel = () => {
                                                             type="checkbox"
                                                             checked={!!selectedRack[sub.key]}
                                                             onChange={(e) => handleUpdateRack(selectedRack.id, { [sub.key]: e.target.checked })}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                         />
-                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                        <span className="text-[11px] text-slate-700">{sub.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Custom Fields List */}
-                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                            <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                                 自訂附屬設備 (Custom Sub-items)
                                             </label>
                                             <div className="space-y-2">
@@ -695,7 +696,7 @@ const RightPanel = () => {
                                                                 handleUpdateRack(selectedRack.id, { rackCustom: newCustom });
                                                             }}
                                                             placeholder="自行輸入設備名稱..."
-                                                            className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                            className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                         />
                                                         <div className="flex items-center gap-1">
                                                             <button
@@ -714,7 +715,7 @@ const RightPanel = () => {
                                                                         const newCustom = (selectedRack.rackCustom || ['']).filter((_, i) => i !== idx);
                                                                         handleUpdateRack(selectedRack.id, { rackCustom: newCustom });
                                                                     }}
-                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                     title="刪除"
                                                                 >
                                                                     <Trash2 className="w-3.5 h-3.5" />
@@ -736,7 +737,7 @@ const RightPanel = () => {
     }
 
     const SelectedIcon = getIconByType(selectedDevice.type);
-    const tStyle = THEME_STYLES[selectedDevice.theme] || THEME_STYLES.slate;
+    const tStyle = LIGHT_THEME_STYLES[selectedDevice.theme] || LIGHT_THEME_STYLES.slate;
     const isSwitchOrRouter = (selectedDevice.type || '').startsWith('Switch') || selectedDevice.type === 'Router';
 
     const nic1Count = getNicCount(selectedDevice, 'ns_nic_1');
@@ -752,11 +753,11 @@ const RightPanel = () => {
     };
 
     return (
-        <aside id="tour-right-panel" data-tour="right-panel" className="w-[360px] bg-[#0b1523]/95 border-l border-slate-700/40 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
+        <aside className="w-[360px] bg-white border-l border-slate-200 p-6 flex flex-col overflow-y-auto shadow-[-8px_0_32px_rgba(0,0,0,0.5)] z-20 shrink-0 custom-scrollbar animate-in slide-in-from-right-8 duration-300 backdrop-blur-md">
             <div className="flex justify-between items-center mb-5">
-                <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2.5">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2.5">
                     <div className="p-1 bg-slate-700/60 rounded-lg border border-slate-600/50">
-                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                        <Info className="w-3.5 h-3.5 text-slate-500" />
                     </div>
                     設備內容
                 </h2>
@@ -772,7 +773,7 @@ const RightPanel = () => {
                     {SelectedIcon && <SelectedIcon className={`w-9 h-9 ${tStyle.text} drop-shadow-lg shrink-0`} />}
                     <div className="relative z-10 min-w-0">
                         <div className="text-white font-bold text-base truncate">{selectedDevice.customName}</div>
-                        <div className="text-slate-400 text-xs font-mono mt-0.5">{selectedDevice.type === 'SideCDU' ? 'Full Rack' : `${selectedDevice.size}U`} · {selectedDevice.type}</div>
+                        <div className="text-slate-500 text-xs font-mono mt-0.5">{selectedDevice.type === 'SideCDU' ? 'Full Rack' : `${selectedDevice.size}U`} · {selectedDevice.type}</div>
                     </div>
                 </div>
 
@@ -798,17 +799,17 @@ const RightPanel = () => {
                 {/* Basic info */}
                 <div className={sectionCls}>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1.5">設備名稱</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">設備名稱</label>
                         <input type="text" value={selectedDevice.customName} onChange={(e) => handleUpdateDevice(selectedDevice.id, { customName: e.target.value })} className={inputCls} />
                     </div>
                     {selectedDevice.type === 'Blank' ? (
                         <>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5">擋板設定 (U數)</label>
                                 <select
                                     value={selectedDevice.size || 1}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseFloat(e.target.value) })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
                                 >
                                     <option value={0.5}>0.5U</option>
                                     <option value={1}>1U</option>
@@ -820,14 +821,14 @@ const RightPanel = () => {
                                     <option value={4}>4U</option>
                                 </select>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
-                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                            <div className="border-t border-slate-200/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-white/40 border border-slate-200 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
                                     <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
                                     <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : formatURange(selectedDevice.startU, selectedDevice.size)}</span>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
                                     <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
                                 </label>
@@ -836,26 +837,26 @@ const RightPanel = () => {
                                     min={0}
                                     value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
                                     placeholder="預設為 10 KG..."
                                 />
                             </div>
                         </>
                     ) : selectedDevice.type === 'UPS' ? (
                         <>
-                            <div className="border-t border-slate-800/50 pt-4">
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
-                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                            <div className="border-t border-slate-200/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-white/40 border border-slate-200 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
                                     <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
                                     <span>{formatURange(selectedDevice.startU, selectedDevice.size)}</span>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5">UPS 設定 (U數)</label>
                                 <select
                                     value={selectedDevice.size || 2}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
                                 >
                                     <option value={1}>1U</option>
                                     <option value={2}>2U</option>
@@ -864,7 +865,7 @@ const RightPanel = () => {
                                     <option value={5}>5U</option>
                                 </select>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
                                     <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
                                 </label>
@@ -873,11 +874,11 @@ const RightPanel = () => {
                                     min={0}
                                     value={selectedDevice.weight !== undefined ? selectedDevice.weight : 30}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
                                     placeholder="預設為 30 KG..."
                                 />
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1">
                                     <Zap className="w-3.5 h-3.5 text-amber-400" /> 電池容量 (Battery Capacity - Wh)
                                 </label>
@@ -886,26 +887,26 @@ const RightPanel = () => {
                                     min={0}
                                     value={selectedDevice.batteryCapacity !== undefined ? selectedDevice.batteryCapacity : 0}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { batteryCapacity: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
                                     placeholder="請輸入電池容量 (Wh)..."
                                 />
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
                                     <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路管理埠
                                 </label>
-                                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200">
                                     <label className="flex items-center gap-2.5 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
                                             checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
                                             onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                         />
-                                        <span className="text-[11px] text-slate-300">啟用 BMC 網路孔</span>
+                                        <span className="text-[11px] text-slate-700">啟用 BMC 網路孔</span>
                                     </label>
                                     {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
-                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
                                             {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
                                         </div>
                                     )}
@@ -914,19 +915,19 @@ const RightPanel = () => {
                         </>
                     ) : (selectedDevice.type === 'PowerShelf' || selectedDevice.type === 'PDU') ? (
                         <>
-                            <div className="border-t border-slate-800/50 pt-4">
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
-                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                            <div className="border-t border-slate-200/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-white/40 border border-slate-200 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
                                     <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
                                     <span>{formatURange(selectedDevice.startU, selectedDevice.size)}</span>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5">設備設定 (U數)</label>
                                 <select
                                     value={selectedDevice.size || 1}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/70 focus:ring-1 focus:ring-sky-500/30 transition-all shadow-inner font-mono"
                                 >
                                     <option value={1}>1U</option>
                                     <option value={2}>2U</option>
@@ -935,7 +936,7 @@ const RightPanel = () => {
                                     <option value={5}>5U</option>
                                 </select>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
                                     <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
                                 </label>
@@ -944,11 +945,11 @@ const RightPanel = () => {
                                     min={0}
                                     value={selectedDevice.weight !== undefined ? selectedDevice.weight : (selectedDevice.type === 'PowerShelf' ? 15 : 5)}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
                                     placeholder="請輸入設備重量..."
                                 />
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1">
                                     <Zap className="w-3.5 h-3.5 text-amber-400" /> 可提供電力瓦數 (Provided Power - W)
                                 </label>
@@ -960,36 +961,36 @@ const RightPanel = () => {
                                         const val = parseFloat(e.target.value) || 0;
                                         handleUpdateDevice(selectedDevice.id, { powerProvided: val, power: val });
                                     }}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
                                     placeholder="請輸入可提供電力瓦數 (W)..."
                                 />
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
                                     <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路孔與 Cable 設定
                                 </label>
-                                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200">
                                     <label className="flex items-center gap-2.5 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
                                             checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
                                             onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                         />
-                                        <span className="text-[11px] text-slate-300">啟用 BMC 網路孔</span>
+                                        <span className="text-[11px] text-slate-700">啟用 BMC 網路孔</span>
                                     </label>
                                     {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
-                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
+                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
                                             {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="border-t border-slate-800/50 pt-4">
+                            <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
                                     <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
                                     <div className="space-y-1">
                                         <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
                                         <div className="grid grid-cols-2 gap-2">
@@ -998,7 +999,7 @@ const RightPanel = () => {
                                                 onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                     anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
                                                 })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
                                             >
                                                 <option value="right">➡️ 右側走線</option>
                                                 <option value="left">⬅️ 左側走線</option>
@@ -1008,7 +1009,7 @@ const RightPanel = () => {
                                                 onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                     anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
                                                 })}
-                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
                                                 style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
                                             >
                                                 <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
@@ -1027,23 +1028,23 @@ const RightPanel = () => {
                             </div>
                         </>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
+                        <div className="grid grid-cols-2 gap-4 border-t border-slate-200/50 pt-4">
                             <div className="col-span-2">
                                 <label className="block text-[11px] font-bold text-emerald-400 mb-1.5">拓撲群組 (Topology Group)</label>
                                 <input type="text" value={selectedDevice.topologyGroup || racks.find(r => r.id === selectedDevice.rackId)?.name || ''} onChange={(e) => handleUpdateDevice(selectedDevice.id, { topologyGroup: e.target.value })} placeholder="預設為所在機櫃名稱"
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner placeholder:text-slate-600" />
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all shadow-inner placeholder:text-slate-400" />
                             </div>
                             {isSwitchOrRouter && (
                                 <>
                                     <div className="col-span-2">
                                         <label className="block text-[11px] font-bold text-indigo-400 mb-1.5">網路用途 (Fabric Group)</label>
                                         {projectInfo?.designType === 'msft' ? (
-                                            <div className="w-full bg-slate-950/40 border border-slate-800 rounded-lg p-2 text-sm text-slate-400 font-semibold">
+                                            <div className="w-full bg-slate-50 border-slate-200 text-slate-800 border border-slate-200 rounded-lg p-2 text-sm text-slate-500 font-semibold">
                                                 North-South Fabric (南北向/融合/管理網路)
                                             </div>
                                         ) : (
                                             <select value={getFabricGroup(selectedDevice, projectInfo?.designType)} onChange={(e) => handleUpdateDevice(selectedDevice.id, { fabricGroup: e.target.value })}
-                                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-inner">
+                                                className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-inner">
                                                 <option value="East-West">East-West Fabric (東西向/運算網路)</option>
                                                 <option value="North-South">North-South Fabric (南北向/融合/管理網路)</option>
                                             </select>
@@ -1052,21 +1053,21 @@ const RightPanel = () => {
                                     <div className="col-span-2">
                                         <label className="block text-[11px] font-bold text-purple-400 mb-1.5">網路角色 (Network Role)</label>
                                         <select value={selectedDevice.networkRole || (selectedDevice.type === 'Router' || selectedDevice.type === 'Switch800G' ? 'Spine' : 'Leaf')} onChange={(e) => handleUpdateDevice(selectedDevice.id, { networkRole: e.target.value })}
-                                            className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition-all shadow-inner">
+                                            className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition-all shadow-inner">
                                             <option value="Spine">Spine Layer (核心骨幹層)</option>
                                             <option value="Leaf">Leaf Layer (邊緣存取層)</option>
                                         </select>
                                     </div>
                                 </>
                             )}
-                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5">所在實體位置</label>
-                                <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
+                            <div className="col-span-2 border-t border-slate-200/50 pt-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-1.5">所在實體位置</label>
+                                <div className="w-full bg-white/40 border border-slate-200 rounded-lg p-2 text-sm text-slate-500 cursor-not-allowed font-mono flex justify-between">
                                     <span>{racks.find(r => r.id === selectedDevice.rackId)?.name}</span>
                                     <span>{selectedDevice.type === 'SideCDU' ? 'SideCar' : formatURange(selectedDevice.startU, selectedDevice.size)}</span>
                                 </div>
                             </div>
-                            <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                            <div className="col-span-2 border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1">
                                     <Weight className="w-3.5 h-3.5 text-sky-400" /> 設備重量 (Weight - KG)
                                 </label>
@@ -1075,7 +1076,7 @@ const RightPanel = () => {
                                     min={0}
                                     value={selectedDevice.weight !== undefined ? selectedDevice.weight : 10}
                                     onChange={(e) => handleUpdateDevice(selectedDevice.id, { weight: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all font-mono"
                                     placeholder="預設為 10 KG..."
                                 />
                             </div>
@@ -1089,11 +1090,11 @@ const RightPanel = () => {
                                 if (!showAnchorSettings) return null;
 
                                 return (
-                                    <div className="col-span-2 border-t border-slate-800/50 pt-4">
+                                    <div className="col-span-2 border-t border-slate-200/50 pt-4">
                                         <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
                                             <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
                                         </label>
-                                        <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                        <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
                                             {/* EW NIC - Only for GPU/AI Servers */}
                                             {hasEwNicCable && (
                                                 <div className="space-y-1">
@@ -1104,7 +1105,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), ew_nic: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
                                                         >
                                                             <option value="right">➡️ 右側走線</option>
                                                             <option value="left">⬅️ 左側走線</option>
@@ -1114,7 +1115,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), ew_nic: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
                                                             style={{ color: selectedDevice.anchorCableColors?.ew_nic || '#22c55e' }}
                                                         >
                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠 (預設)</option>
@@ -1132,7 +1133,7 @@ const RightPanel = () => {
 
                                             {/* PCIe Slot - Only for Servers & Storage Devices */}
                                             {hasPcieCable && (
-                                                <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-200 pt-2.5' : ''}`}>
                                                     <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <select
@@ -1140,7 +1141,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
                                                         >
                                                             <option value="right">➡️ 右側走線</option>
                                                             <option value="left">⬅️ 左側走線</option>
@@ -1150,7 +1151,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
                                                             style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
                                                         >
                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
@@ -1168,7 +1169,7 @@ const RightPanel = () => {
 
                                             {/* S-NIC-M - Only for Servers */}
                                             {hasSNicCable && (
-                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable) ? 'border-t border-slate-200 pt-2.5' : ''}`}>
                                                     <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <select
@@ -1176,7 +1177,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
                                                         >
                                                             <option value="right">➡️ 右側走線</option>
                                                             <option value="left">⬅️ 左側走線</option>
@@ -1186,7 +1187,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
                                                             style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
                                                         >
                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
@@ -1204,7 +1205,7 @@ const RightPanel = () => {
 
                                             {/* BMC */}
                                             {hasBmcCable && (
-                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-200 pt-2.5' : ''}`}>
                                                     <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <select
@@ -1212,7 +1213,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
                                                         >
                                                             <option value="right">➡️ 右側走線</option>
                                                             <option value="left">⬅️ 左側走線</option>
@@ -1222,7 +1223,7 @@ const RightPanel = () => {
                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
                                                             })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
                                                             style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
                                                         >
                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
@@ -1253,12 +1254,12 @@ const RightPanel = () => {
                             <div>
                                 <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3 h-3"/> 設備功耗 (W)</label>
                                 <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
                             </div>
                             <div>
                                 <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3 h-3"/> 設備報價 (USD)</label>
                                 <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                             </div>
 
                             {(getServerCategory(selectedDevice) !== null || (selectedDevice.type || '').startsWith('Storage')) && (() => {
@@ -1290,7 +1291,7 @@ const RightPanel = () => {
                                 };
 
                                 return (
-                                    <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                    <div className="col-span-2 pt-2 border-t border-slate-200/50">
                                         <label className="block text-[11px] font-bold text-indigo-400 mb-1.5 flex items-center gap-1">
                                             {isStorage ? <HardDrive className="w-3 h-3"/> : <Server className="w-3 h-3"/>}
                                             {isStorage ? '儲存伺服器設定 (Storage Config)' : '伺服器設定 (Server Config)'}
@@ -1334,7 +1335,7 @@ const RightPanel = () => {
                             })()}
 
                             {getServerCategory(selectedDevice) === 'AI' && projectInfo?.designType !== 'msft' && (
-                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <div className="col-span-2 pt-2 border-t border-slate-200/50">
                                     <label className="block text-[11px] font-bold text-indigo-400 mb-1.5">EW NIC Network Type</label>
                                     <select value={cx8NetworkType} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'cx8NetworkType', 'type', e.target.value)} className={selectCls}>
                                         <option value="Ethernet">Ethernet / RoCE v2 (綠線)</option>
@@ -1359,14 +1360,14 @@ const RightPanel = () => {
                                     });
                                 };
                                 return (
-                                    <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                    <div className="col-span-2 pt-2 border-t border-slate-200/50">
                                         <label className="block text-[11px] font-bold text-cyan-400 mb-3 flex items-center gap-1.5">
                                             <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
                                             Cooling Configuration
                                         </label>
                                         <div className={`grid ${isAI ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                                             <div>
-                                                <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">Host Cooling</label>
+                                                <label className="block text-[10px] text-slate-500 mb-1.5 font-semibold">Host Cooling</label>
                                                 <select
                                                     value={hostCooling}
                                                     onChange={(e) => setCooling('host', e.target.value)}
@@ -1384,7 +1385,7 @@ const RightPanel = () => {
                                             </div>
                                             {isAI && (
                                                 <div>
-                                                    <label className="block text-[10px] text-slate-400 mb-1.5 font-semibold">GPU Cooling</label>
+                                                    <label className="block text-[10px] text-slate-500 mb-1.5 font-semibold">GPU Cooling</label>
                                                     <select
                                                         value={gpuCooling}
                                                         onChange={(e) => setCooling('gpu', e.target.value)}
@@ -1407,14 +1408,14 @@ const RightPanel = () => {
                             })()}
 
                              {getServerCategory(selectedDevice) !== 'HighDensity' && (
-                                 <div className="col-span-2 pt-2 border-t border-slate-800/50">
-                                     <h3 className="block text-[11px] font-bold text-slate-400 mb-2">網路連線狀態與數量 (Network Ports)</h3>
+                                 <div className="col-span-2 pt-2 border-t border-slate-200/50">
+                                     <h3 className="block text-[11px] font-bold text-slate-500 mb-2">網路連線狀態與數量 (Network Ports)</h3>
                                      <div className="grid grid-cols-2 gap-3">
                                          {getServerCategory(selectedDevice) === 'AI' && projectInfo?.designType !== 'msft' && (() => {
                                              const currentVal = selectedDevice.hardwareSpecs?.cx8p || {};
                                              const qty = currentVal.qty !== undefined ? currentVal.qty : 8;
                                              return (
-                                                 <div className="col-span-2 bg-slate-900/40 p-2.5 rounded-lg border border-indigo-950/40 mt-1">
+                                                 <div className="col-span-2 bg-white/40 p-2.5 rounded-lg border border-indigo-950/40 mt-1">
                                                      <div className="mb-2">
                                                          <label className="block text-[10px] text-slate-500 mb-1">EW NIC 數量</label>
                                                          <input
@@ -1426,7 +1427,7 @@ const RightPanel = () => {
                                                                  const v = Math.max(0, isNaN(val) ? 0 : val);
                                                                  handleHardwareSpecChange(selectedDevice.id, 'cx8p', 'qty', v);
                                                              }}
-                                                             className="w-full bg-slate-900/80 border border-indigo-700/60 rounded-lg px-2 py-1.5 text-xs text-indigo-300 focus:border-indigo-500/60 focus:outline-none" />
+                                                             className="w-full bg-white border border-indigo-700/60 rounded-lg px-2 py-1.5 text-xs text-indigo-300 focus:border-indigo-500/60 focus:outline-none" />
                                                      </div>
                                                      {qty > 0 && renderCablingSubFields('cx8p', currentVal)}
                                                  </div>
@@ -1436,12 +1437,12 @@ const RightPanel = () => {
                                              {(() => {
                                                  const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
                                                  return (
-                                                     <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 mt-1">
+                                                     <div className="bg-white/40 p-2.5 rounded-lg border border-red-950/30 mt-1">
                                                          <div className="mb-2">
                                                              <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
                                                              <input
                                                                  type="number" value={1} disabled
-                                                                 className="w-full bg-slate-950/40 border border-slate-900 rounded-lg px-2 py-1.5 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                                                 className="w-full bg-slate-50 border-slate-200 text-slate-800 border border-slate-900 rounded-lg px-2 py-1.5 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
                                                          </div>
                                                          {renderCablingSubFields('bmc', currentVal)}
                                                      </div>
@@ -1456,7 +1457,7 @@ const RightPanel = () => {
                                                  const maxSuperNicMgt = isGeneral ? pcieSlotQty : 2;
                                                  const currentVal = selectedDevice.hardwareSpecs?.super_nic_mgt || {};
                                                  return (
-                                                     <div className="bg-slate-900/40 p-2.5 rounded-lg border border-violet-950/40 mt-1">
+                                                     <div className="bg-white/40 p-2.5 rounded-lg border border-violet-950/40 mt-1">
                                                          <div className="mb-2">
                                                              <label className="block text-[10px] text-slate-500 mb-1">Super NIC Mgt <span className="text-slate-600">(最多 {maxSuperNicMgt})</span></label>
                                                              <input
@@ -1466,7 +1467,7 @@ const RightPanel = () => {
                                                                      const v = Math.min(maxSuperNicMgt, Math.max(0, parseInt(e.target.value) || 0));
                                                                      handleHardwareSpecChange(selectedDevice.id, 'super_nic_mgt', 'qty', v);
                                                                  }}
-                                                                 className="w-full bg-slate-900/80 border border-violet-700/60 rounded-lg px-2 py-1.5 text-xs text-violet-300 focus:border-violet-500/60 focus:outline-none" />
+                                                                 className="w-full bg-white border border-violet-700/60 rounded-lg px-2 py-1.5 text-xs text-violet-300 focus:border-violet-500/60 focus:outline-none" />
                                                          </div>
                                                          {superNicMgtCount > 0 && renderCablingSubFields('super_nic_mgt', currentVal)}
                                                      </div>
@@ -1489,7 +1490,7 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     附屬設備設定 (BOM Sub-items)
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
                                     {/* Checkbox Group */}
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {[
@@ -1503,16 +1504,16 @@ const RightPanel = () => {
                                                     type="checkbox"
                                                     checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                 />
-                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                <span className="text-[11px] text-slate-700">{sub.label}</span>
                                             </label>
                                         ))}
                                     </div>
 
                                     {/* Custom Fields List */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                             自訂附屬設備 (Custom Sub-items)
                                         </label>
                                         <div className="space-y-2">
@@ -1527,7 +1528,7 @@ const RightPanel = () => {
                                                             handleUpdateDevice(selectedDevice.id, { serverGeneralCustom: newCustom });
                                                         }}
                                                         placeholder="自行輸入設備名稱..."
-                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -1546,7 +1547,7 @@ const RightPanel = () => {
                                                                     const newCustom = (selectedDevice.serverGeneralCustom || ['']).filter((_, i) => i !== idx);
                                                                     handleUpdateDevice(selectedDevice.id, { serverGeneralCustom: newCustom });
                                                                 }}
-                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                 title="刪除"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1572,24 +1573,24 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     交換器標籤 (Switch Tag - 二選一)
                                 </label>
-                                <div className="flex gap-4 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                                <div className="flex gap-4 bg-white/60 p-2.5 rounded-lg border border-slate-200">
                                     <label className="flex items-center gap-2 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
                                             checked={selectedDevice.switchTag === 'tor'}
                                             onChange={() => handleUpdateDevice(selectedDevice.id, { switchTag: 'tor' })}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                         />
-                                        <span className="text-xs text-slate-300">TOR Switch</span>
+                                        <span className="text-xs text-slate-700">TOR Switch</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
                                             checked={selectedDevice.switchTag === 'mgmt'}
                                             onChange={() => handleUpdateDevice(selectedDevice.id, { switchTag: 'mgmt' })}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                         />
-                                        <span className="text-xs text-slate-300">Management Switch</span>
+                                        <span className="text-xs text-slate-700">Management Switch</span>
                                     </label>
                                 </div>
                             </div>
@@ -1600,7 +1601,7 @@ const RightPanel = () => {
                                     <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                         附屬設備設定 (BOM Sub-items)
                                     </label>
-                                    <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
+                                    <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
                                         {/* Checkbox Group */}
                                         <div className="grid grid-cols-2 gap-2.5">
                                             {selectedDevice.switchTag === 'tor' ? (
@@ -1616,9 +1617,9 @@ const RightPanel = () => {
                                                             type="checkbox"
                                                             checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                             onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                         />
-                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                        <span className="text-[11px] text-slate-700">{sub.label}</span>
                                                     </label>
                                                 ))
                                             ) : (
@@ -1634,17 +1635,17 @@ const RightPanel = () => {
                                                             type="checkbox"
                                                             checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                             onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                         />
-                                                        <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                        <span className="text-[11px] text-slate-700">{sub.label}</span>
                                                     </label>
                                                 ))
                                             )}
                                         </div>
 
                                         {/* Custom Fields List */}
-                                        <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                            <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                                 自訂附屬設備 (Custom Sub-items)
                                             </label>
                                             <div className="space-y-2">
@@ -1659,7 +1660,7 @@ const RightPanel = () => {
                                                                 handleUpdateDevice(selectedDevice.id, { switchCustom: newCustom });
                                                             }}
                                                             placeholder="自行輸入設備名稱..."
-                                                            className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                            className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                         />
                                                         <div className="flex items-center gap-1">
                                                             <button
@@ -1678,7 +1679,7 @@ const RightPanel = () => {
                                                                         const newCustom = (selectedDevice.switchCustom || ['']).filter((_, i) => i !== idx);
                                                                         handleUpdateDevice(selectedDevice.id, { switchCustom: newCustom });
                                                                     }}
-                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                     title="刪除"
                                                                 >
                                                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1703,8 +1704,8 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     附屬設備設定 (BOM Sub-items)
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 3</div>
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
+                                    <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Item 3</div>
                                     {/* Checkbox Group */}
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {[
@@ -1721,16 +1722,16 @@ const RightPanel = () => {
                                                     type="checkbox"
                                                     checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                 />
-                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                <span className="text-[11px] text-slate-700">{sub.label}</span>
                                             </label>
                                         ))}
                                     </div>
 
                                     {/* Custom Fields List */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                             自訂附屬設備 (Custom Sub-items)
                                         </label>
                                         <div className="space-y-2">
@@ -1745,7 +1746,7 @@ const RightPanel = () => {
                                                             handleUpdateDevice(selectedDevice.id, { powerShelfCustom: newCustom });
                                                         }}
                                                         placeholder="自行輸入設備名稱..."
-                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -1764,7 +1765,7 @@ const RightPanel = () => {
                                                                     const newCustom = (selectedDevice.powerShelfCustom || ['']).filter((_, i) => i !== idx);
                                                                     handleUpdateDevice(selectedDevice.id, { powerShelfCustom: newCustom });
                                                                 }}
-                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                 title="刪除"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1788,8 +1789,8 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     附屬設備設定 (BOM Sub-items)
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 7</div>
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
+                                    <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Item 7</div>
                                     {/* Checkbox Group */}
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {[
@@ -1801,16 +1802,16 @@ const RightPanel = () => {
                                                     type="checkbox"
                                                     checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                 />
-                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                <span className="text-[11px] text-slate-700">{sub.label}</span>
                                             </label>
                                         ))}
                                     </div>
 
                                     {/* Custom Fields List */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                             自訂附屬設備 (Custom Sub-items)
                                         </label>
                                         <div className="space-y-2">
@@ -1825,7 +1826,7 @@ const RightPanel = () => {
                                                             handleUpdateDevice(selectedDevice.id, { blankCustom: newCustom });
                                                         }}
                                                         placeholder="自行輸入設備名稱..."
-                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -1844,7 +1845,7 @@ const RightPanel = () => {
                                                                     const newCustom = (selectedDevice.blankCustom || ['']).filter((_, i) => i !== idx);
                                                                     handleUpdateDevice(selectedDevice.id, { blankCustom: newCustom });
                                                                 }}
-                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                 title="刪除"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1869,8 +1870,8 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     附屬設備設定 (BOM Sub-items)
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 9</div>
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
+                                    <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Item 9</div>
                                     {/* Checkbox Group */}
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {[
@@ -1883,16 +1884,16 @@ const RightPanel = () => {
                                                     type="checkbox"
                                                     checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                 />
-                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                <span className="text-[11px] text-slate-700">{sub.label}</span>
                                             </label>
                                         ))}
                                     </div>
 
                                     {/* Custom Fields List */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                             自訂附屬設備 (Custom Sub-items)
                                         </label>
                                         <div className="space-y-2">
@@ -1907,7 +1908,7 @@ const RightPanel = () => {
                                                             handleUpdateDevice(selectedDevice.id, { jbodCustom: newCustom });
                                                         }}
                                                         placeholder="自行輸入設備名稱..."
-                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -1926,7 +1927,7 @@ const RightPanel = () => {
                                                                     const newCustom = (selectedDevice.jbodCustom || ['']).filter((_, i) => i !== idx);
                                                                     handleUpdateDevice(selectedDevice.id, { jbodCustom: newCustom });
                                                                 }}
-                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                 title="刪除"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1951,8 +1952,8 @@ const RightPanel = () => {
                                 <label className="block text-xs font-bold text-sky-400 mb-2 flex items-center gap-1">
                                     附屬設備設定 (BOM Sub-items)
                                 </label>
-                                <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                    <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Item 10</div>
+                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
+                                    <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Item 10</div>
                                     {/* Checkbox Group */}
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {[
@@ -1965,16 +1966,16 @@ const RightPanel = () => {
                                                     type="checkbox"
                                                     checked={selectedDevice.hardwareSpecs?.[sub.key]?.qty === 1}
                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, sub.key, 'qty', e.target.checked ? 1 : 0)}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
                                                 />
-                                                <span className="text-[11px] text-slate-300">{sub.label}</span>
+                                                <span className="text-[11px] text-slate-700">{sub.label}</span>
                                             </label>
                                         ))}
                                     </div>
 
                                     {/* Custom Fields List */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/40">
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                                             自訂附屬設備 (Custom Sub-items)
                                         </label>
                                         <div className="space-y-2">
@@ -1989,7 +1990,7 @@ const RightPanel = () => {
                                                             handleUpdateDevice(selectedDevice.id, { jbofCustom: newCustom });
                                                         }}
                                                         placeholder="自行輸入設備名稱..."
-                                                        className="flex-1 bg-slate-950/80 border border-slate-700/60 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                                                        className="flex-1 bg-white border-slate-200 text-slate-800 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -2008,7 +2009,7 @@ const RightPanel = () => {
                                                                     const newCustom = (selectedDevice.jbofCustom || ['']).filter((_, i) => i !== idx);
                                                                     handleUpdateDevice(selectedDevice.id, { jbofCustom: newCustom });
                                                                 }}
-                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-800"
+                                                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all border border-slate-200"
                                                                 title="刪除"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -2031,19 +2032,19 @@ const RightPanel = () => {
                             <div>
                                 <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-400"/> 設備功耗 (W)</label>
                                 <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
                             </div>
                             <div>
                                 <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-400"/> 設備報價 (USD)</label>
                                 <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                             </div>
                             {selectedDevice.type === 'CDU4U' && (
-                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <div className="col-span-2 pt-2 border-t border-slate-200/50">
                                     <label className="block text-[11px] font-bold text-cyan-400 mb-1.5 flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-cyan-400"/> In Rack CDU 設定</label>
                                     <div className="grid grid-cols-1 gap-3">
                                         <div>
-                                            <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
+                                            <label className="block text-[10px] text-slate-500 mb-1">機架高度 (U數)</label>
                                             <select value={selectedDevice.size || 4} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) })} className={selectCls}>
                                                 <option value={4}>4U</option>
                                                 <option value={5}>5U</option>
@@ -2057,16 +2058,16 @@ const RightPanel = () => {
                                     </div>
                                 </div>
                             )}
-                            <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                            <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-2">
                                 {(() => {
                                     const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
                                     return (
-                                        <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
+                                        <div className="bg-white/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
                                             <div className="mb-2">
                                                 <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
                                                 <input
                                                     type="number" value={1} disabled
-                                                    className="w-full bg-slate-950/40 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                                    className="w-full bg-slate-50 border-slate-200 text-slate-800 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
                                             </div>
                                             {renderCablingSubFields('bmc', currentVal)}
                                         </div>
@@ -2098,22 +2099,22 @@ const RightPanel = () => {
                                 <div>
                                     <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-400"/> 設備功耗 (W)</label>
                                     <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
-                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
+                                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
                                 </div>
                                 <div>
                                     <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-400"/> 設備報價 (USD)</label>
                                     <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
-                                        className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
+                                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                                 </div>
-                                <div className="col-span-2 pt-2 border-t border-slate-800/50">
+                                <div className="col-span-2 pt-2 border-t border-slate-200/50">
                                     <label className="block text-[11px] font-bold text-purple-400 mb-1.5 flex items-center gap-1"><Network className="w-3 h-3"/> 交換器設定 (Switch Config)</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[10px] text-slate-400 mb-1">機架高度 (U數)</label>
-                                            <input type="number" min={1} value={selectedDevice.size} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none font-mono" />
+                                            <label className="block text-[10px] text-slate-500 mb-1">機架高度 (U數)</label>
+                                            <input type="number" min={1} value={selectedDevice.size} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })} className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none font-mono" />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] text-slate-400 mb-1">連接埠總量 (Ports)</label>
+                                            <label className="block text-[10px] text-slate-500 mb-1">連接埠總量 (Ports)</label>
                                             <select
                                                 value={totalPortsCount}
                                                 onChange={(e) => {
@@ -2121,7 +2122,7 @@ const RightPanel = () => {
                                                     handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', val);
                                                     handleHardwareSpecChange(selectedDevice.id, 'portQty', 'qty', val);
                                                 }}
-                                                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none"
+                                                className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none"
                                             >
                                                 <option value={8}>8 埠</option>
                                                 <option value={12}>12 埠</option>
@@ -2134,27 +2135,27 @@ const RightPanel = () => {
                                             </select>
                                         </div>
                                         <div className="col-span-2">
-                                            <label className="block text-[10px] text-slate-400 mb-1">傳輸速率 (Speed)</label>
-                                            <input type="text" placeholder="e.g. 400G, 800G" value={(selectedDevice.hardwareSpecs?.speed?.model) || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'speed', 'model', e.target.value)} className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none" />
+                                            <label className="block text-[10px] text-slate-500 mb-1">傳輸速率 (Speed)</label>
+                                            <input type="text" placeholder="e.g. 400G, 800G" value={(selectedDevice.hardwareSpecs?.speed?.model) || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'speed', 'model', e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none" />
                                         </div>
                                         <div className="col-span-2 pt-2">
-                                            <div className="w-full bg-slate-900/60 border border-slate-800/80 rounded-lg p-2.5 flex items-center justify-between text-xs">
-                                                <span className="text-slate-400 font-medium">孔位使用率 (Port Usage)</span>
-                                                <span className="font-mono font-bold text-slate-200">
+                                            <div className="w-full bg-white/60 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                                                <span className="text-slate-500 font-medium">孔位使用率 (Port Usage)</span>
+                                                <span className="font-mono font-bold text-slate-900">
                                                     {usedPortsCount} / {totalPortsCount} 埠 ({totalPortsCount - usedPortsCount} 空置)
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
+                                        <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-2">
                                             {(() => {
                                                 const currentVal = selectedDevice.hardwareSpecs?.bmc || {};
                                                 return (
-                                                    <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
+                                                    <div className="bg-white/40 p-2.5 rounded-lg border border-red-950/30 text-[10px]">
                                                         <div className="mb-2">
                                                             <label className="block text-[10px] text-slate-500 mb-1">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
                                                             <input
                                                                 type="number" value={1} disabled
-                                                                className="w-full bg-slate-950/40 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
+                                                                className="w-full bg-slate-50 border-slate-200 text-slate-800 border border-slate-900 rounded px-2 py-1 text-xs text-slate-500 cursor-not-allowed focus:outline-none" />
                                                         </div>
                                                         {renderCablingSubFields('bmc', currentVal)}
                                                     </div>
@@ -2184,12 +2185,12 @@ const RightPanel = () => {
                                                 const nodeBmcKey = `bmc_${nodeKey}`;
                                                 const currentVal = (selectedDevice.hardwareSpecs || {})[nodeBmcKey] || {};
                                                 return (
-                                                    <div className="bg-slate-900/40 p-2.5 rounded-lg border border-red-950/30 mb-3 text-[10px]">
+                                                    <div className="bg-white/40 p-2.5 rounded-lg border border-red-950/30 mb-3 text-[10px]">
                                                         <div className="mb-2 flex items-center justify-between">
                                                             <label className="block text-[10px] text-slate-500">BMC 網路孔數量 <span className="text-slate-600">(固定 1 埠)</span></label>
                                                             <input
                                                                 type="number" value={1} disabled
-                                                                className="w-16 bg-slate-950/40 border border-slate-900 rounded px-1.5 py-0.5 text-[10px] text-slate-500 text-center cursor-not-allowed focus:outline-none" />
+                                                                className="w-16 bg-slate-50 border-slate-200 text-slate-800 border border-slate-900 rounded px-1.5 py-0.5 text-[10px] text-slate-500 text-center cursor-not-allowed focus:outline-none" />
                                                         </div>
                                                         {renderCablingSubFields(nodeBmcKey, currentVal)}
                                                     </div>
@@ -2207,11 +2208,11 @@ const RightPanel = () => {
                                                     return (
                                                         <React.Fragment key={pcieSlotQtyKey}>
                                                             <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
-                                                                <div className="text-[10px] font-bold text-slate-400 text-right pr-2 truncate">PCIe Slots</div>
+                                                                <div className="text-[10px] font-bold text-slate-500 text-right pr-2 truncate">PCIe Slots</div>
                                                                 <select
                                                                     value={pcieSlotQty}
                                                                     onChange={(e) => handleHardwareSpecChange(selectedDevice.id, pcieSlotQtyKey, 'qty', parseInt(e.target.value))}
-                                                                    className="col-span-2 bg-slate-900 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none"
+                                                                    className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:outline-none"
                                                                 >
                                                                     {Array.from({ length: 13 }).map((_, i) => (
                                                                         <option key={i + 1} value={i + 1}>{i + 1}</option>
@@ -2227,9 +2228,9 @@ const RightPanel = () => {
                                                                         <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
                                                                             <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
                                                                             <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
-                                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                                className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                                             <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
-                                                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                                                className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                                         </div>
                                                                         {currentVal.qty > 0 && (
                                                                             <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
@@ -2254,9 +2255,9 @@ const RightPanel = () => {
                                                             <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
                                                                 <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
                                                                 <input type="text" placeholder="Model..." value={ocpVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'model', e.target.value)}
-                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                    className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                                 <input type="number" placeholder="Qty" value={ocpVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'qty', parseInt(e.target.value) || '')}
-                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                                    className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                             </div>
                                                             {ocpVal.qty > 0 && (
                                                                 <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
@@ -2274,9 +2275,9 @@ const RightPanel = () => {
                                                     <div key={nodeSpecKey} className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
                                                         <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
                                                         <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'model', e.target.value)}
-                                                            className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                            className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                         <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, nodeSpecKey, 'qty', parseInt(e.target.value) || '')}
-                                                            className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                            className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                     </div>
                                                 );
                                             })}
@@ -2286,7 +2287,7 @@ const RightPanel = () => {
                             </>
                         ) : (
                             <>
-                                <label className="block text-xs font-bold text-slate-400 mb-3">硬體規格 (Hardware Specs)</label>
+                                <label className="block text-xs font-bold text-slate-500 mb-3">硬體規格 (Hardware Specs)</label>
                                 <div className="grid grid-cols-[64px_1fr_60px] gap-2 mb-2 text-[10px] text-slate-600 font-bold uppercase tracking-wider">
                                     <div></div>
                                     <div>零組件 (Model)</div>
@@ -2298,11 +2299,11 @@ const RightPanel = () => {
                                         return (
                                             <React.Fragment key="pcieSlotQty">
                                                 <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
-                                                    <div className="text-[10px] font-bold text-slate-400 text-right pr-2 truncate">PCIe Slots</div>
+                                                    <div className="text-[10px] font-bold text-slate-500 text-right pr-2 truncate">PCIe Slots</div>
                                                     <select
                                                         value={pcieSlotQty}
                                                         onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'pcieSlotQty', 'qty', parseInt(e.target.value))}
-                                                        className="col-span-2 bg-slate-900 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none"
+                                                        className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:outline-none"
                                                     >
                                                         {Array.from({ length: 13 }).map((_, i) => (
                                                             <option key={i + 1} value={i + 1}>{i + 1}</option>
@@ -2318,9 +2319,9 @@ const RightPanel = () => {
                                                             <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
                                                                 <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate">PCIe Slot {slotIdx}</div>
                                                                 <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'model', e.target.value)}
-                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                                    className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                                 <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, slotKey, 'qty', parseInt(e.target.value) || '')}
-                                                                    className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                                    className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                             </div>
                                                             {currentVal.qty > 0 && (
                                                                 <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
@@ -2344,11 +2345,11 @@ const RightPanel = () => {
                                         return (
                                             <React.Fragment key="accelerator_gpu">
                                                 <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
-                                                    <div className="text-[10px] font-bold text-slate-400 text-right pr-2 truncate">Accelerator</div>
+                                                    <div className="text-[10px] font-bold text-slate-500 text-right pr-2 truncate">Accelerator</div>
                                                     <select
                                                         value={accelerator}
                                                         onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'accelerator', 'type', e.target.value)}
-                                                        className="col-span-2 bg-slate-900 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none"
+                                                        className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:outline-none"
                                                     >
                                                         <option value="Nvidia">Nvidia</option>
                                                         <option value="AMD">AMD</option>
@@ -2359,9 +2360,9 @@ const RightPanel = () => {
                                                 <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
                                                     <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
                                                     <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)}
-                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                        className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                     <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')}
-                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                        className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                 </div>
                                             </React.Fragment>
                                         );
@@ -2373,9 +2374,9 @@ const RightPanel = () => {
                                                 <div className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-1">
                                                     <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
                                                     <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)}
-                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                        className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                                     <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')}
-                                                        className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                        className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                                 </div>
                                                 {currentVal.qty > 0 && (
                                                     <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
@@ -2391,9 +2392,9 @@ const RightPanel = () => {
                                         <div key={spec.key} className="grid grid-cols-[64px_1fr_60px] gap-2 items-center mb-2">
                                             <div className="text-[10px] font-mono text-slate-500 text-right pr-2 truncate" title={spec.label}>{spec.label}</div>
                                             <input type="text" placeholder="Model..." value={currentVal.model || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'model', e.target.value)}
-                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-700" />
+                                                className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none placeholder:text-slate-400" />
                                             <input type="number" placeholder="Qty" value={currentVal.qty || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, spec.key, 'qty', parseInt(e.target.value) || '')}
-                                                className="w-full min-w-0 bg-slate-900/80 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500/60 focus:outline-none text-center" />
+                                                className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none text-center" />
                                         </div>
                                     );
                                 })}
@@ -2406,4 +2407,4 @@ const RightPanel = () => {
     );
 };
 
-export default RightPanel;
+export default RightPanelLight;
