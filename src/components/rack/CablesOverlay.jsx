@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
+import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getSwitchSubPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
 
 const CablesOverlay = () => {
     const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized, projectInfo } = useRackPlanner();
@@ -104,18 +104,19 @@ const CablesOverlay = () => {
             
             if (isSwitchOrRouter) {
                 const portMax = getSwitchPortCount(targetDev);
+                const subPortMax = getSwitchSubPortCount(targetDev);
                 const occupiedPorts = new Set();
                 devices.forEach(d => {
                     if (d.connections) {
                         Object.entries(d.connections).forEach(([key, tg]) => {
-                            if (tg && tg.startsWith(`${targetDevId}-port-`)) {
+                            if (tg && (tg.startsWith(`${targetDevId}-port-`) || tg.startsWith(`${targetDevId}-subport-`))) {
                                 occupiedPorts.add(tg.substring(targetDevId.length + 1));
                             }
                         });
                     }
                     if (d.id === targetDevId && d.connections) {
                         Object.keys(d.connections).forEach(key => {
-                            if (key.startsWith('port-') && d.connections[key]) {
+                            if ((key.startsWith('port-') || key.startsWith('subport-')) && d.connections[key]) {
                                 occupiedPorts.add(key);
                             }
                         });
@@ -123,6 +124,12 @@ const CablesOverlay = () => {
                 });
                 for (let pIdx = 1; pIdx <= portMax; pIdx++) {
                     const portKey = `port-${pIdx}`;
+                    if (!occupiedPorts.has(portKey)) {
+                        return portKey;
+                    }
+                }
+                for (let sIdx = 1; sIdx <= subPortMax; sIdx++) {
+                    const portKey = `subport-${sIdx}`;
                     if (!occupiedPorts.has(portKey)) {
                         return portKey;
                     }
@@ -302,6 +309,7 @@ const CablesOverlay = () => {
             if (b.startsWith('pcie_slot_') || b.startsWith('ns_nic_')) return 'pcie_slot';
             if (b.startsWith('super_nic_mgt')) return 's_nic_m';
             if (b.startsWith('bmc')) return 'bmc';
+            if (b.startsWith('custom_net')) return 'customNetwork';
             return null;
         };
 
@@ -315,6 +323,9 @@ const CablesOverlay = () => {
         const isBMC = srcBase === 'bmc' || srcBase.startsWith('bmc')
                    || tgtBase === 'bmc' || tgtBase.startsWith('bmc');
         if (isBMC) return devA?.anchorCableColors?.bmc || devB?.anchorCableColors?.bmc || '#60a5fa';
+
+        const isCustomNet = srcBase.startsWith('custom_net') || tgtBase.startsWith('custom_net');
+        if (isCustomNet) return devA?.anchorCableColors?.customNetwork || devB?.anchorCableColors?.customNetwork || '#22d3ee';
 
         const types = [devA?.type, devB?.type].filter(Boolean);
 
@@ -439,6 +450,9 @@ const CablesOverlay = () => {
                         }
                         if (baseKey.startsWith('bmc')) {
                             return anchorSides.bmc || 'right';
+                        }
+                        if (baseKey.startsWith('custom_net')) {
+                            return device.hardwareSpecs?.customNetwork?.position || anchorSides.customNetwork || 'right';
                         }
 
                         if (device.portCableSides && device.portCableSides[rawPortKey]) {

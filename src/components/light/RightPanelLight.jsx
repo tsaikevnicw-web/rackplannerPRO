@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { LIGHT_THEME_STYLES } from '../../themes/light/lightConstants';
 import { HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
+import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
 import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus, Compass, Thermometer } from 'lucide-react';
 
 const RightPanelLight = () => {
@@ -893,23 +893,137 @@ const RightPanelLight = () => {
                             </div>
                             <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
-                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路管理埠
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 網路設定
                                 </label>
-                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200">
-                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
-                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
-                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
-                                        />
-                                        <span className="text-[11px] text-slate-700">啟用 BMC 網路孔</span>
-                                    </label>
-                                    {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
-                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
-                                            {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
-                                        </div>
-                                    )}
+                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200 space-y-3">
+                                    <div>
+                                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
+                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
+                                                className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            />
+                                            <span className="text-[11px] text-slate-700 font-medium">啟用 BMC 網路孔</span>
+                                        </label>
+                                        {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                            <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                                {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="border-t border-slate-200/40 pt-3">
+                                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!selectedDevice.hardwareSpecs?.customNetwork?.enabled}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                    handleUpdateDevice(selectedDevice.id, {
+                                                        hardwareSpecs: {
+                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                            customNetwork: {
+                                                                ...currentCustomNet,
+                                                                enabled: isChecked,
+                                                                name: currentCustomNet.name || 'group1',
+                                                                qty: currentCustomNet.qty || 8
+                                                                qty: currentCustomNet.qty || 8,
+                                                                position: currentCustomNet.position || 'right'
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            />
+                                            <span className="text-[11px] text-slate-700 font-medium">啟用其他網路</span>
+                                        </label>
+
+                                        {selectedDevice.hardwareSpecs?.customNetwork?.enabled && (
+                                            <div className="mt-3 space-y-3 pl-1">
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">網路名稱</label>
+                                                        <input
+                                                            type="text"
+                                                            value={selectedDevice.hardwareSpecs?.customNetwork?.name || 'group1'}
+                                                            onChange={(e) => {
+                                                                const newName = e.target.value;
+                                                                const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                handleUpdateDevice(selectedDevice.id, {
+                                                                    hardwareSpecs: {
+                                                                        ...(selectedDevice.hardwareSpecs || {}),
+                                                                        customNetwork: {
+                                                                            ...currentCustomNet,
+                                                                            name: newName
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            placeholder="例如: group1"
+                                                            className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">連接埠數量</label>
+                                                        <select
+                                                            value={selectedDevice.hardwareSpecs?.customNetwork?.qty || 8}
+                                                            onChange={(e) => {
+                                                                const newQty = parseInt(e.target.value) || 2;
+                                                                const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                handleUpdateDevice(selectedDevice.id, {
+                                                                    hardwareSpecs: {
+                                                                        ...(selectedDevice.hardwareSpecs || {}),
+                                                                        customNetwork: {
+                                                                            ...currentCustomNet,
+                                                                            qty: newQty
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value={2}>2</option>
+                                                            <option value={4}>4</option>
+                                                            <option value={6}>6</option>
+                                                            <option value={8}>8</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">網路群組位置</label>
+                                                        <select
+                                                            value={selectedDevice.hardwareSpecs?.customNetwork?.position || 'right'}
+                                                            onChange={(e) => {
+                                                                const newPos = e.target.value;
+                                                                const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                handleUpdateDevice(selectedDevice.id, {
+                                                                    hardwareSpecs: {
+                                                                        ...(selectedDevice.hardwareSpecs || {}),
+                                                                        customNetwork: {
+                                                                            ...currentCustomNet,
+                                                                            position: newPos
+                                                                        }
+                                                                    },
+                                                                    anchorCableSides: {
+                                                                        ...(selectedDevice.anchorCableSides || {}),
+                                                                        customNetwork: newPos
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value="right">右顯示</option>
+                                                            <option value="left">左顯示</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-2 border-t border-slate-200/40">
+                                                    {renderCablingSubFields('customNetwork', selectedDevice.hardwareSpecs?.customNetwork || {})}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </>
@@ -967,62 +1081,191 @@ const RightPanelLight = () => {
                             </div>
                             <div className="border-t border-slate-200/50 pt-4">
                                 <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
-                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> BMC 網路孔與 Cable 設定
+                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 網路設定
                                 </label>
-                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200">
-                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
-                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
-                                            className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
-                                        />
-                                        <span className="text-[11px] text-slate-700">啟用 BMC 網路孔</span>
-                                    </label>
-                                    {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
-                                        <div className="mt-3 pt-2.5 border-t border-slate-200/40">
-                                            {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
-                                        </div>
-                                    )}
+                                <div className="bg-white/60 p-3 rounded-lg border border-slate-200 space-y-3">
+                                    {/* BMC 網路孔 */}
+                                    <div>
+                                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDevice.hardwareSpecs?.bmc?.qty === 1}
+                                                onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
+                                                className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            />
+                                            <span className="text-[11px] text-slate-700 font-medium">啟用 BMC 網路孔</span>
+                                        </label>
+                                        {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                            <div className="mt-3 pt-2.5 border-t border-slate-200/40">
+                                                {renderCablingSubFields('bmc', selectedDevice.hardwareSpecs?.bmc || {})}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 啟用其他網路 */}
+                                    <div className="border-t border-slate-200/40 pt-3">
+                                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!selectedDevice.hardwareSpecs?.customNetwork?.enabled}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                    handleUpdateDevice(selectedDevice.id, {
+                                                        hardwareSpecs: {
+                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                            customNetwork: {
+                                                                ...currentCustomNet,
+                                                                enabled: isChecked,
+                                                                name: currentCustomNet.name || 'RSCM',
+                                                                qty: currentCustomNet.qty || 8
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-4 h-4 rounded border-slate-200 bg-white text-sky-500 focus:ring-sky-500 cursor-pointer"
+                                            />
+                                            <span className="text-[11px] text-slate-700 font-medium">啟用其他網路</span>
+                                        </label>
+
+                                        {selectedDevice.hardwareSpecs?.customNetwork?.enabled && (
+                                            <div className="mt-3 space-y-3 pl-1">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">網路名稱</label>
+                                                        <input
+                                                            type="text"
+                                                            value={selectedDevice.hardwareSpecs?.customNetwork?.name || 'RSCM'}
+                                                            onChange={(e) => {
+                                                                const newName = e.target.value;
+                                                                const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                handleUpdateDevice(selectedDevice.id, {
+                                                                    hardwareSpecs: {
+                                                                        ...(selectedDevice.hardwareSpecs || {}),
+                                                                        customNetwork: {
+                                                                            ...currentCustomNet,
+                                                                            name: newName
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            placeholder="例如: RSCM"
+                                                            className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">連接埠數量</label>
+                                                        <select
+                                                            value={selectedDevice.hardwareSpecs?.customNetwork?.qty || 8}
+                                                            onChange={(e) => {
+                                                                const newQty = parseInt(e.target.value) || 2;
+                                                                const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                handleUpdateDevice(selectedDevice.id, {
+                                                                    hardwareSpecs: {
+                                                                        ...(selectedDevice.hardwareSpecs || {}),
+                                                                        customNetwork: {
+                                                                            ...currentCustomNet,
+                                                                            qty: newQty
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                        >
+                                                            <option value={2}>2</option>
+                                                            <option value={4}>4</option>
+                                                            <option value={6}>6</option>
+                                                            <option value={8}>8</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-2 border-t border-slate-200/40">
+                                                    {renderCablingSubFields('customNetwork', selectedDevice.hardwareSpecs?.customNetwork || {})}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-200/50 pt-4">
-                                <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
-                                    <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
-                                </label>
-                                <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
-                                    <div className="space-y-1">
-                                        <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <select
-                                                value={selectedDevice.anchorCableSides?.bmc || 'right'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
-                                                })}
-                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
-                                            >
-                                                <option value="right">➡️ 右側走線</option>
-                                                <option value="left">⬅️ 左側走線</option>
-                                            </select>
-                                            <select
-                                                value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
-                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
-                                                })}
-                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
-                                            >
-                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
-                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                            </select>
-                                        </div>
+                            {(selectedDevice.hardwareSpecs?.bmc?.qty === 1 || selectedDevice.hardwareSpecs?.customNetwork?.enabled) && (
+                                <div className="border-t border-slate-200/50 pt-4">
+                                    <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
+                                        <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
+                                    </label>
+                                    <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
+                                        {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                            <div className="space-y-1">
+                                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <select
+                                                        value={selectedDevice.anchorCableSides?.bmc || 'right'}
+                                                        onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                            anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), bmc: e.target.value }
+                                                        })}
+                                                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                    >
+                                                        <option value="right">➡️ 右側走線</option>
+                                                        <option value="left">⬅️ 左側走線</option>
+                                                    </select>
+                                                    <select
+                                                        value={selectedDevice.anchorCableColors?.bmc || '#60a5fa'}
+                                                        onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                            anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), bmc: e.target.value }
+                                                        })}
+                                                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                        style={{ color: selectedDevice.anchorCableColors?.bmc || '#60a5fa' }}
+                                                    >
+                                                        <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                        <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                        <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色 (預設)</option>
+                                                        <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                        <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                        <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                        <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                        <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                        <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {selectedDevice.hardwareSpecs?.customNetwork?.enabled && (
+                                            <div className="space-y-1 border-t border-slate-200/40 pt-2">
+                                                <label className="block text-[11px] font-semibold text-cyan-400">
+                                                    {selectedDevice.hardwareSpecs?.customNetwork?.name || 'RSCM'} 走線與顏色
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <select
+                                                        value={selectedDevice.anchorCableSides?.customNetwork || 'right'}
+                                                        onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                            anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), customNetwork: e.target.value }
+                                                        })}
+                                                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                    >
+                                                        <option value="right">➡️ 右側走線</option>
+                                                        <option value="left">⬅️ 左側走線</option>
+                                                    </select>
+                                                    <select
+                                                        value={selectedDevice.anchorCableColors?.customNetwork || '#22d3ee'}
+                                                        onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                            anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), customNetwork: e.target.value }
+                                                        })}
+                                                        className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                        style={{ color: selectedDevice.anchorCableColors?.customNetwork || '#22d3ee' }}
+                                                    >
+                                                        <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                        <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                        <option value="#60a5fa" style={{ color: '#60a5fa' }}>💙 天藍色</option>
+                                                        <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                        <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                        <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                        <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                        <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍 (預設)</option>
+                                                        <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -2084,39 +2327,41 @@ const RightPanelLight = () => {
                     devices.forEach(d => {
                         if (d.connections) {
                             Object.entries(d.connections).forEach(([key, tg]) => {
-                                if (tg && tg.startsWith(`${selectedDevice.id}-port-`)) {
+                                if (tg && (tg.startsWith(`${selectedDevice.id}-port-`) || tg.startsWith(`${selectedDevice.id}-subport-`))) {
                                     occupiedPorts.add(tg);
                                 }
                             });
                         }
                     });
                     const usedPortsCount = occupiedPorts.size;
-                    const totalPortsCount = getSwitchPortCount(selectedDevice);
+                    const mainPortsCount = getSwitchPortCount(selectedDevice);
+                    const subPortsCount = getSwitchSubPortCount(selectedDevice);
+                    const totalPortsCount = mainPortsCount + subPortsCount;
 
                     return (
                         <div className={sectionCls}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[11px] font-bold text-amber-400 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-400"/> 設備功耗 (W)</label>
+                                    <label className="block text-[11px] font-bold text-amber-500 mb-1.5 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-amber-500"/> 設備功耗 (W)</label>
                                     <input type="number" value={selectedDevice.power || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { power: parseFloat(e.target.value) || 0 })}
                                         className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" />
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-400"/> 設備報價 (USD)</label>
+                                    <label className="block text-[11px] font-bold text-emerald-600 mb-1.5 flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-emerald-600"/> 設備報價 (USD)</label>
                                     <input type="number" value={selectedDevice.price || 0} onChange={(e) => handleUpdateDevice(selectedDevice.id, { price: parseFloat(e.target.value) || 0 })}
                                         className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono" />
                                 </div>
                                 <div className="col-span-2 pt-2 border-t border-slate-200/50">
-                                    <label className="block text-[11px] font-bold text-purple-400 mb-1.5 flex items-center gap-1"><Network className="w-3 h-3"/> 交換器設定 (Switch Config)</label>
+                                    <label className="block text-[11px] font-bold text-purple-600 mb-1.5 flex items-center gap-1"><Network className="w-3 h-3"/> 交換器設定 (Switch Config)</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-[10px] text-slate-500 mb-1">機架高度 (U數)</label>
                                             <input type="number" min={1} value={selectedDevice.size} onChange={(e) => handleUpdateDevice(selectedDevice.id, { size: parseInt(e.target.value) || 1 })} className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none font-mono" />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] text-slate-500 mb-1">連接埠總量 (Ports)</label>
+                                            <label className="block text-[10px] text-slate-500 mb-1">主連接埠數量</label>
                                             <select
-                                                value={totalPortsCount}
+                                                value={mainPortsCount}
                                                 onChange={(e) => {
                                                     const val = parseInt(e.target.value) || 48;
                                                     handleHardwareSpecChange(selectedDevice.id, 'ports', 'qty', val);
@@ -2135,14 +2380,69 @@ const RightPanelLight = () => {
                                             </select>
                                         </div>
                                         <div className="col-span-2">
-                                            <label className="block text-[10px] text-slate-500 mb-1">傳輸速率 (Speed)</label>
+                                            <label className="block text-[10px] text-slate-500 mb-1">主連接埠速率</label>
                                             <input type="text" placeholder="e.g. 400G, 800G" value={(selectedDevice.hardwareSpecs?.speed?.model) || ''} onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'speed', 'model', e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-indigo-500/60 focus:outline-none" />
                                         </div>
+
+                                        {/* 副連接埠設定 (Checkbox + 條件顯示下拉式選單與速率) */}
+                                        <div className="col-span-2 pt-2 border-t border-slate-200/40">
+                                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!selectedDevice.hardwareSpecs?.subPorts?.enabled}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        handleHardwareSpecChange(selectedDevice.id, 'subPorts', 'enabled', isChecked);
+                                                        if (isChecked && !selectedDevice.hardwareSpecs?.subPorts?.qty) {
+                                                            handleHardwareSpecChange(selectedDevice.id, 'subPorts', 'qty', 2);
+                                                        }
+                                                    }}
+                                                    className="rounded border-slate-300 bg-white text-amber-500 focus:ring-amber-500/30 w-3.5 h-3.5 cursor-pointer accent-amber-500"
+                                                />
+                                                <span className="text-[11px] font-semibold text-amber-600">副連接埠數量</span>
+                                            </label>
+
+                                            {selectedDevice.hardwareSpecs?.subPorts?.enabled && (
+                                                <div className="grid grid-cols-2 gap-3 mt-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded-lg animate-in fade-in duration-200">
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">副連接埠數量</label>
+                                                        <select
+                                                            value={selectedDevice.hardwareSpecs?.subPorts?.qty || 2}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 2;
+                                                                handleHardwareSpecChange(selectedDevice.id, 'subPorts', 'qty', val);
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-amber-500/60 focus:outline-none"
+                                                        >
+                                                            <option value={2}>2 埠</option>
+                                                            <option value={4}>4 埠</option>
+                                                            <option value={6}>6 埠</option>
+                                                            <option value={8}>8 埠</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] text-slate-500 mb-1">副連接埠速率</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. 100G, 400G"
+                                                            value={selectedDevice.hardwareSpecs?.subPorts?.speed || ''}
+                                                            onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'subPorts', 'speed', e.target.value)}
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-amber-500/60 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="col-span-2 pt-2">
                                             <div className="w-full bg-white/60 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between text-xs">
                                                 <span className="text-slate-500 font-medium">孔位使用率 (Port Usage)</span>
                                                 <span className="font-mono font-bold text-slate-900">
-                                                    {usedPortsCount} / {totalPortsCount} 埠 ({totalPortsCount - usedPortsCount} 空置)
+                                                    {subPortsCount > 0 ? (
+                                                        `${usedPortsCount} / ${totalPortsCount} 埠 (主 ${mainPortsCount} + 副 ${subPortsCount})`
+                                                    ) : (
+                                                        `${usedPortsCount} / ${mainPortsCount} 埠 (${mainPortsCount - usedPortsCount} 空置)`
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>

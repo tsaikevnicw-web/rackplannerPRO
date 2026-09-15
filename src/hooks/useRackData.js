@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { getNicCount, getSwitchPortCount, getFabricGroup, getServerCategory } from '../utils/helpers';
+import { getNicCount, getSwitchPortCount, getSwitchSubPortCount, getFabricGroup, getServerCategory } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
 export function useRackData(alertModalRef) {
@@ -174,29 +174,34 @@ export function useRackData(alertModalRef) {
             const isSwitchOrRouter = (targetDev.type || '').startsWith('Switch') || targetDev.type === 'Router';
 
             if (isSwitchOrRouter) {
-                const portMax = getSwitchPortCount(targetDev);
+                const mainPortMax = getSwitchPortCount(targetDev);
+                const subPortMax = getSwitchSubPortCount(targetDev);
+                const totalMax = mainPortMax + subPortMax;
                 const occupiedPorts = new Set();
                 prev.forEach(d => {
                     if (d.connections) {
                         Object.entries(d.connections).forEach(([key, tg]) => {
                             if (d.id === deviceId && key === portKey) return;
-                            if (tg && tg.startsWith(`${targetDevId}-port-`)) {
+                            if (tg && (tg.startsWith(`${targetDevId}-port-`) || tg.startsWith(`${targetDevId}-subport-`))) {
                                 occupiedPorts.add(tg);
                             }
                         });
                     }
                 });
 
-                if (occupiedPorts.size >= portMax) {
+                if (occupiedPorts.size >= totalMax) {
                     if (alertModalRef?.current) {
-                        alertModalRef.current(`警告：網路設備【${targetDev.customName || targetDev.type}】的連接埠已達上限 (${portMax} 埠)，無法新增連線！`, '連線失敗', 'error');
+                        alertModalRef.current(`警告：網路設備【${targetDev.customName || targetDev.type}】的連接埠已達上限 (${totalMax} 埠)，無法新增連線！`, '連線失敗', 'error');
                     }
                     return prev;
                 }
 
                 if (occupiedPorts.has(targetConnection)) {
                     if (alertModalRef?.current) {
-                        alertModalRef.current(`警告：此連接埠 ${targetPortKey.replace('port-', '')} 已被佔用！`, '連線失敗', 'error');
+                        const portName = targetPortKey.startsWith('subport-')
+                            ? `副連接埠 ${targetPortKey.replace('subport-', '')}`
+                            : `連接埠 ${targetPortKey.replace('port-', '')}`;
+                        alertModalRef.current(`警告：此${portName} 已被佔用！`, '連線失敗', 'error');
                     }
                     return prev;
                 }

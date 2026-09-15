@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server } from 'lucide-react';
 
@@ -157,8 +157,13 @@ const RackView = ({ racksToRender }) => {
                 : 'bg-red-600 border-red-500 shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]';
         }
         
-        const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
-        const defaultBorder = effectiveConnected ? 'border-green-200' : 'border-slate-500';
+        const isSubPort = portKey.startsWith('subport-');
+        const connectedColorStr = isSubPort 
+            ? 'bg-orange-400 shadow-[0_0_8px_#fb923c]' 
+            : 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
+        const defaultBorder = effectiveConnected 
+            ? (isSubPort ? 'border-orange-200' : 'border-green-200') 
+            : 'border-slate-500';
         const borderClass = waterConnectedColor ? '' : defaultBorder;
 
         const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : 'bg-slate-700 opacity-60'));
@@ -512,6 +517,29 @@ const RackView = ({ racksToRender }) => {
                                     <div className="absolute inset-y-0 left-4 right-4 flex items-center text-white overflow-hidden z-20">
                                         <div className="absolute inset-0 opacity-[0.15] bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,#000_2px,#000_4px)] mix-blend-overlay"></div>
                                         <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-black/60 to-transparent pointer-events-none"></div>
+
+                                        {/* 左側其他網路 (當位置設為左顯示時) */}
+                                        {(() => {
+                                            const customNet = dev.hardwareSpecs?.customNetwork;
+                                            if (customNet?.enabled && (customNet?.qty > 0) && customNet?.position === 'left') {
+                                                const qty = customNet.qty || 8;
+                                                const portSizeClass = (dev.size <= 2 && qty === 8) ? "w-2 h-2 shrink-0" : "w-2.5 h-2.5 shrink-0";
+                                                return (
+                                                    <div className="relative z-30 flex items-center gap-1.5 border-r border-white/20 pr-2.5 pl-2 shrink-0 h-full">
+                                                        <div className="text-[10px] font-bold font-mono text-cyan-300 leading-normal pb-0.5">
+                                                            {customNet.name || 'group1'}
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-0.5">
+                                                            {Array.from({ length: qty }).map((_, idx) => {
+                                                                const portKey = `custom_net-${idx + 1}`;
+                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
 
                                         {/* 左側：Icon 與名稱 */}
                                         <div className="flex items-center flex-1 min-w-0 h-full relative z-10 overflow-hidden pl-3 pr-2">
@@ -904,14 +932,17 @@ const RackView = ({ racksToRender }) => {
                                             })()}
 
                                             {((dev.type || '').startsWith('Switch') || dev.type === 'Router') && (
-                                                <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
+                                                <div className="flex items-center justify-end gap-2.5 border-l border-white/20 pl-2.5 shrink-0 h-full">
                                                     <div className="flex items-center gap-1.5">
                                                         <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
                                                         <div className="flex gap-0.5">
                                                             {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col justify-center bg-slate-900/90 rounded-md border border-slate-700/80 shadow-[0_4px_15px_rgba(0,0,0,0.6)] shrink-0 p-1">
+
+                                                    {/* 連接埠區塊 (主連接埠 + 分隔線 + 副連接埠) */}
+                                                    <div className="flex items-center gap-1.5 bg-slate-900/90 rounded-md border border-slate-700/80 shadow-[0_4px_15px_rgba(0,0,0,0.6)] shrink-0 p-1">
+                                                        {/* 主連接埠 */}
                                                         {(() => {
                                                             const { rows, cols } = getSwitchPortLayout(portCount, dev.size);
                                                             const portSizeClass = "w-1.5 h-1.5 shrink-0";
@@ -922,10 +953,40 @@ const RackView = ({ racksToRender }) => {
                                                                             {Array.from({ length: cols }).map((_, cIdx) => {
                                                                                 const portNum = rIdx * cols + cIdx + 1;
                                                                                 if (portNum > portCount) return <div key={cIdx} className={portSizeClass} />;
-                                                                                return renderPortAnchor(dev, `port-${portNum}`, `Port ${portNum}`, 'hover:border-purple-400 hover:bg-purple-500/30', portSizeClass);
+                                                                                return renderPortAnchor(dev, `port-${portNum}`, `主連接埠 ${portNum} (Port ${portNum})`, 'hover:border-purple-400 hover:bg-purple-500/30', portSizeClass);
                                                                             })}
                                                                         </div>
                                                                     ))}
+                                                                </div>
+                                                            );
+                                                        })()}
+
+                                                        {/* 副連接埠 (用一條分隔線與主連接埠隔開，樣式與一般錨點完全相同) */}
+                                                        {(() => {
+                                                            const subPortCount = getSwitchSubPortCount(dev);
+                                                            if (subPortCount <= 0) return null;
+                                                            const subRows = (dev.size >= 2 && portCount > 32) ? 4 : 2;
+                                                            const subCols = Math.ceil(subPortCount / subRows);
+                                                            const portSizeClass = "w-1.5 h-1.5 shrink-0";
+                                                            return (
+                                                                <div className="flex border-l border-slate-700/80 pl-1.5">
+                                                                    <div className="flex flex-col gap-0.5">
+                                                                        {Array.from({ length: subRows }).map((_, rIdx) => (
+                                                                            <div key={rIdx} className="flex gap-0.5">
+                                                                                {Array.from({ length: subCols }).map((_, cIdx) => {
+                                                                                    const subNum = rIdx * subCols + cIdx + 1;
+                                                                                    if (subNum > subPortCount) return <div key={cIdx} className={portSizeClass} />;
+                                                                                    return renderPortAnchor(
+                                                                                        dev, 
+                                                                                        `subport-${subNum}`, 
+                                                                                        `副連接埠 ${subNum} (SubPort ${subNum})`, 
+                                                                                        'hover:border-purple-400 hover:bg-purple-500/30', 
+                                                                                        portSizeClass
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
                                                             );
                                                         })()}
@@ -935,15 +996,39 @@ const RackView = ({ racksToRender }) => {
 
                                             {(dev.type === 'PowerShelf' || dev.type === 'PDU' || dev.type === 'UPS') && (() => {
                                                 const hasBmc = dev.hardwareSpecs?.bmc?.qty === 1;
-                                                if (!hasBmc) return null;
+                                                const customNet = dev.hardwareSpecs?.customNetwork;
+                                                const hasCustomNet = customNet?.enabled && (customNet?.qty > 0);
+
+                                                if (!hasBmc && !hasCustomNet) return null;
+
+                                                const qty = customNet?.qty || 0;
+                                                const portSizeClass = (dev.size <= 2 && qty === 8)
+                                                    ? "w-2 h-2 shrink-0"
+                                                    : "w-2.5 h-2.5 shrink-0";
+
                                                 return (
                                                     <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                                            <div className="flex gap-0.5">
-                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                        {hasBmc && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                                <div className="flex gap-0.5">
+                                                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        )}
+                                                        {hasCustomNet && (customNet?.position !== 'left') && (
+                                                            <div className="flex items-center gap-1.5 border-l border-white/10 pl-2">
+                                                                <div className="text-[10px] font-bold font-mono text-cyan-300 leading-normal pb-0.5">
+                                                                    {customNet.name || 'group1'}
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-0.5">
+                                                                    {Array.from({ length: qty }).map((_, idx) => {
+                                                                        const portKey = `custom_net-${idx + 1}`;
+                                                                        return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             })()}

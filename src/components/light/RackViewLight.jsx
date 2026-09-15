@@ -87,11 +87,12 @@ const RackViewLight = ({ racksToRender }) => {
                 : 'bg-rose-100 border-rose-300';
         }
         
-        const connectedColorStr = 'bg-emerald-500 border-emerald-600 shadow-2xs'; 
-        const defaultBorder = effectiveConnected ? 'border-emerald-600' : 'border-slate-300';
+        const isSubPort = portKey.startsWith('subport-');
+        const connectedColorStr = isSubPort ? 'bg-orange-500 border-orange-600 shadow-2xs' : 'bg-emerald-500 border-emerald-600 shadow-2xs'; 
+        const defaultBorder = effectiveConnected ? (isSubPort ? 'border-orange-600' : 'border-emerald-600') : (isSubPort ? 'border-amber-400' : 'border-slate-300');
         const borderClass = waterConnectedColor ? '' : defaultBorder;
 
-        const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : 'bg-slate-200 hover:bg-slate-300'));
+        const bgClass = waterConnectedColor ? waterConnectedColor : (colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : (isSubPort ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-200 hover:bg-slate-300')));
         const shapeClass = (portKey === 'water_cold' || portKey === 'water_hot') ? 'rounded-full' : 'rounded-[2px]';
 
         return (
@@ -406,6 +407,29 @@ const RackViewLight = ({ racksToRender }) => {
                                 >
                                     {/* Left Status LED & Chassis Label */}
                                     <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        {/* 左側其他網路 (當位置設為左顯示時) */}
+                                        {(() => {
+                                            const customNet = dev.hardwareSpecs?.customNetwork;
+                                            if (customNet?.enabled && (customNet?.qty > 0) && customNet?.position === 'left') {
+                                                const qty = customNet.qty || 8;
+                                                const portSizeClass = (dev.size <= 2 && qty === 8) ? "w-2 h-2 shrink-0" : "w-2.5 h-2.5 shrink-0";
+                                                return (
+                                                    <div className="flex items-center gap-1 border-r border-slate-300 pr-1.5 shrink-0 h-full">
+                                                        <div className="text-[9px] font-bold font-mono text-cyan-600 leading-normal">
+                                                            {customNet.name || 'group1'}
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-0.5">
+                                                            {Array.from({ length: qty }).map((_, idx) => {
+                                                                const portKey = `custom_net-${idx + 1}`;
+                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+
                                         {/* Status LED Cluster */}
                                         <div className="flex items-center gap-0.5 shrink-0">
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -449,6 +473,46 @@ const RackViewLight = ({ racksToRender }) => {
                                         {nic2Count > 0 && Array.from({ length: nic2Count }).map((_, i) => (
                                             renderPortAnchor(dev, `nic2_${i+1}`, `NIC-2 Port ${i+1}`, 'hover:border-indigo-500', 'w-2 h-2')
                                         ))}
+
+                                        {/* Power Shelf / PDU / UPS network anchors */}
+                                        {(dev.type === 'PowerShelf' || dev.type === 'PDU' || dev.type === 'UPS') && (() => {
+                                            const hasBmc = dev.hardwareSpecs?.bmc?.qty === 1;
+                                            const customNet = dev.hardwareSpecs?.customNetwork;
+                                            const hasCustomNet = customNet?.enabled && (customNet?.qty > 0);
+
+                                            if (!hasBmc && !hasCustomNet) return null;
+
+                                            const qty = customNet?.qty || 0;
+                                            const portSizeClass = (dev.size <= 2 && qty === 8)
+                                                ? "w-2 h-2 shrink-0"
+                                                : "w-2.5 h-2.5 shrink-0";
+
+                                            return (
+                                                <div className="flex items-center justify-end gap-2 border-l border-slate-300 pl-2 shrink-0 h-full">
+                                                    {hasBmc && (
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="text-[9px] font-bold font-mono text-slate-500 leading-normal">BMC</div>
+                                                            <div className="flex gap-0.5">
+                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-500 hover:bg-red-500/50', portSizeClass)}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {hasCustomNet && (customNet?.position !== 'left') && (
+                                                        <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+                                                            <div className="text-[9px] font-bold font-mono text-cyan-600 leading-normal">
+                                                                {customNet.name || 'group1'}
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-0.5">
+                                                                {Array.from({ length: qty }).map((_, idx) => {
+                                                                    const portKey = `custom_net-${idx + 1}`;
+                                                                    return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Power draw in Monospace */}
                                         <span className="text-[10px] font-mono text-slate-500 font-medium ml-1">

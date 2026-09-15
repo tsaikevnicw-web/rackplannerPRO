@@ -48,6 +48,19 @@ export const getSwitchPortCount = (dev) => {
     return 48; // Default for Switch
 };
 
+export const getSwitchSubPortCount = (dev) => {
+    if (!dev) return 0;
+    const sub = dev.hardwareSpecs?.subPorts;
+    if (!sub || !sub.enabled) return 0;
+    const qty = parseInt(sub.qty);
+    return isNaN(qty) ? 0 : qty;
+};
+
+export const getSwitchSubPortSpeed = (dev) => {
+    if (!dev) return '';
+    return dev.hardwareSpecs?.subPorts?.speed || '';
+};
+
 export const getSwitchPortLayout = (portCount, size = 1) => {
     if (size >= 2) {
         if (portCount > 32) {

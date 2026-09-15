@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getFabricGroup, getNicCount, getSwitchPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo } from '../utils/helpers';
+import { getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 import { toCanvas } from 'html-to-image';
 
@@ -57,6 +57,9 @@ const formatRemotePort = (portKey) => {
     }
     if (portKey.startsWith('port-')) {
         return portKey.replace('port-', 'Port ');
+    }
+    if (portKey.startsWith('subport-')) {
+        return portKey.replace('subport-', 'SubPort ');
     }
     if (portKey === 'bmc') {
         return 'BMC';
@@ -693,6 +696,31 @@ export function useExport(
                             else if (cx8Type === 'InfiniBand') { transceiverNic = '一體化 (2x 800G OSFP)'; transceiverSw = '一體化 (1.6TB)'; cableModel = 'MCA7K10'; cableCount = '0.5'; }
                         }
                         const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `Port ${i}`, remoteRack, remoteDev.customName, formattedRemotePort, transceiverNic, transceiverSw, cableModel, cableCount];
+                        csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+                        isFirstRowForSwitch = false;
+                    }
+                }
+            }
+
+            const subPortCount = getSwitchSubPortCount(sw);
+            for (let i = 1; i <= subPortCount; i++) {
+                const fullLocalId = `${sw.id}-subport-${i}`;
+                if (linkMap[fullLocalId]) {
+                    switchHasAnyConnection = true;
+                    const remoteInfo = linkMap[fullLocalId];
+                    const remoteDev = devices.find(d => d.id === remoteInfo.devId);
+
+                    if (remoteDev) {
+                        const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
+                        const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
+
+                        let transceiverNic = '-'; let transceiverSw = '-'; let cableModel = '-'; let cableCount = '-';
+                        if (getServerCategory(remoteDev) === 'AI' && remoteInfo.portKey.startsWith('cx8-')) {
+                            const cx8Type = remoteDev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
+                            if (cx8Type === 'Ethernet') { transceiverNic = 'MMA4Z00-NS-FLT'; transceiverSw = 'MMA4Z00-NS'; cableModel = 'MFP7E10-Nxxx'; cableCount = '2'; }
+                            else if (cx8Type === 'InfiniBand') { transceiverNic = '一體化 (2x 800G OSFP)'; transceiverSw = '一體化 (1.6TB)'; cableModel = 'MCA7K10'; cableCount = '0.5'; }
+                        }
+                        const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `SubPort ${i}`, remoteRack, remoteDev.customName, formattedRemotePort, transceiverNic, transceiverSw, cableModel, cableCount];
                         csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                         isFirstRowForSwitch = false;
                     }

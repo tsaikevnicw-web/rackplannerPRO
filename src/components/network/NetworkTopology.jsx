@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -67,8 +67,9 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
             effectiveConnected = connectedToSelectedSet.has(fullId);
         }
         
-        const connectedColorStr = 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
-        const defaultBorder = effectiveConnected ? 'border-green-200' : 'border-slate-500';
+        const isSubPort = portKey.startsWith('subport-');
+        const connectedColorStr = isSubPort ? 'bg-orange-400 shadow-[0_0_8px_#fb923c]' : 'bg-green-400 shadow-[0_0_8px_#4ade80]'; 
+        const defaultBorder = effectiveConnected ? (isSubPort ? 'border-orange-200' : 'border-green-200') : 'border-slate-500';
 
         const bgClass = colorOverride ? colorOverride : (effectiveConnected ? connectedColorStr : 'bg-slate-700 opacity-60');
 
@@ -202,16 +203,38 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                 <div className="p-3 flex flex-col gap-2 bg-slate-900/40">
                     {portLayout ? (
                         <div className="flex flex-col gap-2">
-                            <div className="flex flex-col gap-1 items-center justify-center">
-                                {Array.from({ length: portLayout.rows }).map((_, rowIndex) => (
-                                    <div key={rowIndex} className="flex gap-1 justify-center flex-nowrap">
-                                        {Array.from({ length: portLayout.cols }).map((_, colIndex) => {
-                                            const portNum = rowIndex * portLayout.cols + colIndex + 1;
-                                            if (portNum > portCount) return null;
-                                            return renderPortAnchor(dev, `port-${portNum}`, `Port ${portNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
-                                        })}
-                                    </div>
-                                ))}
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="flex flex-col gap-1 items-center justify-center">
+                                    {Array.from({ length: portLayout.rows }).map((_, rowIndex) => (
+                                        <div key={rowIndex} className="flex gap-1 justify-center flex-nowrap">
+                                            {Array.from({ length: portLayout.cols }).map((_, colIndex) => {
+                                                const portNum = rowIndex * portLayout.cols + colIndex + 1;
+                                                if (portNum > portCount) return null;
+                                                return renderPortAnchor(dev, `port-${portNum}`, `Port ${portNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
+                                            })}
+                                        </div>
+                                    ))}
+                                </div>
+                                {(() => {
+                                    const subPortCount = getSwitchSubPortCount(dev);
+                                    if (subPortCount <= 0) return null;
+                                    const subCols = Math.ceil(subPortCount / 2);
+                                    return (
+                                        <div className="flex border-l border-slate-700 pl-2">
+                                            <div className="flex flex-col gap-1 justify-center">
+                                                {Array.from({ length: 2 }).map((_, rIdx) => (
+                                                    <div key={rIdx} className="flex gap-1 justify-center flex-nowrap">
+                                                        {Array.from({ length: subCols }).map((_, cIdx) => {
+                                                            const subNum = rIdx * subCols + cIdx + 1;
+                                                            if (subNum > subPortCount) return null;
+                                                            return renderPortAnchor(dev, `subport-${subNum}`, `副連接埠 ${subNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
+                                                        })}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                             <div className="flex justify-center border-t border-slate-700 pt-2 mt-1">
                                 <div className="flex items-center gap-1.5">
@@ -315,13 +338,32 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 </div>
                             </div>
                         );
-                    })() : dev.type === 'CDU4U' ? (() => {
+                    })() : (dev.type === 'PowerShelf' || dev.type === 'PDU' || dev.type === 'UPS' || dev.type === 'CDU4U') ? (() => {
+                        const hasBmc = dev.hardwareSpecs?.bmc?.qty === 1 || dev.type === 'CDU4U';
+                        const customNet = dev.hardwareSpecs?.customNetwork;
+                        const hasCustomNet = customNet?.enabled && (customNet?.qty > 0);
+                        const isLeft = customNet?.position === 'left';
+                        const renderCustomNetBlock = () => (
+                            <div className={`flex items-center gap-1.5 ${isLeft ? 'border-r pr-3' : 'border-l pl-3'} border-slate-700`}>
+                                <div className="text-[10px] font-bold font-mono text-cyan-400 leading-normal pb-0.5">{customNet.name || 'group1'}</div>
+                                <div className="grid grid-cols-2 gap-1">
+                                    {Array.from({ length: customNet.qty || 8 }).map((_, idx) => {
+                                        const portKey = `custom_net-${idx + 1}`;
+                                        return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50');
+                                    })}
+                                </div>
+                            </div>
+                        );
                         return (
                             <div className="flex flex-wrap justify-center gap-4">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
-                                </div>
+                                {hasCustomNet && isLeft && renderCustomNetBlock()}
+                                {hasBmc && (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                        {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                    </div>
+                                )}
+                                {hasCustomNet && !isLeft && renderCustomNetBlock()}
                             </div>
                         );
                     })() : (() => {

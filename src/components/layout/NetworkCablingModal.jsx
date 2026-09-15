@@ -120,7 +120,7 @@ const findConnectedSwitch = (dev, specKey, devices) => {
         for (const suffix of suffixes) {
             const connValue = dev.connections[`${pk}${suffix}`];
             if (connValue) {
-                const targetSwitch = devices.find(d => connValue.startsWith(`${d.id}-port-`));
+                const targetSwitch = devices.find(d => connValue.startsWith(`${d.id}-port-`) || connValue.startsWith(`${d.id}-subport-`));
                 if (targetSwitch) {
                     return targetSwitch;
                 }
