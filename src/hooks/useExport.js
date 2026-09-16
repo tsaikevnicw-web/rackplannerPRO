@@ -24,7 +24,7 @@ const formatRemotePort = (portKey) => {
     const bmcNodeMatch = portKey.match(/^bmc_([nN]\d+)$/);
     if (bmcNodeMatch) {
         const [, nodeKey] = bmcNodeMatch;
-        return `${nodeKey.toUpperCase()} BMC`;
+        return `${nodeKey.toUpperCase()} MGMT`;
     }
     
     // 4. OCP with node: ocp_n1-1 -> N1 OCP P1
@@ -62,7 +62,7 @@ const formatRemotePort = (portKey) => {
         return portKey.replace('subport-', 'SubPort ');
     }
     if (portKey === 'bmc') {
-        return 'BMC';
+        return 'MGMT';
     }
     
     return portKey;
@@ -735,7 +735,7 @@ export function useExport(
                 if (remoteDev) {
                     const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
                     const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
-                    const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `BMC`, remoteRack, remoteDev.customName, formattedRemotePort, '-', '-', '-', '-'];
+                    const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC', remoteRack, remoteDev.customName, formattedRemotePort, '-', '-', '-', '-'];
                     csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                     isFirstRowForSwitch = false;
                 }

@@ -202,34 +202,45 @@ const Header = () => {
                         <Info className="w-4 h-4 text-indigo-400 animate-pulse" />
                         專案資訊
                     </button>
-                    {/* Design Classification Indicator */}
-                    {(() => {
-                        const designType = projectInfo?.designType || 'common';
-                        let badgeClass = '';
-                        let dotClass = '';
-                        let text = '';
+                    {/* Quick Project Classification Toggle */}
+                    <div className="flex items-center p-1 bg-[#09111c] border-2 border-indigo-500/30 rounded-xl shadow-inner gap-1">
+                        <button
+                            onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'common', isCdcProject: false }))}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 select-none ${
+                                (projectInfo?.designType || 'common') === 'common'
+                                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.6)] border border-indigo-400 ring-2 ring-indigo-400/40 font-black'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
+                            }`}
+                            title="切換為 Common Design 專案分類"
+                        >
+                            <span className={`w-2 h-2 rounded-full ${ (projectInfo?.designType || 'common') === 'common' ? 'bg-indigo-200 shadow-[0_0_8px_#fff] animate-pulse' : 'bg-slate-600' }`} />
+                            <span>Common Design</span>
+                        </button>
 
-                        if (designType === 'cdc') {
-                            badgeClass = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]';
-                            dotClass = 'bg-emerald-400 shadow-[0_0_8px_#10b981]';
-                            text = 'CDC 貨櫃';
-                        } else if (designType === 'msft') {
-                            badgeClass = 'bg-sky-500/15 border-sky-500/30 text-sky-400 shadow-[0_0_12px_rgba(14,165,233,0.2)]';
-                            dotClass = 'bg-sky-400 shadow-[0_0_8px_#0ea5e9]';
-                            text = 'MSFT 設計';
-                        } else {
-                            badgeClass = 'bg-slate-800/80 border-slate-700 text-slate-300';
-                            dotClass = 'bg-slate-500';
-                            text = 'Common Design';
-                        }
+                        <button
+                            onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'msft', isCdcProject: false }))}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 select-none ${
+                                projectInfo?.designType === 'msft'
+                                    ? 'bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 font-black shadow-[0_0_18px_rgba(14,165,233,0.7)] border border-sky-300 ring-2 ring-sky-300/60'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
+                            }`}
+                            title="切換為 MSFT 專案分類"
+                        >
+                            <span className={`w-2 h-2 rounded-full ${ projectInfo?.designType === 'msft' ? 'bg-slate-950 shadow-[0_0_8px_#0ea5e9] animate-pulse' : 'bg-slate-600' }`} />
+                            <span>MSFT</span>
+                        </button>
 
-                        return (
-                            <div className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-black tracking-wide uppercase whitespace-nowrap transition-all duration-300 select-none ${badgeClass}`}>
-                                <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
-                                <span>{text}</span>
-                            </div>
-                        );
-                    })()}
+                        {projectInfo?.designType === 'cdc' && (
+                            <button
+                                onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'cdc', isCdcProject: true }))}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 select-none bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.6)] border border-emerald-400 ring-2 ring-emerald-400/40"
+                                title="CDC 貨櫃專案分類"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-emerald-200 shadow-[0_0_8px_#fff] animate-pulse" />
+                                <span>CDC 貨櫃</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">

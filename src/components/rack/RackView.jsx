@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server } from 'lucide-react';
 
@@ -201,8 +201,8 @@ const RackView = ({ racksToRender }) => {
                     }
                     setDrawing(null);
                 }}
-                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
-                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
+                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true, hoverDevId: dev.id, hoverPortKey: portKey } : prev)}
+                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false, hoverDevId: null, hoverPortKey: null } : prev)}
             >
                 {isConnected && !colorOverride && !waterConnectedColor && (
                     connCount > 1
@@ -532,7 +532,7 @@ const RackView = ({ racksToRender }) => {
                                                         <div className="grid grid-cols-2 gap-0.5">
                                                             {Array.from({ length: qty }).map((_, idx) => {
                                                                 const portKey = `custom_net-${idx + 1}`;
-                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
+                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, idx + 1)}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
                                                             })}
                                                         </div>
                                                     </div>
@@ -614,9 +614,9 @@ const RackView = ({ racksToRender }) => {
                                                                         </div>
                                                                     </>
                                                                 )}
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
                                                                 <div className="flex gap-0.5">
-                                                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                                    {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                                                 </div>
                                                                 {hasLC && (
                                                                     <div className="ml-1 pl-1 border-l border-cyan-900/50">
@@ -673,9 +673,9 @@ const RackView = ({ racksToRender }) => {
                                                             </div>
                                                         )}
                                                         <div className="flex items-center gap-1.5">
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
                                                             <div className="flex gap-0.5">
-                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                                {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -694,9 +694,9 @@ const RackView = ({ racksToRender }) => {
                                                             {renderPortAnchor(dev, 'water_hot', 'Hot Water Return', 'hover:border-red-300 hover:bg-red-500/40', 'w-3 h-3 shrink-0')}
                                                         </div>
                                                         <div className="flex items-center gap-1.5">
-                                                            <div className="text-[10px] font-bold text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
                                                             <div className="flex gap-0.5">
-                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                                {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -752,9 +752,9 @@ const RackView = ({ racksToRender }) => {
                                                                     </div>
                                                                 </>
                                                             )}
-                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                            <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
                                                             <div className="flex gap-0.5">
-                                                                {renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                                {renderPortAnchor(dev, 'bmc', projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}
                                                             </div>
                                                         </div>
                                                         {/* Water cooling anchors — GPU and/or Host, always one row */}
@@ -857,7 +857,7 @@ const RackView = ({ racksToRender }) => {
                                                                                 {renderPortAnchor(
                                                                                     dev, 
                                                                                     `bmc_${nodeKey}`, 
-                                                                                    `N${nodeNum} BMC Port`, 
+                                                                                    `N${nodeNum} ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 
                                                                                     'hover:border-red-400 hover:bg-red-500/50', 
                                                                                     'w-1.5 h-1.5 shrink-0'
                                                                                 )}
@@ -919,9 +919,9 @@ const RackView = ({ racksToRender }) => {
                                                                         </div>
                                                                     )}
                                                                     <div className="flex items-center gap-1 ml-0.5 pl-0.5 border-l border-white/10 shrink-0">
-                                                                        <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-none`}>{is1U2N ? 'B' : 'BMC'}</div>
+                                                                        <div className={`${portLabelClass} font-bold font-mono text-white/60 leading-none`}>{is1U2N ? 'B' : (projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC')}</div>
                                                                         <div className="flex gap-0.5">
-                                                                            {renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC Port`, 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
+                                                                            {renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -932,11 +932,15 @@ const RackView = ({ racksToRender }) => {
                                             })()}
 
                                             {((dev.type || '').startsWith('Switch') || dev.type === 'Router') && (
-                                                <div className="flex items-center justify-end gap-2.5 border-l border-white/20 pl-2.5 shrink-0 h-full">
+                                                <div 
+                                                    className="flex items-center justify-end gap-2.5 border-l border-white/20 pl-2.5 shrink-0 h-full"
+                                                    onMouseEnter={() => setDrawing(prev => prev ? { ...prev, hoverDevId: dev.id } : prev)}
+                                                    onMouseLeave={() => setDrawing(prev => prev ? { ...prev, hoverDevId: null } : prev)}
+                                                >
                                                     <div className="flex items-center gap-1.5">
-                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
                                                         <div className="flex gap-0.5">
-                                                            {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                                            {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                                         </div>
                                                     </div>
 
@@ -946,12 +950,13 @@ const RackView = ({ racksToRender }) => {
                                                         {(() => {
                                                             const { rows, cols } = getSwitchPortLayout(portCount, dev.size);
                                                             const portSizeClass = "w-1.5 h-1.5 shrink-0";
+                                                            const isMsft = projectInfo?.designType === 'msft';
                                                             return (
                                                                 <div className="flex flex-col gap-0.5">
                                                                     {Array.from({ length: rows }).map((_, rIdx) => (
                                                                         <div key={rIdx} className="flex gap-0.5">
                                                                             {Array.from({ length: cols }).map((_, cIdx) => {
-                                                                                const portNum = rIdx * cols + cIdx + 1;
+                                                                                const portNum = getSwitchPortNumber(rIdx, cIdx, rows, cols, isMsft, dev.size, portCount);
                                                                                 if (portNum > portCount) return <div key={cIdx} className={portSizeClass} />;
                                                                                 return renderPortAnchor(dev, `port-${portNum}`, `主連接埠 ${portNum} (Port ${portNum})`, 'hover:border-purple-400 hover:bg-purple-500/30', portSizeClass);
                                                                             })}
@@ -965,7 +970,8 @@ const RackView = ({ racksToRender }) => {
                                                         {(() => {
                                                             const subPortCount = getSwitchSubPortCount(dev);
                                                             if (subPortCount <= 0) return null;
-                                                            const subRows = (dev.size >= 2 && portCount > 32) ? 4 : 2;
+                                                            const isMsft = projectInfo?.designType === 'msft';
+                                                            const subRows = (isMsft && dev.size === 1) ? 2 : ((dev.size >= 2 && portCount > 32) ? 4 : 2);
                                                             const subCols = Math.ceil(subPortCount / subRows);
                                                             const portSizeClass = "w-1.5 h-1.5 shrink-0";
                                                             return (
@@ -974,7 +980,7 @@ const RackView = ({ racksToRender }) => {
                                                                         {Array.from({ length: subRows }).map((_, rIdx) => (
                                                                             <div key={rIdx} className="flex gap-0.5">
                                                                                 {Array.from({ length: subCols }).map((_, cIdx) => {
-                                                                                    const subNum = rIdx * subCols + cIdx + 1;
+                                                                                    const subNum = getSwitchPortNumber(rIdx, cIdx, subRows, subCols, isMsft, dev.size, subPortCount);
                                                                                     if (subNum > subPortCount) return <div key={cIdx} className={portSizeClass} />;
                                                                                     return renderPortAnchor(
                                                                                         dev, 
@@ -1005,14 +1011,17 @@ const RackView = ({ racksToRender }) => {
                                                 const portSizeClass = (dev.size <= 2 && qty === 8)
                                                     ? "w-2 h-2 shrink-0"
                                                     : "w-2.5 h-2.5 shrink-0";
+                                                const isMsft = projectInfo?.designType === 'msft';
+                                                const bmcTitle = isMsft ? 'MGMT' : 'BMC';
+                                                const portPrefix = customNet?.portName || 'Port';
 
                                                 return (
                                                     <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">
                                                         {hasBmc && (
                                                             <div className="flex items-center gap-1.5">
-                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
+                                                                <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{bmcTitle}</div>
                                                                 <div className="flex gap-0.5">
-                                                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
+                                                                    {renderPortAnchor(dev, 'bmc', `${bmcTitle} Port`, 'hover:border-red-400 hover:bg-red-500/50', portSizeClass)}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1021,11 +1030,27 @@ const RackView = ({ racksToRender }) => {
                                                                 <div className="text-[10px] font-bold font-mono text-cyan-300 leading-normal pb-0.5">
                                                                     {customNet.name || 'group1'}
                                                                 </div>
-                                                                <div className="grid grid-cols-2 gap-0.5">
-                                                                    {Array.from({ length: qty }).map((_, idx) => {
-                                                                        const portKey = `custom_net-${idx + 1}`;
-                                                                        return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
-                                                                    })}
+                                                                <div className="flex gap-0.5">
+                                                                    {isMsft ? (() => {
+                                                                        const rows = Math.ceil(qty / 2);
+                                                                        return Array.from({ length: 2 }).map((_, cIdx) => (
+                                                                            <div key={cIdx} className="flex flex-col gap-0.5">
+                                                                                {Array.from({ length: rows }).map((_, rIdx) => {
+                                                                                    const portNum = cIdx * rows + rIdx + 1;
+                                                                                    if (portNum > qty) return <div key={rIdx} className={portSizeClass} />;
+                                                                                    const portKey = `custom_net-${portNum}`;
+                                                                                    return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, portNum)}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
+                                                                                })}
+                                                                            </div>
+                                                                        ));
+                                                                    })() : (
+                                                                        <div className="grid grid-cols-2 gap-0.5">
+                                                                            {Array.from({ length: qty }).map((_, idx) => {
+                                                                                const portKey = `custom_net-${idx + 1}`;
+                                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, idx + 1)}`, 'hover:border-cyan-400 hover:bg-cyan-500/50', portSizeClass);
+                                                                            })}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1101,8 +1126,8 @@ const RackView = ({ racksToRender }) => {
                                     </div>
                                     {/* BMC Anchor */}
                                     <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700 shadow-xl flex flex-col items-center gap-1.5">
-                                        <div className="text-[10px] font-mono text-white/80">BMC</div>
-                                        {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                        <div className="text-[10px] font-mono text-white/80">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
+                                        {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                     </div>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
+import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
 import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus, Compass, Thermometer } from 'lucide-react';
 
 const RightPanel = () => {
@@ -304,7 +304,7 @@ const RightPanel = () => {
 
                             {/* BMC */}
                             <div className="space-y-1 border-t border-slate-800/60 pt-2.5">
-                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <select 
                                         value="" 
@@ -315,7 +315,7 @@ const RightPanel = () => {
                                                         anchorCableSides: { ...(dev.anchorCableSides || {}), bmc: e.target.value }
                                                     });
                                                 });
-                                                showAlert(`已批次修改 BMC 走線方向`, '成功', 'success');
+                                                showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線方向`, '成功', 'success');
                                             }
                                         }} 
                                         className={selectCls}
@@ -333,7 +333,7 @@ const RightPanel = () => {
                                                         anchorCableColors: { ...(dev.anchorCableColors || {}), bmc: e.target.value }
                                                     });
                                                 });
-                                                showAlert(`已批次修改 BMC 線路顏色`, '成功', 'success');
+                                                showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 線路顏色`, '成功', 'success');
                                             }
                                         }} 
                                         className={selectCls}
@@ -801,6 +801,19 @@ const RightPanel = () => {
                         <label className="block text-xs font-bold text-slate-400 mb-1.5">設備名稱</label>
                         <input type="text" value={selectedDevice.customName} onChange={(e) => handleUpdateDevice(selectedDevice.id, { customName: e.target.value })} className={inputCls} />
                     </div>
+                    <div>
+                        <label className="block text-xs font-bold text-sky-400 mb-1.5 flex items-center gap-1">
+                            <Info className="w-3.5 h-3.5 text-sky-400" />
+                            自訂義訊息 (Custom Information)
+                        </label>
+                        <textarea
+                            rows={2}
+                            value={selectedDevice.customNote || ''}
+                            onChange={(e) => handleUpdateDevice(selectedDevice.id, { customNote: e.target.value })}
+                            className={inputCls}
+                            placeholder="輸入此設備的補充訊息或備註..."
+                        />
+                    </div>
                     {selectedDevice.type === 'Blank' ? (
                         <>
                             <div className="border-t border-slate-800/50 pt-4">
@@ -903,7 +916,7 @@ const RightPanel = () => {
                                                 onChange={(e) => handleHardwareSpecChange(selectedDevice.id, 'bmc', 'qty', e.target.checked ? 1 : 0)}
                                                 className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 cursor-pointer"
                                             />
-                                            <span className="text-[11px] text-slate-300 font-medium">啟用 BMC 網路孔</span>
+                                             <span className="text-[11px] text-slate-300 font-medium">啟用 {projectInfo?.designType === 'msft' ? 'MGT' : 'BMC'} 網路孔</span>
                                         </label>
                                         {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
                                             <div className="mt-3 pt-2.5 border-t border-slate-800/40">
@@ -939,7 +952,7 @@ const RightPanel = () => {
 
                                         {selectedDevice.hardwareSpecs?.customNetwork?.enabled && (
                                             <div className="mt-3 space-y-3 pl-1">
-                                                <div className="grid grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="block text-[10px] text-slate-400 mb-1">網路名稱</label>
                                                         <input
@@ -962,6 +975,30 @@ const RightPanel = () => {
                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
                                                         />
                                                     </div>
+                                                    {projectInfo?.designType !== 'msft' && (
+                                                        <div>
+                                                            <label className="block text-[10px] text-cyan-400 font-bold mb-1">自訂義 Port Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={selectedDevice.hardwareSpecs?.customNetwork?.portName || ''}
+                                                                onChange={(e) => {
+                                                                    const newPortName = e.target.value;
+                                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                    handleUpdateDevice(selectedDevice.id, {
+                                                                        hardwareSpecs: {
+                                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                                            customNetwork: {
+                                                                                ...currentCustomNet,
+                                                                                portName: newPortName
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                placeholder="例如: Port / P..."
+                                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-mono"
+                                                            />
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <label className="block text-[10px] text-slate-400 mb-1">連接埠數量</label>
                                                         <select
@@ -1001,20 +1038,57 @@ const RightPanel = () => {
                                                                             ...currentCustomNet,
                                                                             position: newPos
                                                                         }
-                                                                    },
-                                                                    anchorCableSides: {
-                                                                        ...(selectedDevice.anchorCableSides || {}),
-                                                                        customNetwork: newPos
                                                                     }
                                                                 });
                                                             }}
                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
                                                         >
-                                                            <option value="right">右顯示</option>
-                                                            <option value="left">左顯示</option>
+                                                            <option value="right">右側 (Right)</option>
+                                                            <option value="left">左側 (Left)</option>
                                                         </select>
                                                     </div>
                                                 </div>
+
+                                                {projectInfo?.designType === 'msft' && (() => {
+                                                    const qty = selectedDevice.hardwareSpecs?.customNetwork?.qty || 8;
+                                                    const portNames = selectedDevice.hardwareSpecs?.customNetwork?.portNames || {};
+                                                    return (
+                                                        <div className="pt-2 border-t border-slate-800/40">
+                                                            <label className="block text-[10px] text-cyan-400 font-bold mb-1.5">各連接埠自訂名稱 (Port 1 ~ {qty})</label>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {Array.from({ length: qty }).map((_, idx) => {
+                                                                    const portNum = idx + 1;
+                                                                    const currentVal = portNames[portNum] || '';
+                                                                    return (
+                                                                        <div key={portNum} className="flex items-center gap-1.5">
+                                                                            <span className="text-[10px] text-slate-400 font-mono w-7 shrink-0">P{portNum}:</span>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={currentVal}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value;
+                                                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                                    const updatedNames = { ...(currentCustomNet.portNames || {}), [portNum]: val };
+                                                                                    handleUpdateDevice(selectedDevice.id, {
+                                                                                        hardwareSpecs: {
+                                                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                                                            customNetwork: {
+                                                                                                ...currentCustomNet,
+                                                                                                portNames: updatedNames
+                                                                                            }
+                                                                                        }
+                                                                                    });
+                                                                                }}
+                                                                                placeholder={`Port ${portNum}`}
+                                                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-mono"
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
 
                                                 <div className="pt-2 border-t border-slate-800/40">
                                                     {renderCablingSubFields('customNetwork', selectedDevice.hardwareSpecs?.customNetwork || {})}
@@ -1129,7 +1203,7 @@ const RightPanel = () => {
 
                                         {selectedDevice.hardwareSpecs?.customNetwork?.enabled && (
                                             <div className="mt-3 space-y-3 pl-1">
-                                                <div className="grid grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="block text-[10px] text-slate-400 mb-1">網路名稱</label>
                                                         <input
@@ -1152,6 +1226,30 @@ const RightPanel = () => {
                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
                                                         />
                                                     </div>
+                                                    {projectInfo?.designType !== 'msft' && (
+                                                        <div>
+                                                            <label className="block text-[10px] text-cyan-400 font-bold mb-1">自訂義 Port Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={selectedDevice.hardwareSpecs?.customNetwork?.portName || ''}
+                                                                onChange={(e) => {
+                                                                    const newPortName = e.target.value;
+                                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                    handleUpdateDevice(selectedDevice.id, {
+                                                                        hardwareSpecs: {
+                                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                                            customNetwork: {
+                                                                                ...currentCustomNet,
+                                                                                portName: newPortName
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                placeholder="例如: Port / P..."
+                                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-mono"
+                                                            />
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <label className="block text-[10px] text-slate-400 mb-1">連接埠數量</label>
                                                         <select
@@ -1206,6 +1304,47 @@ const RightPanel = () => {
                                                     </div>
                                                 </div>
 
+                                                {projectInfo?.designType === 'msft' && (() => {
+                                                    const qty = selectedDevice.hardwareSpecs?.customNetwork?.qty || 8;
+                                                    const portNames = selectedDevice.hardwareSpecs?.customNetwork?.portNames || {};
+                                                    return (
+                                                        <div className="pt-2 border-t border-slate-800/40">
+                                                            <label className="block text-[10px] text-cyan-400 font-bold mb-1.5">各連接埠自訂名稱 (Port 1 ~ {qty})</label>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {Array.from({ length: qty }).map((_, idx) => {
+                                                                    const portNum = idx + 1;
+                                                                    const currentVal = portNames[portNum] || '';
+                                                                    return (
+                                                                        <div key={portNum} className="flex items-center gap-1.5">
+                                                                            <span className="text-[10px] text-slate-400 font-mono w-7 shrink-0">P{portNum}:</span>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={currentVal}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value;
+                                                                                    const currentCustomNet = selectedDevice.hardwareSpecs?.customNetwork || {};
+                                                                                    const updatedNames = { ...(currentCustomNet.portNames || {}), [portNum]: val };
+                                                                                    handleUpdateDevice(selectedDevice.id, {
+                                                                                        hardwareSpecs: {
+                                                                                            ...(selectedDevice.hardwareSpecs || {}),
+                                                                                            customNetwork: {
+                                                                                                ...currentCustomNet,
+                                                                                                portNames: updatedNames
+                                                                                            }
+                                                                                        }
+                                                                                    });
+                                                                                }}
+                                                                                placeholder={`Port ${portNum}`}
+                                                                                className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-mono"
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+
                                                 <div className="pt-2 border-t border-slate-800/40">
                                                     {renderCablingSubFields('customNetwork', selectedDevice.hardwareSpecs?.customNetwork || {})}
                                                 </div>
@@ -1214,15 +1353,17 @@ const RightPanel = () => {
                                     </div>
                                 </div>
                             </div>
-                            {(selectedDevice.hardwareSpecs?.bmc?.qty === 1 || selectedDevice.hardwareSpecs?.customNetwork?.enabled) && (
+
+                            {/* Power Shelf & PDU / UPS / CDU 專屬： customNetwork / BMC 走線與顏色 */}
+                            {(['PowerShelf', 'PDU', 'UPS', 'CDU4U'].includes(selectedDevice.type) || selectedDevice.hardwareSpecs?.bmc?.qty === 1 || selectedDevice.hardwareSpecs?.customNetwork?.enabled) && (
                                 <div className="border-t border-slate-800/50 pt-4">
                                     <label className="block text-[11px] font-bold text-cyan-400 mb-2 flex items-center gap-1">
                                         <Network className="w-3.5 h-3.5 text-cyan-400" /> 錨點走線通道與顏色設定
                                     </label>
                                     <div className="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-                                        {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
+                                        {(selectedDevice.hardwareSpecs?.bmc?.qty === 1 || selectedDevice.type === 'CDU4U') && (
                                             <div className="space-y-1">
-                                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <select
                                                         value={selectedDevice.anchorCableSides?.bmc || 'right'}
@@ -1400,82 +1541,143 @@ const RightPanel = () => {
                                                 </div>
                                             )}
 
-                                            {/* PCIe Slot - Only for Servers & Storage Devices */}
-                                            {hasPcieCable && (
-                                                <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
-                                                    <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <select
-                                                            value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
-                                                            })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                                        >
-                                                            <option value="right">➡️ 右側走線</option>
-                                                            <option value="left">⬅️ 左側走線</option>
-                                                        </select>
-                                                        <select
-                                                            value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
-                                                            })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                            style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
-                                                        >
-                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
-                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            )}
+                                             {/* PCIe Slot - Only for Servers & Storage Devices */}
+                                             {hasPcieCable && (() => {
+                                                 const isMsft = projectInfo?.designType === 'msft';
+                                                 const pcieSlotQty = selectedDevice.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                 const nodes = getServerCategory(selectedDevice) === 'HighDensity' ? getHighDensityNodes(selectedDevice) : [null];
+                                                 const pciePortsList = [];
+                                                 nodes.forEach((nodeKey, nIdx) => {
+                                                     for (let i = 1; i <= pcieSlotQty; i++) {
+                                                         const { model, qty: slotPortCount } = getPcieSlotInfo(selectedDevice, i, nodeKey);
+                                                         if (slotPortCount > 0) {
+                                                             for (let p = 1; p <= slotPortCount; p++) {
+                                                                 const portKey = nodeKey ? `pcie_slot_${i}_${nodeKey}-${p}` : `pcie_slot_${i}-${p}`;
+                                                                 const nodePrefix = nodeKey ? `N${nIdx + 1} ` : '';
+                                                                 const label = `${nodePrefix}PCIe Slot ${i}.${p}`;
+                                                                 pciePortsList.push({ portKey, label });
+                                                             }
+                                                         }
+                                                     }
+                                                 });
 
-                                            {/* S-NIC-M - Only for Servers */}
-                                            {hasSNicCable && (
-                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
-                                                    <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <select
-                                                            value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
-                                                            })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
-                                                        >
-                                                            <option value="right">➡️ 右側走線</option>
-                                                            <option value="left">⬅️ 左側走線</option>
-                                                        </select>
-                                                        <select
-                                                            value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
-                                                            })}
-                                                            className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                            style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
-                                                        >
-                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
-                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
-                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                 if (isMsft && pciePortsList.length > 0) {
+                                                     return (
+                                                         <div className={`space-y-2.5 ${hasEwNicCable ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                             {pciePortsList.map(item => (
+                                                                 <div key={item.portKey} className="space-y-1">
+                                                                     <label className="block text-[11px] font-semibold text-amber-400">{item.label} 走線與顏色</label>
+                                                                     <div className="grid grid-cols-2 gap-2">
+                                                                         <select
+                                                                             value={selectedDevice.anchorCableSides?.[item.portKey] || selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), [item.portKey]: e.target.value }
+                                                                             })}
+                                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                                         >
+                                                                             <option value="right">➡️ 右側走線</option>
+                                                                             <option value="left">⬅️ 左側走線</option>
+                                                                         </select>
+                                                                         <select
+                                                                             value={selectedDevice.anchorCableColors?.[item.portKey] || selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), [item.portKey]: e.target.value }
+                                                                             })}
+                                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                                             style={{ color: selectedDevice.anchorCableColors?.[item.portKey] || selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                                                         >
+                                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                                             <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                                             <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                                             <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                                             <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                                             <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                                             <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                                             <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                                         </select>
+                                                                     </div>
+                                                                 </div>
+                                                             ))}
+                                                         </div>
+                                                     );
+                                                 }
 
-                                            {/* BMC */}
-                                            {hasBmcCable && (
-                                                <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
-                                                    <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                 return (
+                                                     <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                         <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                                         <div className="grid grid-cols-2 gap-2">
+                                                             <select
+                                                                 value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                                 onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                     anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
+                                                                 })}
+                                                                 className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                             >
+                                                                 <option value="right">➡️ 右側走線</option>
+                                                                 <option value="left">⬅️ 左側走線</option>
+                                                             </select>
+                                                             <select
+                                                                 value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                                 onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                     anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
+                                                                 })}
+                                                                 className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                                 style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                                             >
+                                                                 <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                                 <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                                 <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                                 <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                                 <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                                 <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                                 <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                                 <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                             </select>
+                                                         </div>
+                                                     </div>
+                                                 );
+                                             })()}
+
+                                             {/* S-NIC-M - Only for Servers */}
+                                             {hasSNicCable && (
+                                                 <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                     <label className="block text-[11px] font-semibold text-purple-400">S-NIC-M 走線與顏色</label>
+                                                     <div className="grid grid-cols-2 gap-2">
+                                                         <select
+                                                             value={selectedDevice.anchorCableSides?.s_nic_m || 'right'}
+                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                 anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), s_nic_m: e.target.value }
+                                                             })}
+                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                                                         >
+                                                             <option value="right">➡️ 右側走線</option>
+                                                             <option value="left">⬅️ 左側走線</option>
+                                                         </select>
+                                                         <select
+                                                             value={selectedDevice.anchorCableColors?.s_nic_m || '#a855f7'}
+                                                             onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                 anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), s_nic_m: e.target.value }
+                                                             })}
+                                                             className="w-full bg-slate-950/80 border border-slate-700/60 rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                             style={{ color: selectedDevice.anchorCableColors?.s_nic_m || '#a855f7' }}
+                                                         >
+                                                             <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                             <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                             <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色</option>
+                                                             <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                             <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭 (預設)</option>
+                                                             <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                             <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                             <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                         </select>
+                                                     </div>
+                                                 </div>
+                                             )}
+
+                                             {/* BMC */}
+                                             {hasBmcCable && (
+                                                 <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-800/60 pt-2.5' : ''}`}>
+                                                     <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <select
                                                             value={selectedDevice.anchorCableSides?.bmc || 'right'}

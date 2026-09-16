@@ -76,6 +76,32 @@ export const getSwitchPortLayout = (portCount, size = 1) => {
     return { rows: 2, cols: cols > 0 ? cols : 1 };
 };
 
+export const getSwitchPortNumber = (rIdx, cIdx, rows, cols, isMsft = false, devSize = 1, totalPorts = 48) => {
+    if (!isMsft) {
+        return rIdx * cols + cIdx + 1;
+    }
+    if (devSize === 1 || rows === 2) {
+        if (rIdx === 0) return cIdx * 2 + 1;
+        if (rIdx === 1) return cIdx * 2 + 2;
+    }
+    if (devSize >= 2 && totalPorts >= 48) {
+        return cIdx * rows + rIdx + 1;
+    }
+    return rIdx * cols + cIdx + 1;
+};
+
+export const getCustomNetworkPortLabel = (dev, portNum) => {
+    const customNet = dev?.hardwareSpecs?.customNetwork;
+    if (!customNet) return `Port ${portNum}`;
+    if (customNet.portNames && customNet.portNames[portNum]) {
+        return customNet.portNames[portNum];
+    }
+    if (customNet.portName) {
+        return `${customNet.portName} ${portNum}`;
+    }
+    return `Port ${portNum}`;
+};
+
 export const getGroupedDevices = (devList, racks) => {
     const groups = {};
     devList.forEach(d => {

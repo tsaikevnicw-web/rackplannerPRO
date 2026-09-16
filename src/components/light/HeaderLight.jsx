@@ -200,31 +200,45 @@ const HeaderLight = () => {
                         />
                     </div>
 
-                    {/* Project Spec Indicator */}
-                    {(() => {
-                        const designType = projectInfo?.designType || 'common';
-                        let label = 'Common Design';
-                        let badgeCls = 'bg-slate-50 text-slate-700 border-slate-200';
+                    {/* Quick Project Classification Toggle */}
+                    <div className="flex items-center p-0.5 bg-slate-100 border border-slate-200 rounded-lg shadow-inner gap-1">
+                        <button
+                            onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'common', isCdcProject: false }))}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-all duration-200 select-none ${
+                                (projectInfo?.designType || 'common') === 'common'
+                                    ? 'bg-blue-600 text-white shadow-sm font-bold border border-blue-600'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border border-transparent'
+                            }`}
+                            title="切換為 Common Design 專案分類"
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${ (projectInfo?.designType || 'common') === 'common' ? 'bg-white' : 'bg-slate-400' }`} />
+                            <span>Common Design</span>
+                        </button>
 
-                        if (designType === 'cdc') {
-                            label = 'CDC 貨櫃規格';
-                            badgeCls = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-                        } else if (designType === 'msft') {
-                            label = 'MSFT 規格';
-                            badgeCls = 'bg-blue-50 text-blue-800 border-blue-200';
-                        }
+                        <button
+                            onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'msft', isCdcProject: false }))}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-all duration-200 select-none ${
+                                projectInfo?.designType === 'msft'
+                                    ? 'bg-sky-500 text-white shadow-sm font-bold border border-sky-500 ring-1 ring-sky-300'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border border-transparent'
+                            }`}
+                            title="切換為 MSFT 專案分類"
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${ projectInfo?.designType === 'msft' ? 'bg-white' : 'bg-slate-400' }`} />
+                            <span>MSFT</span>
+                        </button>
 
-                        return (
+                        {projectInfo?.designType === 'cdc' && (
                             <button
-                                onClick={() => setIsProjectInfoOpen(true)}
-                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border transition-colors hover:border-slate-400 ${badgeCls}`}
-                                title="點擊檢視/編輯專案規格"
+                                onClick={() => setProjectInfo(prev => ({ ...prev, designType: 'cdc', isCdcProject: true }))}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold transition-all duration-200 select-none bg-emerald-600 text-white shadow-sm border border-emerald-600"
+                                title="CDC 貨櫃專案分類"
                             >
-                                <span>{label}</span>
-                                <Info className="w-3 h-3 opacity-60" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                <span>CDC 貨櫃</span>
                             </button>
-                        );
-                    })()}
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Global Action Bar */}

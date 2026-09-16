@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
 import { LIGHT_THEME_STYLES, LIGHT_INFRA_THEMES } from '../../themes/light/lightConstants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server, ArrowDown, ArrowUp, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -127,8 +127,8 @@ const RackViewLight = ({ racksToRender }) => {
                     }
                     setDrawing(null);
                 }}
-                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
-                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
+                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true, hoverDevId: dev.id, hoverPortKey: portKey } : prev)}
+                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false, hoverDevId: null, hoverPortKey: null } : prev)}
             >
                 {isConnected && !colorOverride && !waterConnectedColor && (
                     connCount > 1
@@ -421,7 +421,7 @@ const RackViewLight = ({ racksToRender }) => {
                                                         <div className="grid grid-cols-2 gap-0.5">
                                                             {Array.from({ length: qty }).map((_, idx) => {
                                                                 const portKey = `custom_net-${idx + 1}`;
-                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
+                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, idx + 1)}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
                                                             })}
                                                         </div>
                                                     </div>
@@ -486,14 +486,16 @@ const RackViewLight = ({ racksToRender }) => {
                                             const portSizeClass = (dev.size <= 2 && qty === 8)
                                                 ? "w-2 h-2 shrink-0"
                                                 : "w-2.5 h-2.5 shrink-0";
+                                            const isMsft = projectInfo?.designType === 'msft';
+                                            const bmcTitle = isMsft ? 'MGMT' : 'BMC';
 
                                             return (
                                                 <div className="flex items-center justify-end gap-2 border-l border-slate-300 pl-2 shrink-0 h-full">
                                                     {hasBmc && (
                                                         <div className="flex items-center gap-1">
-                                                            <div className="text-[9px] font-bold font-mono text-slate-500 leading-normal">BMC</div>
+                                                            <div className="text-[9px] font-bold font-mono text-slate-500 leading-normal">{bmcTitle}</div>
                                                             <div className="flex gap-0.5">
-                                                                {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-500 hover:bg-red-500/50', portSizeClass)}
+                                                                {renderPortAnchor(dev, 'bmc', `${bmcTitle} Port`, 'hover:border-red-500 hover:bg-red-500/50', portSizeClass)}
                                                             </div>
                                                         </div>
                                                     )}
@@ -502,11 +504,27 @@ const RackViewLight = ({ racksToRender }) => {
                                                             <div className="text-[9px] font-bold font-mono text-cyan-600 leading-normal">
                                                                 {customNet.name || 'group1'}
                                                             </div>
-                                                            <div className="grid grid-cols-2 gap-0.5">
-                                                                {Array.from({ length: qty }).map((_, idx) => {
-                                                                    const portKey = `custom_net-${idx + 1}`;
-                                                                    return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
-                                                                })}
+                                                            <div className="flex gap-0.5">
+                                                                {isMsft ? (() => {
+                                                                    const rows = Math.ceil(qty / 2);
+                                                                    return Array.from({ length: 2 }).map((_, cIdx) => (
+                                                                        <div key={cIdx} className="flex flex-col gap-0.5">
+                                                                            {Array.from({ length: rows }).map((_, rIdx) => {
+                                                                                const portNum = cIdx * rows + rIdx + 1;
+                                                                                if (portNum > qty) return <div key={rIdx} className={portSizeClass} />;
+                                                                                const portKey = `custom_net-${portNum}`;
+                                                                                return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, portNum)}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
+                                                                            })}
+                                                                        </div>
+                                                                    ));
+                                                                })() : (
+                                                                    <div className="grid grid-cols-2 gap-0.5">
+                                                                        {Array.from({ length: qty }).map((_, idx) => {
+                                                                            const portKey = `custom_net-${idx + 1}`;
+                                                                            return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, idx + 1)}`, 'hover:border-cyan-500 hover:bg-cyan-500/50', portSizeClass);
+                                                                        })}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     )}

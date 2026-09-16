@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, getCustomNetworkPortLabel } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -105,8 +105,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                     }
                     setDrawing(null);
                 }}
-                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true } : prev)}
-                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false } : prev)}
+                onMouseEnter={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: true, hoverDevId: dev.id, hoverPortKey: portKey } : prev)}
+                onMouseLeave={() => setDrawing(prev => prev ? { ...prev, isHoveringTarget: false, hoverDevId: null, hoverPortKey: null } : prev)}
             >
                 {isConnected && !colorOverride && <div className="absolute inset-0 m-auto w-[60%] h-[60%] bg-white rounded-sm opacity-80"></div>}
             </div>
@@ -208,7 +208,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                     {Array.from({ length: portLayout.rows }).map((_, rowIndex) => (
                                         <div key={rowIndex} className="flex gap-1 justify-center flex-nowrap">
                                             {Array.from({ length: portLayout.cols }).map((_, colIndex) => {
-                                                const portNum = rowIndex * portLayout.cols + colIndex + 1;
+                                                const isMsft = projectInfo?.designType === 'msft';
+                                                const portNum = getSwitchPortNumber(rowIndex, colIndex, portLayout.rows, portLayout.cols, isMsft, dev.size, portCount);
                                                 if (portNum > portCount) return null;
                                                 return renderPortAnchor(dev, `port-${portNum}`, `Port ${portNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
                                             })}
@@ -219,13 +220,14 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                     const subPortCount = getSwitchSubPortCount(dev);
                                     if (subPortCount <= 0) return null;
                                     const subCols = Math.ceil(subPortCount / 2);
+                                    const isMsft = projectInfo?.designType === 'msft';
                                     return (
                                         <div className="flex border-l border-slate-700 pl-2">
                                             <div className="flex flex-col gap-1 justify-center">
                                                 {Array.from({ length: 2 }).map((_, rIdx) => (
                                                     <div key={rIdx} className="flex gap-1 justify-center flex-nowrap">
                                                         {Array.from({ length: subCols }).map((_, cIdx) => {
-                                                            const subNum = rIdx * subCols + cIdx + 1;
+                                                            const subNum = getSwitchPortNumber(rIdx, cIdx, 2, subCols, isMsft, dev.size, subPortCount);
                                                             if (subNum > subPortCount) return null;
                                                             return renderPortAnchor(dev, `subport-${subNum}`, `副連接埠 ${subNum}`, 'hover:border-blue-400 hover:bg-blue-500/50');
                                                         })}
@@ -238,8 +240,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                             </div>
                             <div className="flex justify-center border-t border-slate-700 pt-2 mt-1">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>
-                                    {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                    <div className="text-[10px] font-bold font-mono text-slate-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
+                                    {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                 </div>
                             </div>
                         </div>
@@ -292,7 +294,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                                 );
                                             })}
                                             {ocpCountVal > 0 && <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">OCP</div><div className="flex gap-1.5">{Array.from({ length: ocpCountVal }).map((_, i) => renderPortAnchor(dev, `ocp_${nodeKey}-${i + 1}`, `N${nodeNum} OCP P${i + 1}`, 'hover:border-amber-400 hover:bg-amber-500/50'))}</div></div>}
-                                            <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} BMC`, 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                            <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>{renderPortAnchor(dev, `bmc_${nodeKey}`, `N${nodeNum} ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}`, 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                         </div>
                                     );
                                 })}
@@ -334,7 +336,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                             </div>
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                    <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>{renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}</div>
                                 </div>
                             </div>
                         );
@@ -349,7 +351,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 <div className="grid grid-cols-2 gap-1">
                                     {Array.from({ length: customNet.qty || 8 }).map((_, idx) => {
                                         const portKey = `custom_net-${idx + 1}`;
-                                        return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} Port ${idx + 1}`, 'hover:border-cyan-400 hover:bg-cyan-500/50');
+                                        return renderPortAnchor(dev, portKey, `${customNet.name || 'group1'} ${getCustomNetworkPortLabel(dev, idx + 1)}`, 'hover:border-cyan-400 hover:bg-cyan-500/50');
                                     })}
                                 </div>
                             </div>
@@ -359,8 +361,8 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                 {hasCustomNet && isLeft && renderCustomNetBlock()}
                                 {hasBmc && (
                                     <div className="flex items-center gap-1.5">
-                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">BMC</div>
-                                        {renderPortAnchor(dev, 'bmc', 'BMC Port', 'hover:border-red-400 hover:bg-red-500/50')}
+                                        <div className="text-[10px] font-bold font-mono text-white/60 leading-normal pb-0.5">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>
+                                        {renderPortAnchor(dev, 'bmc', `${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} Port`, 'hover:border-red-400 hover:bg-red-500/50')}
                                     </div>
                                 )}
                                 {hasCustomNet && !isLeft && renderCustomNetBlock()}
@@ -392,7 +394,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">BMC</div>{renderPortAnchor(dev, 'bmc', 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
+                                <div className="flex items-center gap-1.5"><div className="text-[10px] font-bold font-mono text-slate-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'}</div>{renderPortAnchor(dev, 'bmc', projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC', 'hover:border-red-400 hover:bg-red-500/50')}</div>
                             </div>
                         );
                     })()}

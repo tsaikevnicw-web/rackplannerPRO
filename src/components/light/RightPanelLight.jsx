@@ -2,7 +2,7 @@ import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { LIGHT_THEME_STYLES } from '../../themes/light/lightConstants';
 import { HW_SPECS_CONFIG, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize } from '../../utils/helpers';
+import { getIconByType, getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo } from '../../utils/helpers';
 import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Server, HardDrive, Zap, Droplets, Weight, Plus, Compass, Thermometer } from 'lucide-react';
 
 const RightPanelLight = () => {
@@ -305,7 +305,7 @@ const RightPanelLight = () => {
 
                             {/* BMC */}
                             <div className="space-y-1 border-t border-slate-200 pt-2.5">
-                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <select 
                                         value="" 
@@ -316,7 +316,7 @@ const RightPanelLight = () => {
                                                         anchorCableSides: { ...(dev.anchorCableSides || {}), bmc: e.target.value }
                                                     });
                                                 });
-                                                showAlert(`已批次修改 BMC 走線方向`, '成功', 'success');
+                                                showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線方向`, '成功', 'success');
                                             }
                                         }} 
                                         className={selectCls}
@@ -334,7 +334,7 @@ const RightPanelLight = () => {
                                                         anchorCableColors: { ...(dev.anchorCableColors || {}), bmc: e.target.value }
                                                     });
                                                 });
-                                                showAlert(`已批次修改 BMC 線路顏色`, '成功', 'success');
+                                                showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 線路顏色`, '成功', 'success');
                                             }
                                         }} 
                                         className={selectCls}
@@ -1196,7 +1196,7 @@ const RightPanelLight = () => {
                                     <div className="space-y-3 bg-white/60 p-3 rounded-lg border border-slate-200">
                                         {selectedDevice.hardwareSpecs?.bmc?.qty === 1 && (
                                             <div className="space-y-1">
-                                                <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <select
                                                         value={selectedDevice.anchorCableSides?.bmc || 'right'}
@@ -1375,40 +1375,101 @@ const RightPanelLight = () => {
                                             )}
 
                                             {/* PCIe Slot - Only for Servers & Storage Devices */}
-                                            {hasPcieCable && (
-                                                <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-200 pt-2.5' : ''}`}>
-                                                    <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <select
-                                                            value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
-                                                            })}
-                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
-                                                        >
-                                                            <option value="right">➡️ 右側走線</option>
-                                                            <option value="left">⬅️ 左側走線</option>
-                                                        </select>
-                                                        <select
-                                                            value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
-                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
-                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
-                                                            })}
-                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
-                                                            style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
-                                                        >
-                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
-                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
-                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
-                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
-                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
-                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
-                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
-                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
-                                                        </select>
+                                            {hasPcieCable && (() => {
+                                                const isMsft = projectInfo?.designType === 'msft';
+                                                const pcieSlotQty = selectedDevice.hardwareSpecs?.pcieSlotQty?.qty || 2;
+                                                const nodes = getServerCategory(selectedDevice) === 'HighDensity' ? getHighDensityNodes(selectedDevice) : [null];
+                                                const pciePortsList = [];
+                                                nodes.forEach((nodeKey, nIdx) => {
+                                                    for (let i = 1; i <= pcieSlotQty; i++) {
+                                                        const { model, qty: slotPortCount } = getPcieSlotInfo(selectedDevice, i, nodeKey);
+                                                        if (slotPortCount > 0) {
+                                                            for (let p = 1; p <= slotPortCount; p++) {
+                                                                const portKey = nodeKey ? `pcie_slot_${i}_${nodeKey}-${p}` : `pcie_slot_${i}-${p}`;
+                                                                const nodePrefix = nodeKey ? `N${nIdx + 1} ` : '';
+                                                                const label = `${nodePrefix}PCIe Slot ${i}.${p}`;
+                                                                pciePortsList.push({ portKey, label });
+                                                            }
+                                                        }
+                                                    }
+                                                });
+
+                                                if (isMsft && pciePortsList.length > 0) {
+                                                    return (
+                                                        <div className={`space-y-2.5 ${hasEwNicCable ? 'border-t border-slate-200 pt-2.5' : ''}`}>
+                                                            {pciePortsList.map(item => (
+                                                                <div key={item.portKey} className="space-y-1">
+                                                                    <label className="block text-[11px] font-semibold text-amber-400">{item.label} 走線與顏色</label>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <select
+                                                                            value={selectedDevice.anchorCableSides?.[item.portKey] || selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                                anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), [item.portKey]: e.target.value }
+                                                                            })}
+                                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                                        >
+                                                                            <option value="right">➡️ 右側走線</option>
+                                                                            <option value="left">⬅️ 左側走線</option>
+                                                                        </select>
+                                                                        <select
+                                                                            value={selectedDevice.anchorCableColors?.[item.portKey] || selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                                            onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                                anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), [item.portKey]: e.target.value }
+                                                                            })}
+                                                                            className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                                            style={{ color: selectedDevice.anchorCableColors?.[item.portKey] || selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                                                        >
+                                                                            <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                                            <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                                            <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                                            <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                                            <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                                            <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                                            <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                                            <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <div className={`space-y-1 ${hasEwNicCable ? 'border-t border-slate-200 pt-2.5' : ''}`}>
+                                                        <label className="block text-[11px] font-semibold text-amber-400">PCIe Slot 走線與顏色</label>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <select
+                                                                value={selectedDevice.anchorCableSides?.pcie_slot || 'right'}
+                                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                    anchorCableSides: { ...(selectedDevice.anchorCableSides || {}), pcie_slot: e.target.value }
+                                                                })}
+                                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60"
+                                                            >
+                                                                <option value="right">➡️ 右側走線</option>
+                                                                <option value="left">⬅️ 左側走線</option>
+                                                            </select>
+                                                            <select
+                                                                value={selectedDevice.anchorCableColors?.pcie_slot || '#facc15'}
+                                                                onChange={(e) => handleUpdateDevice(selectedDevice.id, {
+                                                                    anchorCableColors: { ...(selectedDevice.anchorCableColors || {}), pcie_slot: e.target.value }
+                                                                })}
+                                                                className="w-full bg-white border-slate-200 text-slate-800 border border-slate-200 rounded p-1.5 text-xs text-slate-900 focus:outline-none focus:border-cyan-500/60 font-medium"
+                                                                style={{ color: selectedDevice.anchorCableColors?.pcie_slot || '#facc15' }}
+                                                            >
+                                                                <option value="#22c55e" style={{ color: '#22c55e' }}>🟢 翡翠綠</option>
+                                                                <option value="#3b82f6" style={{ color: '#3b82f6' }}>🔵 天空藍</option>
+                                                                <option value="#facc15" style={{ color: '#facc15' }}>🟡 亮黃色 (預設)</option>
+                                                                <option value="#ef4444" style={{ color: '#ef4444' }}>🔴 珊瑚紅</option>
+                                                                <option value="#a855f7" style={{ color: '#a855f7' }}>🟣 紫羅蘭</option>
+                                                                <option value="#ec4899" style={{ color: '#ec4899' }}>🌸 玫瑰粉</option>
+                                                                <option value="#22d3ee" style={{ color: '#22d3ee' }}>🩵 青翠藍</option>
+                                                                <option value="#f97316" style={{ color: '#f97316' }}>🟠 活力橘</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
 
                                             {/* S-NIC-M - Only for Servers */}
                                             {hasSNicCable && (
@@ -1449,7 +1510,7 @@ const RightPanelLight = () => {
                                             {/* BMC */}
                                             {hasBmcCable && (
                                                 <div className={`space-y-1 ${(hasEwNicCable || hasPcieCable || hasSNicCable) ? 'border-t border-slate-200 pt-2.5' : ''}`}>
-                                                    <label className="block text-[11px] font-semibold text-rose-400">BMC 走線與顏色</label>
+                                                    <label className="block text-[11px] font-semibold text-rose-400">{projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線與顏色</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <select
                                                             value={selectedDevice.anchorCableSides?.bmc || 'right'}

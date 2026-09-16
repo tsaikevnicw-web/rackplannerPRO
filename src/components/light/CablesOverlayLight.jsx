@@ -342,7 +342,7 @@ const CablesOverlayLight = () => {
 
         // Fallback: 依 portKey 前綴判斷
         if (srcBase.startsWith('cx8-'))    return devA?.anchorCableColors?.ew_nic || devB?.anchorCableColors?.ew_nic || '#22c55e';
-        if (srcBase.startsWith('ns_nic_') || srcBase.startsWith('pcie_slot_')) return devA?.anchorCableColors?.pcie_slot || devB?.anchorCableColors?.pcie_slot || '#facc15';
+        if (srcBase.startsWith('ns_nic_') || srcBase.startsWith('pcie_slot_')) return devA?.anchorCableColors?.[srcBase] || devA?.anchorCableColors?.pcie_slot || devB?.anchorCableColors?.[tgtBase] || devB?.anchorCableColors?.pcie_slot || '#facc15';
         if (srcBase.startsWith('super_nic_mgt')) return devA?.anchorCableColors?.s_nic_m || devB?.anchorCableColors?.s_nic_m || '#a855f7';
         if (srcBase.startsWith('port-'))   return '#a855f7';
         return '#64748b';
@@ -443,7 +443,7 @@ const CablesOverlayLight = () => {
                             return anchorSides.ew_nic || 'right';
                         }
                         if (baseKey.startsWith('pcie_slot_') || baseKey.startsWith('ns_nic_')) {
-                            return anchorSides.pcie_slot || 'right';
+                            return anchorSides[baseKey] || anchorSides.pcie_slot || 'right';
                         }
                         if (baseKey.startsWith('super_nic_mgt')) {
                             return anchorSides.s_nic_m || 'right';
@@ -628,37 +628,236 @@ const CablesOverlayLight = () => {
         }
     });
 
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" className="absolute inset-0 pointer-events-none z-[100]" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
-            {connectionPaths.map(conn => {
-                const opacityValue = conn.isHighlighted ? 1 : (selectedId && !isGeneratingPDF ? 0.03 : 0.8);
-                const filterValue = conn.isHighlighted ? 'drop-shadow(0px 0px 5px rgba(255,255,255,0.7))' : 'none';
-                const thickness = conn.isHighlighted ? (conn.isGroupConnection ? "6" : "3") : (conn.isGroupConnection ? "4" : "2");
-                
-                return (
-                    <g key={conn.id} className={`transition-all duration-300 ${conn.isHighlighted ? 'z-50' : 'z-10'}`} style={{ opacity: opacityValue, filter: filterValue }}>
-                        {/* Shadow line */}
-                        <path d={conn.path} stroke="#020617" strokeWidth={conn.isGroupConnection ? "8" : "4"} fill="none" opacity="0.3"/>
-                        {/* Colored line, explicitly styling stroke for html2canvas compatibility */}
-                        <path d={conn.path} stroke={conn.colorClass} strokeWidth={thickness} fill="none" />
-                    </g>
-                );
-            })}
+    // MSFT Switch Magnifier HUD calculation
+    const msftMagnifier = (() => {
+        if (projectInfo?.designType !== 'msft' || !drawing || drawing.currentX === undefined) {
+            return null;
+        }
 
-            {drawing && drawing.startX !== drawing.currentX && (
-                <g>
-                    <path 
-                        d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
-                        stroke="#020617" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.25"
-                    />
-                    <path 
-                        d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
-                        stroke={getLineColor(drawing.sourcePortKey, drawing.sourceId, null, '', null, null)} 
-                        strokeWidth="2" fill="none" strokeDasharray="8 4" opacity="0.4"
-                    />
-                </g>
+        const { currentX, currentY, hoverDevId, hoverPortKey } = drawing;
+        const switchDevices = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router');
+        if (switchDevices.length === 0) return null;
+
+        let closestDev = null;
+        let closestPortKey = null;
+        let minDistance = Infinity;
+        let closestCoord = null;
+
+        if (hoverDevId && hoverPortKey) {
+            const dev = switchDevices.find(d => d.id === hoverDevId);
+            if (dev) {
+                closestDev = dev;
+                closestPortKey = hoverPortKey;
+                const coordKey = `${dev.id}-${hoverPortKey}`;
+                closestCoord = localCoords[coordKey] || { x: currentX, y: currentY };
+                minDistance = Math.hypot(closestCoord.x - currentX, closestCoord.y - currentY);
+            }
+        }
+
+        if (!closestDev) {
+            switchDevices.forEach(dev => {
+                const mainPorts = getSwitchPortCount(dev);
+                const subPorts = getSwitchSubPortCount(dev);
+
+                for (let i = 1; i <= mainPorts; i++) {
+                    const key = `port-${i}`;
+                    const coord = localCoords[`${dev.id}-${key}`];
+                    if (coord) {
+                        const dist = Math.hypot(coord.x - currentX, coord.y - currentY);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closestDev = dev;
+                            closestPortKey = key;
+                            closestCoord = coord;
+                        }
+                    }
+                }
+
+                for (let i = 1; i <= subPorts; i++) {
+                    const key = `subport-${i}`;
+                    const coord = localCoords[`${dev.id}-${key}`];
+                    if (coord) {
+                        const dist = Math.hypot(coord.x - currentX, coord.y - currentY);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closestDev = dev;
+                            closestPortKey = key;
+                            closestCoord = coord;
+                        }
+                    }
+                }
+            });
+        }
+
+        const isDirectlyOverSwitch = hoverDevId && switchDevices.some(d => d.id === hoverDevId);
+        const isCloseToPort = minDistance <= 35;
+
+        if (!closestDev || (!isDirectlyOverSwitch && !isCloseToPort)) {
+            return null;
+        }
+
+        const portCount = getSwitchPortCount(closestDev);
+        const subPortCount = getSwitchSubPortCount(closestDev);
+
+        let labelText = '';
+        let isSubPort = false;
+        let portNumber = 0;
+
+        if (closestPortKey.startsWith('port-')) {
+            portNumber = parseInt(closestPortKey.replace('port-', ''));
+            labelText = `主連接埠 #${portNumber}`;
+            isSubPort = false;
+        } else if (closestPortKey.startsWith('subport-')) {
+            portNumber = parseInt(closestPortKey.replace('subport-', ''));
+            labelText = `副連接埠 #${portNumber}`;
+            isSubPort = true;
+        } else if (closestPortKey === 'bmc' || closestPortKey.startsWith('bmc')) {
+            labelText = `${projectInfo?.designType === 'msft' ? 'MGMT' : 'MGMT/MGT'} 管理連接埠`;
+        } else {
+            labelText = closestPortKey;
+        }
+
+        return {
+            dev: closestDev,
+            portKey: closestPortKey,
+            coord: closestCoord || { x: currentX, y: currentY },
+            distance: minDistance,
+            portCount,
+            subPortCount,
+            labelText,
+            isSubPort,
+            portNumber
+        };
+    })();
+
+    return (
+        <>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" className="absolute inset-0 pointer-events-none z-[100]" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
+                {connectionPaths.map(conn => {
+                    const opacityValue = conn.isHighlighted ? 1 : (selectedId && !isGeneratingPDF ? 0.03 : 0.8);
+                    const filterValue = conn.isHighlighted ? 'drop-shadow(0px 0px 5px rgba(255,255,255,0.7))' : 'none';
+                    const thickness = conn.isHighlighted ? (conn.isGroupConnection ? "6" : "3") : (conn.isGroupConnection ? "4" : "2");
+                    
+                    return (
+                        <g key={conn.id} className={`transition-all duration-300 ${conn.isHighlighted ? 'z-50' : 'z-10'}`} style={{ opacity: opacityValue, filter: filterValue }}>
+                            {/* Shadow line */}
+                            <path d={conn.path} stroke="#020617" strokeWidth={conn.isGroupConnection ? "8" : "4"} fill="none" opacity="0.3"/>
+                            {/* Colored line, explicitly styling stroke for html2canvas compatibility */}
+                            <path d={conn.path} stroke={conn.colorClass} strokeWidth={thickness} fill="none" />
+                        </g>
+                    );
+                })}
+
+                {drawing && drawing.startX !== drawing.currentX && (
+                    <g>
+                        <path 
+                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
+                            stroke="#020617" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.25"
+                        />
+                        <path 
+                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
+                            stroke={getLineColor(drawing.sourcePortKey, drawing.sourceId, null, '', null, null)} 
+                            strokeWidth="2" fill="none" strokeDasharray="8 4" opacity="0.4"
+                        />
+                    </g>
+                )}
+            </svg>
+
+            {/* MSFT Magnifier Glass HUD */}
+            {msftMagnifier && drawing && (
+                <div 
+                    className="absolute pointer-events-none z-[250] flex flex-col items-center transition-all duration-75"
+                    style={{
+                        left: `${drawing.currentX + 45}px`,
+                        top: `${drawing.currentY - 140}px`,
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                >
+                    {/* Floating Header Badge */}
+                    <div className="mb-2 px-3 py-1 rounded-full bg-slate-900/95 border border-cyan-400/80 shadow-[0_0_15px_rgba(34,211,238,0.5)] flex items-center gap-2 backdrop-blur-md">
+                        <span className={`w-2 h-2 rounded-full ${msftMagnifier.isSubPort ? 'bg-amber-400 animate-ping' : 'bg-cyan-400 animate-ping'}`} />
+                        <span className="text-[12px] font-black text-white font-mono tracking-wide">
+                            {msftMagnifier.labelText}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                            ({msftMagnifier.dev.name || msftMagnifier.dev.type})
+                        </span>
+                    </div>
+
+                    {/* Circular Magnifier Glass Lens */}
+                    <div className="w-[170px] h-[170px] rounded-full border-2 border-cyan-400/90 bg-slate-950/90 shadow-[0_0_35px_rgba(34,211,238,0.35),inset_0_0_25px_rgba(0,0,0,0.85)] relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center p-2">
+                        {/* Glass reflection overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-white/15 pointer-events-none z-20 rounded-full" />
+                        
+                        {/* Center Crosshair Target */}
+                        <div className="absolute w-full h-[1px] bg-cyan-400/30 z-20 pointer-events-none" />
+                        <div className="absolute h-full w-[1px] bg-cyan-400/30 z-20 pointer-events-none" />
+                        <div className="absolute w-6 h-6 rounded-full border border-cyan-400/60 z-20 pointer-events-none animate-pulse" />
+
+                        {/* Magnified Port Grid View */}
+                        <div className="relative z-10 flex flex-col items-center gap-2.5 max-w-full">
+                            {/* Main Ports Grid */}
+                            <div className="flex flex-col items-center">
+                                <div className="text-[9px] font-black text-cyan-400 tracking-wider mb-1">
+                                    主連接埠 (MAIN)
+                                </div>
+                                <div className="grid grid-cols-6 gap-1 bg-slate-900/90 p-1.5 rounded-md border border-cyan-500/40">
+                                    {Array.from({ length: Math.min(msftMagnifier.portCount, 12) }).map((_, idx) => {
+                                        const total = msftMagnifier.portCount;
+                                        let startP = Math.max(1, msftMagnifier.portNumber - 3);
+                                        if (startP + 11 > total) startP = Math.max(1, total - 11);
+                                        const pNum = startP + idx;
+                                        const isCurrent = !msftMagnifier.isSubPort && msftMagnifier.portNumber === pNum;
+                                        return (
+                                            <div 
+                                                key={pNum} 
+                                                className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
+                                                    isCurrent 
+                                                        ? 'bg-cyan-400 text-slate-950 ring-2 ring-white scale-110 font-black shadow-[0_0_10px_#22d3ee]' 
+                                                        : 'bg-purple-950/80 text-purple-200 border border-purple-500/40'
+                                                }`}
+                                            >
+                                                {pNum}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Sub Ports Grid */}
+                            {msftMagnifier.subPortCount > 0 && (
+                                <div className="flex flex-col items-center">
+                                    <div className="text-[9px] font-black text-amber-400 tracking-wider mb-1">
+                                        副連接埠 (SUB)
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-1 bg-slate-900/90 p-1.5 rounded-md border border-amber-500/40">
+                                        {Array.from({ length: Math.min(msftMagnifier.subPortCount, 6) }).map((_, idx) => {
+                                            const sNum = idx + 1;
+                                            const isCurrent = msftMagnifier.isSubPort && msftMagnifier.portNumber === sNum;
+                                            return (
+                                                <div 
+                                                    key={sNum} 
+                                                    className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
+                                                        isCurrent 
+                                                            ? 'bg-amber-400 text-slate-950 ring-2 ring-white scale-110 font-black shadow-[0_0_10px_#fbbf24]' 
+                                                            : 'bg-amber-950/80 text-amber-200 border border-amber-500/40'
+                                                    }`}
+                                                >
+                                                    S{sNum}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Magnifier Handle Decorative Stick */}
+                    <div className="w-1.5 h-5 bg-cyan-400/80 rounded-full shadow-[0_0_10px_#22d3ee] -mt-1.5 z-10" />
+                </div>
             )}
-        </svg>
+        </>
     );
 };
 
