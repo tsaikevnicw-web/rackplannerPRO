@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server } from 'lucide-react';
 
@@ -114,7 +114,7 @@ const RackView = ({ racksToRender }) => {
                 Object.entries(d.connections).forEach(([localKey, targetKey]) => {
                     if (targetKey) {
                         const localFullId = `${d.id}-${localKey}`;
-                        const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
+                        const { targetDevId } = parseTargetConnection(targetKey, devices);
                         if (d.id === selectedId || targetDevId === selectedId) {
                             set.add(localFullId);
                             set.add(targetKey);
@@ -409,11 +409,11 @@ const RackView = ({ racksToRender }) => {
                         style={{ height: rackMaxU * U_HEIGHT }}
                     >
                         {/* 擬真立柱 */}
-                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-800 to-slate-900 border-r border-slate-950 flex flex-col justify-around py-1 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.6)]">
-                            {Array.from({ length: rackMaxU * 3 }).map((_, i) => <div key={i} className="w-2.5 h-1.5 bg-black rounded-[2px] shadow-inner border-t border-b border-white/5 ml-3"></div>)}
+                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-800 to-slate-900 border-r border-slate-950 flex flex-col items-center justify-around py-1 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.6)]">
+                            {Array.from({ length: rackMaxU * 3 }).map((_, i) => <div key={i} className="w-2.5 h-1.5 bg-black rounded-[2px] shadow-inner border-t border-b border-white/5"></div>)}
                         </div>
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-800 to-slate-900 border-l border-slate-950 flex flex-col justify-around py-1 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.6)]">
-                            {Array.from({ length: rackMaxU * 3 }).map((_, i) => <div key={i} className="w-2.5 h-1.5 bg-black rounded-[2px] shadow-inner border-t border-b border-white/5 mr-3"></div>)}
+                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-800 to-slate-900 border-l border-slate-950 flex flex-col items-center justify-around py-1 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.6)]">
+                            {Array.from({ length: rackMaxU * 3 }).map((_, i) => <div key={i} className="w-2.5 h-1.5 bg-black rounded-[2px] shadow-inner border-t border-b border-white/5"></div>)}
                         </div>
 
                         {/* U 數空間標示 */}

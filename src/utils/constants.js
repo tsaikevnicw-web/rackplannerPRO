@@ -4,13 +4,16 @@ export const DEFAULT_RACK_U_COUNT = 48;
 export const U_HEIGHT = 24;
 
 export const THEME_STYLES = {
-    blue: { border: 'border-blue-500/50', bg: 'bg-[#0f172a]', glow: 'shadow-[inset_0_0_20px_rgba(59,130,246,0.15)]', led: 'bg-blue-500', text: 'text-blue-400' },
-    cyan: { border: 'border-cyan-500/50', bg: 'bg-[#081b23]', glow: 'shadow-[inset_0_0_20px_rgba(6,182,212,0.15)]', led: 'bg-cyan-500', text: 'text-cyan-400' },
-    emerald: { border: 'border-emerald-500/50', bg: 'bg-[#061e14]', glow: 'shadow-[inset_0_0_20px_rgba(16,185,129,0.15)]', led: 'bg-emerald-500', text: 'text-emerald-400' },
-    purple: { border: 'border-purple-500/50', bg: 'bg-[#150e24]', glow: 'shadow-[inset_0_0_20px_rgba(168,85,247,0.15)]', led: 'bg-purple-500', text: 'text-purple-400' },
-    violet: { border: 'border-violet-500/50', bg: 'bg-[#120a1f]', glow: 'shadow-[inset_0_0_20px_rgba(139,92,246,0.15)]', led: 'bg-violet-500', text: 'text-violet-400' },
-    orange: { border: 'border-orange-500/50', bg: 'bg-[#201008]', glow: 'shadow-[inset_0_0_20px_rgba(249,115,22,0.15)]', led: 'bg-orange-500', text: 'text-orange-400' },
-    slate: { border: 'border-slate-600/50', bg: 'bg-[#111827]', glow: 'shadow-[inset_0_0_20px_rgba(100,116,139,0.15)]', led: 'bg-slate-400', text: 'text-slate-300' }
+    blue: { border: 'border-blue-500/50', hoverBorder: 'hover:border-blue-500/40', bg: 'bg-[#0f172a]', glow: 'shadow-[inset_0_0_20px_rgba(59,130,246,0.15)]', led: 'bg-blue-500', text: 'text-blue-400' },
+    indigo: { border: 'border-indigo-500/50', hoverBorder: 'hover:border-indigo-500/40', bg: 'bg-[#11152c]', glow: 'shadow-[inset_0_0_20px_rgba(99,102,241,0.15)]', led: 'bg-indigo-500', text: 'text-indigo-400' },
+    cyan: { border: 'border-cyan-500/50', hoverBorder: 'hover:border-cyan-500/40', bg: 'bg-[#081b23]', glow: 'shadow-[inset_0_0_20px_rgba(6,182,212,0.15)]', led: 'bg-cyan-500', text: 'text-cyan-400' },
+    emerald: { border: 'border-emerald-500/50', hoverBorder: 'hover:border-emerald-500/40', bg: 'bg-[#061e14]', glow: 'shadow-[inset_0_0_20px_rgba(16,185,129,0.15)]', led: 'bg-emerald-500', text: 'text-emerald-400' },
+    purple: { border: 'border-purple-500/50', hoverBorder: 'hover:border-purple-500/40', bg: 'bg-[#150e24]', glow: 'shadow-[inset_0_0_20px_rgba(168,85,247,0.15)]', led: 'bg-purple-500', text: 'text-purple-400' },
+    violet: { border: 'border-violet-500/50', hoverBorder: 'hover:border-violet-500/40', bg: 'bg-[#120a1f]', glow: 'shadow-[inset_0_0_20px_rgba(139,92,246,0.15)]', led: 'bg-violet-500', text: 'text-violet-400' },
+    orange: { border: 'border-orange-500/50', hoverBorder: 'hover:border-orange-500/40', bg: 'bg-[#201008]', glow: 'shadow-[inset_0_0_20px_rgba(249,115,22,0.15)]', led: 'bg-orange-500', text: 'text-orange-400' },
+    amber: { border: 'border-amber-500/50', hoverBorder: 'hover:border-amber-500/40', bg: 'bg-[#211507]', glow: 'shadow-[inset_0_0_20px_rgba(245,158,11,0.15)]', led: 'bg-amber-500', text: 'text-amber-400' },
+    rose: { border: 'border-rose-500/50', hoverBorder: 'hover:border-rose-500/40', bg: 'bg-[#220a14]', glow: 'shadow-[inset_0_0_20px_rgba(244,63,94,0.15)]', led: 'bg-rose-500', text: 'text-rose-400' },
+    slate: { border: 'border-slate-600/50', hoverBorder: 'hover:border-slate-500/40', bg: 'bg-[#111827]', glow: 'shadow-[inset_0_0_20px_rgba(100,116,139,0.15)]', led: 'bg-slate-400', text: 'text-slate-300' }
 };
 
 export const HW_SPECS_CONFIG = [

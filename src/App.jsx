@@ -30,7 +30,7 @@ const AppContent = () => {
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
         raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, isGeneratingCablePDF, containers,
-        projectInfo, hideNonItCabinets, isTourOpen, setIsTourOpen
+        projectInfo, hideNonItCabinets, isTourOpen, setIsTourOpen, uiTheme
     } = useRackPlanner();
 
     const [activeOverviewContainerId, setActiveOverviewContainerId] = React.useState(null);
@@ -382,7 +382,11 @@ const AppContent = () => {
 
     return (
         <>
-            <div className="screen-layout flex flex-col h-screen bg-[#060c16] text-slate-200 overflow-hidden font-sans select-none">
+            <div
+                className="award-preview-root screen-layout flex flex-col h-screen bg-[#060c16] text-slate-200 overflow-hidden font-sans select-none"
+                data-award-theme={uiTheme}
+                data-award-font="editorial"
+            >
                 <Header />
             <div className="flex flex-1 overflow-hidden relative">
                 <Sidebar />

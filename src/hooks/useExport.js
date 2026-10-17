@@ -1,72 +1,9 @@
 import { useState } from 'react';
-import { getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo } from '../utils/helpers';
+import { getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo, formatRemotePort } from '../utils/helpers';
+import { getMsftRackSubItems, getMsftDeviceSubItems } from '../utils/msftBomConfig';
+import { generateProjectCableCutSheet, calculatePhysicalCableDistance, determineCableAndTransceivers } from '../utils/cableCalculator';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 import { toCanvas } from 'html-to-image';
-
-const formatRemotePort = (portKey) => {
-    if (!portKey) return '-';
-    
-    // 1. PCIe slot with node: pcie_slot_1_n1-2 -> N1 Slot 1 P2
-    const pcieNodeMatch = portKey.match(/^pcie_slot_(\d+)_([nN]\d+)-(\d+)$/);
-    if (pcieNodeMatch) {
-        const [, slotIdx, nodeKey, portIdx] = pcieNodeMatch;
-        return `${nodeKey.toUpperCase()} Slot ${slotIdx} P${portIdx}`;
-    }
-    
-    // 2. PCIe slot standard: pcie_slot_1-2 -> Slot 1 P2
-    const pcieMatch = portKey.match(/^pcie_slot_(\d+)-(\d+)$/);
-    if (pcieMatch) {
-        const [, slotIdx, portIdx] = pcieMatch;
-        return `Slot ${slotIdx} P${portIdx}`;
-    }
-    
-    // 3. BMC with node: bmc_n1 -> N1 BMC
-    const bmcNodeMatch = portKey.match(/^bmc_([nN]\d+)$/);
-    if (bmcNodeMatch) {
-        const [, nodeKey] = bmcNodeMatch;
-        return `${nodeKey.toUpperCase()} MGMT`;
-    }
-    
-    // 4. OCP with node: ocp_n1-1 -> N1 OCP P1
-    const ocpNodeMatch = portKey.match(/^ocp_([nN]\d+)-(\d+)$/);
-    if (ocpNodeMatch) {
-        const [, nodeKey, portIdx] = ocpNodeMatch;
-        return `${nodeKey.toUpperCase()} OCP P${portIdx}`;
-    }
-
-    // 5. Legacy NS-NIC with node: ns_nic_1_n1-2 -> N1 Slot 1 P2
-    const legacyNicNodeMatch = portKey.match(/^ns_nic_(\d+)_([nN]\d+)-(\d+)$/);
-    if (legacyNicNodeMatch) {
-        const [, slotIdx, nodeKey, portIdx] = legacyNicNodeMatch;
-        return `${nodeKey.toUpperCase()} Slot ${slotIdx} P${portIdx}`;
-    }
-
-    // 6. Legacy NS-NIC standard: ns_nic_1-2 -> Slot 1 P2
-    const legacyNicMatch = portKey.match(/^ns_nic_(\d+)-(\d+)$/);
-    if (legacyNicMatch) {
-        const [, slotIdx, portIdx] = legacyNicMatch;
-        return `Slot ${slotIdx} P${portIdx}`;
-    }
-
-    // 7. General formatting
-    if (portKey.startsWith('cx8-')) {
-        return portKey.replace('cx8-', 'EW NIC P');
-    }
-    if (portKey.startsWith('ocp-')) {
-        return portKey.replace('ocp-', 'OCP P');
-    }
-    if (portKey.startsWith('port-')) {
-        return portKey.replace('port-', 'Port ');
-    }
-    if (portKey.startsWith('subport-')) {
-        return portKey.replace('subport-', 'SubPort ');
-    }
-    if (portKey === 'bmc') {
-        return 'MGMT';
-    }
-    
-    return portKey;
-};
 
 export function useExport(
     racks, devices, setIsFileMenuOpen, setIsExporting, rackContainerRef, showAlert,
@@ -80,9 +17,22 @@ export function useExport(
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [printTimestamp, setPrintTimestamp] = useState('');
 
+    const getExportCanvasBgColor = () => {
+        const mainCanvas = document.querySelector('.main-canvas');
+        if (mainCanvas) {
+            const bg = window.getComputedStyle(mainCanvas).backgroundColor;
+            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+                return bg;
+            }
+        }
+        return document.querySelector('.award-preview-root') ? '#1F2223' : '#060c16';
+    };
+
     const handlePrintPDF = async () => {
         setIsGeneratingPDF(true);
         setIsFileMenuOpen(false);
+
+        const exportBgColor = getExportCanvasBgColor();
 
         // Save original states
         const originalViewMode = viewMode;
@@ -113,11 +63,11 @@ export function useExport(
                     const originalTransform = element.style.transform;
 
                     element.style.transform = 'none';
-                    element.style.backgroundColor = '#020617';
+                    element.style.backgroundColor = exportBgColor;
                     void element.offsetWidth;
 
                     const canvas = await toCanvas(element, {
-                        backgroundColor: '#020617',
+                        backgroundColor: exportBgColor,
                         pixelRatio: 2,
                     });
 
@@ -164,11 +114,11 @@ export function useExport(
                 const originalTransform = element.style.transform;
 
                 element.style.transform = 'none';
-                element.style.backgroundColor = '#020617';
+                element.style.backgroundColor = exportBgColor;
                 void element.offsetWidth;
 
                 const canvas = await toCanvas(element, {
-                    backgroundColor: '#020617',
+                    backgroundColor: exportBgColor,
                     pixelRatio: 2,
                 });
 
@@ -293,49 +243,18 @@ export function useExport(
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
 
             if (projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'rackEnclosure', label: 'Rack enclosure' },
-                    { key: 'busbar', label: 'Busbar' },
-                    { key: 'sidePanel', label: 'Side Panel' },
-                    { key: 'leakManagement', label: 'Leak Management' },
-                    { key: 'cableManagement', label: 'Cable Management' },
-                    { key: 'rackNut', label: 'NUT' },
-                    { key: 'rackScrew', label: 'SCREW' },
-                    { key: 'ioCables', label: 'IO Cables' },
-                    { key: 'cat6Rj45', label: 'CAT-6 RJ45' },
-                    { key: 'rackGrounding', label: 'Rack Grounding' }
-                ];
-                subKeys.forEach(sub => {
-                    if (rack[sub.key]) {
-                        const subRow = [
-                            rack.name,
-                            `${position} (附屬)`,
-                            sub.label,
-                            0,
-                            0,
-                            '-',
-                            0
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
+                getMsftRackSubItems(rack).forEach(subLabel => {
+                    const subRow = [
+                        rack.name,
+                        `${position} (附屬)`,
+                        subLabel,
+                        0,
+                        0,
+                        '-',
+                        0
+                    ];
+                    csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                 });
-                if (rack.rackCustom && Array.isArray(rack.rackCustom)) {
-                    rack.rackCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rack.name,
-                                `${position} (附屬)`,
-                                trimmed,
-                                0,
-                                0,
-                                '-',
-                                0
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
             }
         });
         
@@ -408,236 +327,39 @@ export function useExport(
             ];
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
 
-            if (dev.type === 'PowerShelf' && projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'powerShelfKit', label: 'Power Shelf Kit' },
-                    { key: 'powerShelfEnclosure', label: 'Power Shelf Enclosure' },
-                    { key: 'powerSupplyUnit', label: 'Power Supply Unit' },
-                    { key: 'railForPowerShelf', label: 'Rail for Power shelf' },
-                    { key: 'rackScm', label: 'Rack-SCM' },
-                    { key: 'c13Module', label: 'C-13 Module' },
-                    { key: 'psuFiller', label: 'PSU filler' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        const subRow = [
-                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                            '', '', '', '', '', '', '', '', '', ''
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
-                });
-                if (dev.powerShelfCustom && Array.isArray(dev.powerShelfCustom)) {
-                    dev.powerShelfCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-
-            if (dev.type === 'ServerGeneral' && projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'computeNode', label: 'Compute Node' },
-                    { key: 'slideRailForNode', label: 'Slide Rail for Node' },
-                    { key: 'screwForNodeRail', label: 'Screw for Node Rail' },
-                    { key: 'nutForNodeRail', label: 'NUT for Node Rail' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        const subRow = [
-                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                            '', '', '', '', '', '', '', '', '', ''
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
-                });
-                if (dev.serverGeneralCustom && Array.isArray(dev.serverGeneralCustom)) {
-                    dev.serverGeneralCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-
-            if (dev.type === 'Blank' && projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'oneOu', label: '1OU' },
-                    { key: 'ouEia', label: 'OU-EIA' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        const subRow = [
-                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                            '', '', '', '', '', '', '', '', '', ''
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
-                });
-                if (dev.blankCustom && Array.isArray(dev.blankCustom)) {
-                    dev.blankCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-
-            if (dev.type === 'StorageJBOD' && projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'jbod', label: 'JBOD' },
-                    { key: 'railForJbod', label: 'Rail for JBOD' },
-                    { key: 'halfOuBlank', label: '0.5OU Blank' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        const subRow = [
-                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                            '', '', '', '', '', '', '', '', '', ''
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
-                });
-                if (dev.jbodCustom && Array.isArray(dev.jbodCustom)) {
-                    dev.jbodCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-
-            if (dev.type === 'StorageJBOF' && projectInfo?.designType === 'msft') {
-                const subKeys = [
-                    { key: 'jbof', label: 'JBOF' },
-                    { key: 'railForJbof', label: 'Rail for JBOF' },
-                    { key: 'halfOuBlank', label: '0.5OU Blank' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        const subRow = [
-                            rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                            '', '', '', '', '', '', '', '', '', ''
-                        ];
-                        csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                    }
-                });
-                if (dev.jbofCustom && Array.isArray(dev.jbofCustom)) {
-                    dev.jbofCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-            if ((dev.type || '').startsWith('Switch') && projectInfo?.designType === 'msft') {
-                const switchTag = dev.switchTag;
-                if (switchTag === 'tor') {
-                    const subKeys = [
-                        { key: 'tor', label: 'TOR' },
-                        { key: 'eiaAdapter2U', label: 'EIA 19” Adapter 2U' },
-                        { key: 'mountingKitTor', label: 'Mounting kit for TOR' },
-                        { key: 'powerCordTor', label: 'Power cord for TOR' },
-                        { key: 'sleeveC13', label: 'Sleeve C13' }
+            if (projectInfo?.designType === 'msft') {
+                getMsftDeviceSubItems(dev).forEach(subLabel => {
+                    const subRow = [
+                        rackName, `${position} (附屬)`, subLabel, 'Sub-Device', 0, 0, 0,
+                        '', '', '', '', '', '', '', '', '', ''
                     ];
-                    subKeys.forEach(sub => {
-                        if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                            const subRow = [
-                                rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                } else if (switchTag === 'mgmt') {
-                    const subKeys = [
-                        { key: 'managementSwitch', label: 'Management Switch' },
-                        { key: 'eiaAdapter1U', label: 'EIA 19” Adapter 1U' },
-                        { key: 'mountingKitMgmt', label: 'Mounting kit for MGMT' },
-                        { key: 'powerCordMgmt', label: 'Power cord for MGMT' },
-                        { key: 'sleeveC13', label: 'Sleeve C13' }
-                    ];
-                    subKeys.forEach(sub => {
-                        if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                            const subRow = [
-                                rackName, `${position} (附屬)`, sub.label, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-                if (dev.switchCustom && Array.isArray(dev.switchCustom)) {
-                    dev.switchCustom.forEach(customItem => {
-                        const trimmed = (customItem || '').trim();
-                        if (trimmed) {
-                            const customRow = [
-                                rackName, `${position} (附屬)`, trimmed, 'Sub-Device', 0, 0, 0,
-                                '', '', '', '', '', '', '', '', '', ''
-                            ];
-                            csv += customRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
-                        }
-                    });
-                }
-            }
-        });
-
-        csv += "\n\n網路線材與光模組統計 (Cables & Transceivers)\n類型,總數量\n";
-        const bomCounts = { '1G NIC cable': 0, '10G/100G cable': 0, '400G cable': 0, '800G cable': 0, 'QSFP56 transceiver': 0, '2x400G Transceiver': 0, 'EW NIC Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)': 0, 'EW NIC Ethernet: MMA4Z00-NS Transceiver (SW端)': 0, 'EW NIC Ethernet: MFP7E10-Nxxx Cable': 0, 'EW NIC InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)': 0 };
-
-        devices.forEach(dev => {
-            if (dev.connections) {
-                Object.entries(dev.connections).forEach(([portKey, targetKey]) => {
-                    if (!targetKey) return;
-                    const targetDevice = devices.find(d => targetKey.startsWith(d.id + '-'));
-                    if (targetDevice) {
-                        if (getServerCategory(dev) === 'AI' && portKey.startsWith('cx8-')) {
-                            const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-                            if (cx8NetworkType === 'Ethernet') {
-                                bomCounts['EW NIC Ethernet: MMA4Z00-NS-FLT Transceiver (NIC端)'] += 1;
-                                bomCounts['EW NIC Ethernet: MMA4Z00-NS Transceiver (SW端)'] += 1;
-                                bomCounts['EW NIC Ethernet: MFP7E10-Nxxx Cable'] += 2;
-                            } else if (cx8NetworkType === 'InfiniBand') {
-                                bomCounts['EW NIC InfiniBand: MCA7K10 一體化 Cable (1.6T to 2x800G)'] += 0.5;
-                            }
-                        } else {
-                            if (targetDevice.type === 'Switch1G') bomCounts['1G NIC cable']++;
-                            else if (targetDevice.type === 'Switch10G' || targetDevice.type === 'Router') bomCounts['10G/100G cable']++;
-                            else if (targetDevice.type === 'Switch400G' || targetDevice.type === 'Switch400G1U') { bomCounts['400G cable']++; bomCounts['QSFP56 transceiver'] += 2; }
-                            else if (targetDevice.type === 'Switch800G') { bomCounts['800G cable'] += 2; bomCounts['2x400G Transceiver'] += 2; }
-                        }
-                    }
+                    csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                 });
             }
         });
 
-        Object.entries(bomCounts).forEach(([type, count]) => { if (count > 0) csv += `"${type}","${count}"\n`; });
+        const { cutSheetRows, lengthBinnedBom, transceiverMap } = generateProjectCableCutSheet(devices, racks, projectInfo);
+
+        csv += "\n\nL11/L12 網路線材分長度採購統計 (Length-Binned Cables BOM)\n線材類別,標準料號/規格,物理介質 (DAC/AOC/Fiber/UTP),標準採購長度(m),L11櫃內數量,L12跨櫃數量,總採購數量,總米數(m)\n";
+        lengthBinnedBom.forEach(item => {
+            const row = [
+                item.bomCategoryName,
+                item.cableModel,
+                item.mediaType,
+                `${item.standardLength}m`,
+                item.scopeBreakdown.l11,
+                item.scopeBreakdown.l12,
+                item.totalQty,
+                `${item.totalMeters}m`
+            ];
+            csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+        });
+
+        csv += "\n\n獨立光模組採購統計 (Optical Transceivers BOM)\n光模組型號,總數量\n";
+        Object.entries(transceiverMap).forEach(([model, qty]) => {
+            if (qty > 0) csv += `"${model}","${qty}"\n`;
+        });
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a'); link.href = url; link.download = `RackPlanner-BOM-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -646,7 +368,40 @@ export function useExport(
 
     const handleExportCableRouting = () => {
         let csv = '\uFEFF';
-        csv += "交換器名稱,網路用途 (Fabric Group),網路角色 (Network Role),交換器孔位,對接機櫃名稱,對接設備名稱,對接設備孔位,Transceiver(NIC),Transceiver(SW),Cable型號,Cable數量\n";
+        const { cutSheetRows } = generateProjectCableCutSheet(devices, racks, projectInfo);
+
+        // 第一部分：產線級 L11/L12 點對點拉線施工表 (Point-to-Point Cut-Sheet with Cable_ID)
+        csv += "【第一部分】L11/L12 產線點對點拉線施工表 (Point-to-Point Cable Cut-Sheet & Brady Label)\n";
+        csv += "項次,線標編號 (Cable_ID),佈線層級 (Scope),網路平面 (Fabric),來源機櫃 (Src_Rack),來源U位 (Src_U),來源設備 (Src_Hostname),來源埠位 (Src_Port),目的機櫃 (Dst_Rack),目的U位 (Dst_U),目的設備 (Dst_Hostname),目的埠位 (Dst_Port),物理估算距離(m),建議採購線長(m),線材物理介質 (Media),線材型號 (Cable_PN),來源端收發器 (Src_Transceiver),目的端收發器 (Dst_Transceiver),線材數量\n";
+
+        cutSheetRows.forEach(r => {
+            const row = [
+                r.seq,
+                r.cableId,
+                r.scope,
+                r.fabricLabel,
+                r.srcRackName,
+                r.srcU,
+                r.srcDeviceName,
+                r.srcPortFormatted,
+                r.dstRackName,
+                r.dstU,
+                r.dstDeviceName,
+                r.dstPortFormatted,
+                `${r.rawLength}m`,
+                `${r.standardLength}m`,
+                r.mediaType,
+                r.cableModel,
+                r.transceiverSrc,
+                r.transceiverDst,
+                r.cableQty
+            ];
+            csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
+        });
+
+        // 第二部分：交換器孔位視角對照表 (Switch Port Mapping)
+        csv += "\n\n【第二部分】交換器埠位對照表 (Switch Port Mapping View)\n";
+        csv += "交換器名稱,網路用途 (Fabric Group),網路角色 (Network Role),交換器孔位,對接機櫃名稱,對接設備U位,對接設備名稱,對接設備孔位,佈線層級,預估實長(m),採購線長(m),物理介質,Transceiver(NIC),Transceiver(SW),Cable型號,Cable數量\n";
         const switches = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router');
         switches.sort((a, b) => {
             const fgA = getFabricGroup(a, projectInfo?.designType); const fgB = getFabricGroup(b, projectInfo?.designType);
@@ -660,16 +415,46 @@ export function useExport(
         devices.forEach(d => {
             if (d.connections) {
                 Object.entries(d.connections).forEach(([localKey, targetKey]) => {
-                        const targetDevice = devices.find(x => targetKey.startsWith(x.id + '-'));
-                        if (targetDevice) {
-                            const targetDevId = targetDevice.id;
-                            const targetPortKey = targetKey.substring(targetDevId.length + 1);
-                            linkMap[`${d.id}-${localKey}`] = { devId: targetDevId, portKey: targetPortKey };
-                            linkMap[targetKey] = { devId: d.id, portKey: localKey };
-                        }
+                    const targetDevice = devices.find(x => targetKey.startsWith(x.id + '-'));
+                    if (targetDevice) {
+                        const targetDevId = targetDevice.id;
+                        const targetPortKey = targetKey.substring(targetDevId.length + 1);
+                        linkMap[`${d.id}-${localKey}`] = { devId: targetDevId, portKey: targetPortKey };
+                        linkMap[targetKey] = { devId: d.id, portKey: localKey };
+                    }
                 });
             }
         });
+
+        const buildSwitchPortRow = (sw, fabricGroup, role, swPortLabel, swPortKey, remoteInfo, isFirstRowForSwitch) => {
+            const remoteDev = devices.find(d => d.id === remoteInfo.devId);
+            if (!remoteDev) return null;
+            const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
+            const remoteU = remoteDev.type === 'SideCDU' ? 'SideCar' : `U${remoteDev.startU}`;
+            const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
+
+            const distInfo = calculatePhysicalCableDistance(remoteDev, remoteInfo.portKey, sw, swPortKey, racks);
+            const specInfo = determineCableAndTransceivers(remoteDev, remoteInfo.portKey, sw, swPortKey, distInfo.standardLength, projectInfo?.designType);
+
+            return [
+                isFirstRowForSwitch ? sw.customName : "",
+                isFirstRowForSwitch ? fabricGroup : "",
+                isFirstRowForSwitch ? role : "",
+                swPortLabel,
+                remoteRack,
+                remoteU,
+                remoteDev.customName,
+                formattedRemotePort,
+                distInfo.scope,
+                `${distInfo.rawLength}m`,
+                `${distInfo.standardLength}m`,
+                specInfo.mediaType,
+                specInfo.transceiverSrc,
+                specInfo.transceiverDst,
+                specInfo.cableModel,
+                specInfo.cableQty
+            ];
+        };
 
         switches.forEach(sw => {
             const fabricGroup = getFabricGroup(sw, projectInfo?.designType);
@@ -681,21 +466,9 @@ export function useExport(
             for (let i = 1; i <= portCount; i++) {
                 const fullLocalId = `${sw.id}-port-${i}`;
                 if (linkMap[fullLocalId]) {
-                    switchHasAnyConnection = true;
-                    const remoteInfo = linkMap[fullLocalId];
-                    const remoteDev = devices.find(d => d.id === remoteInfo.devId);
-
-                    if (remoteDev) {
-                        const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
-                        const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
-
-                        let transceiverNic = '-'; let transceiverSw = '-'; let cableModel = '-'; let cableCount = '-';
-                        if (getServerCategory(remoteDev) === 'AI' && remoteInfo.portKey.startsWith('cx8-')) {
-                            const cx8Type = remoteDev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-                            if (cx8Type === 'Ethernet') { transceiverNic = 'MMA4Z00-NS-FLT'; transceiverSw = 'MMA4Z00-NS'; cableModel = 'MFP7E10-Nxxx'; cableCount = '2'; }
-                            else if (cx8Type === 'InfiniBand') { transceiverNic = '一體化 (2x 800G OSFP)'; transceiverSw = '一體化 (1.6TB)'; cableModel = 'MCA7K10'; cableCount = '0.5'; }
-                        }
-                        const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `Port ${i}`, remoteRack, remoteDev.customName, formattedRemotePort, transceiverNic, transceiverSw, cableModel, cableCount];
+                    const rowData = buildSwitchPortRow(sw, fabricGroup, role, `Port ${i}`, `port-${i}`, linkMap[fullLocalId], isFirstRowForSwitch);
+                    if (rowData) {
+                        switchHasAnyConnection = true;
                         csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                         isFirstRowForSwitch = false;
                     }
@@ -706,21 +479,9 @@ export function useExport(
             for (let i = 1; i <= subPortCount; i++) {
                 const fullLocalId = `${sw.id}-subport-${i}`;
                 if (linkMap[fullLocalId]) {
-                    switchHasAnyConnection = true;
-                    const remoteInfo = linkMap[fullLocalId];
-                    const remoteDev = devices.find(d => d.id === remoteInfo.devId);
-
-                    if (remoteDev) {
-                        const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
-                        const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
-
-                        let transceiverNic = '-'; let transceiverSw = '-'; let cableModel = '-'; let cableCount = '-';
-                        if (getServerCategory(remoteDev) === 'AI' && remoteInfo.portKey.startsWith('cx8-')) {
-                            const cx8Type = remoteDev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-                            if (cx8Type === 'Ethernet') { transceiverNic = 'MMA4Z00-NS-FLT'; transceiverSw = 'MMA4Z00-NS'; cableModel = 'MFP7E10-Nxxx'; cableCount = '2'; }
-                            else if (cx8Type === 'InfiniBand') { transceiverNic = '一體化 (2x 800G OSFP)'; transceiverSw = '一體化 (1.6TB)'; cableModel = 'MCA7K10'; cableCount = '0.5'; }
-                        }
-                        const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", `SubPort ${i}`, remoteRack, remoteDev.customName, formattedRemotePort, transceiverNic, transceiverSw, cableModel, cableCount];
+                    const rowData = buildSwitchPortRow(sw, fabricGroup, role, `SubPort ${i}`, `subport-${i}`, linkMap[fullLocalId], isFirstRowForSwitch);
+                    if (rowData) {
+                        switchHasAnyConnection = true;
                         csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                         isFirstRowForSwitch = false;
                     }
@@ -729,24 +490,20 @@ export function useExport(
 
             const bmcLocalId = `${sw.id}-bmc`;
             if (linkMap[bmcLocalId]) {
-                switchHasAnyConnection = true;
-                const remoteInfo = linkMap[bmcLocalId];
-                const remoteDev = devices.find(d => d.id === remoteInfo.devId);
-                if (remoteDev) {
-                    const remoteRack = racks.find(r => r.id === remoteDev.rackId)?.name || '未知機櫃';
-                    const formattedRemotePort = formatRemotePort(remoteInfo.portKey);
-                    const rowData = [isFirstRowForSwitch ? sw.customName : "", isFirstRowForSwitch ? fabricGroup : "", isFirstRowForSwitch ? role : "", projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC', remoteRack, remoteDev.customName, formattedRemotePort, '-', '-', '-', '-'];
+                const rowData = buildSwitchPortRow(sw, fabricGroup, role, projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC', 'bmc', linkMap[bmcLocalId], isFirstRowForSwitch);
+                if (rowData) {
+                    switchHasAnyConnection = true;
                     csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
                     isFirstRowForSwitch = false;
                 }
             }
-            if (!switchHasAnyConnection) csv += `"${sw.customName}","${fabricGroup}","${role}","無接線","-","-","-","-","-","-","-"\n`;
-            else csv += `,,,,,,,,,,\n`;
+            if (!switchHasAnyConnection) csv += `"${sw.customName}","${fabricGroup}","${role}","無接線","-","-","-","-","-","-","-","-","-","-","-","-"\n`;
+            else csv += `,,,,,,,,,,,,,,,\n`;
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a'); link.href = url; link.download = `RackPlanner-CableRouting-${new Date().toISOString().slice(0, 10)}.csv`;
+        const link = document.createElement('a'); link.href = url; link.download = `RackPlanner-L11L12-CutSheet-${new Date().toISOString().slice(0, 10)}.csv`;
         link.click(); URL.revokeObjectURL(url); setIsFileMenuOpen(false);
     };
 
@@ -757,17 +514,18 @@ export function useExport(
         if (!element) return;
         setIsExporting(true);
         try {
+            const exportBgColor = getExportCanvasBgColor();
             const originalStyle = element.style.cssText; 
             const originalTransform = element.style.transform;
             
             element.style.transform = 'none'; 
-            element.style.backgroundColor = '#020617';
+            element.style.backgroundColor = exportBgColor;
 
             // Ensure browser performs layout recalculation
             void element.offsetWidth;
 
             const canvas = await toCanvas(element, { 
-                backgroundColor: '#020617', 
+                backgroundColor: exportBgColor, 
                 pixelRatio: window.devicePixelRatio || 1,
             });
             

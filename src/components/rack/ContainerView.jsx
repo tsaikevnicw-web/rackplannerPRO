@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Server, Droplets, Zap, Settings, Trash2, LogOut, Info, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
     ShieldAlert, Eye, Thermometer, LayoutGrid, RotateCw, RefreshCw, Sparkles, 
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
+import { getRackStats as calcRackStats, getSingleContainerStats as calcSingleContainerStats } from '../../utils/helpers';
 
 const ContainerView = () => {
     const {
@@ -25,9 +26,15 @@ const ContainerView = () => {
     // 檢視模式狀態：每個貨櫃各自記住 'topdown' (俯視角2D自由畫布) 或 'slot' (一維插槽)
     const [layoutModes, setLayoutModes] = useState({});
     
-    // 2D 滑鼠拖拽移動與調整尺寸之狀態
+    // 2D 滑鼠拖拽移動與調整尺寸之狀態（使用 transientRackUpdate 緩衝拖曳中座標，在 mouseup 時才一次性寫入 setRacks，避免污染 Undo 歷史與觸發全域重繪）
     const [dragState, setDragState] = useState(null);
     const [resizeState, setResizeState] = useState(null);
+    const [transientRackUpdate, setTransientRackUpdate] = useState(null);
+
+    const displayRacks = useMemo(() => {
+        if (!transientRackUpdate) return racks;
+        return racks.map(r => r.id === transientRackUpdate.id ? { ...r, ...transientRackUpdate } : r);
+    }, [racks, transientRackUpdate]);
 
     const getLayoutMode = (containerId) => layoutModes[containerId] || 'topdown';
 
@@ -38,87 +45,10 @@ const ContainerView = () => {
         }));
     };
 
-    // 計算每個 slot 內機櫃的實際功耗與重量
-    const getRackStats = (rack) => {
-        if (!rack) return { power: 0, weight: 0 };
-        if (rack.isZone || rack.type === 'ColdAisleZone' || rack.type === 'HotAisleZone') return { power: 0, weight: 0 };
-        
-        if (rack.type === 'Cooling') return { power: rack.power || 4500, weight: rack.weight || 320 };
-        if (rack.type === 'CDU') return { power: rack.power || 2500, weight: rack.weight || 350 };
-        if (rack.type === 'UPS') return { power: 0, weight: rack.weight || 850 };
-        if (rack.type === 'Battery') return { power: 0, weight: rack.weight || 1200 };
-        if (rack.type === 'Switchboard') return { power: 0, weight: rack.weight || 420 };
-        if (rack.type === 'PowerPanel') return { power: 0, weight: rack.weight || 120 };
-        if (rack.type === 'FireSuppression') return { power: 0, weight: rack.weight || 250 };
-        if (rack.type === 'Monitoring') return { power: 0, weight: rack.weight || 180 };
-        if (rack.type === 'EnvControl') return { power: 0, weight: rack.weight || 150 };
+    // 計算每個 slot 內機櫃的實際功耗與重量（統一調用 helpers.js）
+    const getRackStats = (rack) => calcRackStats(rack, devices);
 
-        const rackDevices = devices.filter(d => d.rackId === rack.id);
-        const devicePower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
-        const deviceWeight = rackDevices.reduce((sum, d) => sum + (d.weight !== undefined && d.weight !== null ? d.weight : 10), 0);
-        
-        return {
-            power: devicePower,
-            weight: (rack.weight || 150) + deviceWeight
-        };
-    };
-
-    const getSingleContainerStats = (container) => {
-        const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
-        const activeRacks = racks.filter(r => {
-            const cId = r.containerId || 'container-1';
-            return cId === container.id;
-        });
-
-        const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : (container.type === '40ft' ? 3800 : (container.customLength ? container.customLength * 95 : 3800)));
-        let totalWeight = selfW;
-        let totalItPower = 0;
-        let totalCoolingPower = 0;
-
-        activeRacks.forEach(rack => {
-            if (rack.isZone || rack.type === 'ColdAisleZone' || rack.type === 'HotAisleZone') return;
-            if (rack.type === 'Cooling') {
-                totalWeight += (rack.weight || 320);
-                totalCoolingPower += (rack.power || 4500);
-            } else if (rack.type === 'CDU') {
-                totalWeight += (rack.weight || 350);
-                totalCoolingPower += (rack.power || 2500);
-            } else if (rack.type === 'UPS') {
-                totalWeight += (rack.weight || 850);
-            } else if (rack.type === 'Battery') {
-                totalWeight += (rack.weight || 1200);
-            } else if (rack.type === 'Switchboard') {
-                totalWeight += (rack.weight || 420);
-            } else if (rack.type === 'PowerPanel') {
-                totalWeight += (rack.weight || 120);
-            } else if (rack.type === 'FireSuppression') {
-                totalWeight += (rack.weight || 250);
-            } else if (rack.type === 'Monitoring') {
-                totalWeight += (rack.weight || 180);
-            } else if (rack.type === 'EnvControl') {
-                totalWeight += (rack.weight || 150);
-            } else {
-                const rackDevices = devices.filter(d => d.rackId === rack.id);
-                const devicePower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
-                const deviceWeight = rackDevices.reduce((sum, d) => sum + (d.weight !== undefined && d.weight !== null ? d.weight : 10), 0);
-                totalItPower += devicePower;
-                totalWeight += (rack.weight || 150) + deviceWeight;
-            }
-        });
-
-        const upsLosses = totalItPower * 0.05;
-        const pue = totalItPower > 0 
-            ? (totalItPower + totalCoolingPower + upsLosses) / totalItPower
-            : 1.15;
-
-        return {
-            totalWeight,
-            totalItPower,
-            totalCoolingPower,
-            totalPower: totalItPower + totalCoolingPower + upsLosses,
-            pue: Math.max(1.15, pue)
-        };
-    };
+    const getSingleContainerStats = (container) => calcSingleContainerStats(container, racks, devices);
 
     // 取得 2D 畫布預設座標 (當機櫃尚未設定 posX / posY 時)
     const getRack2DPos = (rack, slotIdx, maxSlots, canvasWidth = 1100) => {
@@ -196,6 +126,8 @@ const ContainerView = () => {
     useEffect(() => {
         if (!dragState && !resizeState) return;
 
+        let latestPatch = null;
+
         const handleMouseMove = (e) => {
             if (dragState) {
                 const deltaX = e.clientX - dragState.startX;
@@ -218,12 +150,8 @@ const ContainerView = () => {
                 let newX = Math.max(minX, Math.min(maxX, Math.round(rawX / 5) * 5));
                 let newY = Math.max(minY, Math.min(maxY, Math.round(rawY / 5) * 5));
 
-                setRacks(prev => prev.map(r => {
-                    if (r.id === dragState.rackId) {
-                        return { ...r, posX: newX, posY: newY };
-                    }
-                    return r;
-                }));
+                latestPatch = { id: dragState.rackId, posX: newX, posY: newY };
+                setTransientRackUpdate(latestPatch);
             } else if (resizeState) {
                 const deltaX = e.clientX - resizeState.startX;
                 const deltaY = e.clientY - resizeState.startY;
@@ -240,16 +168,17 @@ const ContainerView = () => {
                 let newW = Math.max(40, Math.min(maxAllowedW, Math.round((resizeState.initW + deltaX) / 5) * 5));
                 let newH = Math.max(30, Math.min(maxAllowedH, Math.round((resizeState.initH + deltaY) / 5) * 5));
 
-                setRacks(prev => prev.map(r => {
-                    if (r.id === resizeState.rackId) {
-                        return { ...r, customWidth: newW, customHeight: newH };
-                    }
-                    return r;
-                }));
+                latestPatch = { id: resizeState.rackId, customWidth: newW, customHeight: newH };
+                setTransientRackUpdate(latestPatch);
             }
         };
 
         const handleMouseUp = () => {
+            if (latestPatch) {
+                const patchToCommit = latestPatch;
+                setRacks(prev => prev.map(r => r.id === patchToCommit.id ? { ...r, ...patchToCommit } : r));
+            }
+            setTransientRackUpdate(null);
             setDragState(null);
             setResizeState(null);
         };
@@ -738,7 +667,7 @@ const ContainerView = () => {
 
             {containers.map((container) => {
                 const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
-                const activeContainerRacks = racks.filter(r => (r.containerId || 'container-1') === container.id);
+                const activeContainerRacks = displayRacks.filter(r => (r.containerId || 'container-1') === container.id);
                 const stats = getSingleContainerStats(container);
                 const currentLayoutMode = getLayoutMode(container.id);
 

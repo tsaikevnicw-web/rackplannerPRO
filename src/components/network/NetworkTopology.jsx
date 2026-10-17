@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, getCustomNetworkPortLabel } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
@@ -15,7 +15,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
                 Object.entries(d.connections).forEach(([localKey, targetKey]) => {
                     if (targetKey) {
                         const localFullId = `${d.id}-${localKey}`;
-                        const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
+                        const { targetDevId } = parseTargetConnection(targetKey, devices);
                         if (d.id === selectedId || targetDevId === selectedId) {
                             set.add(localFullId);
                             set.add(targetKey);

@@ -1,0 +1,990 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* ==========================================================================
+   AWARD-WINNING CALM & ERGONOMIC UI THEME (國際設計獎・靜謐莫蘭迪夜 + Editorial 知性襯線)
+   Scoped strictly to .award-preview-root so the main system remains untouched
+   ========================================================================== */
+
+.award-preview-root {
+  /* Default Theme: Morandi Sage Dusk (靜謐莫蘭迪夜 - 零霓虹感溫潤深灰) */
+  --ui-bg-canvas: #1F2223;
+  --ui-bg-panel: #272A2C;
+  --ui-bg-surface: #2E3235;
+  --ui-bg-subtle: #232628;
+  --ui-bg-hover: #363B3E;
+
+  --ui-border: #3B4043;
+  --ui-border-strong: #4C5256;
+  --ui-border-subtle: #313538;
+
+  --ui-text-primary: #EAE6DF;
+  --ui-text-secondary: #B5AFA6;
+  --ui-text-muted: #827C74;
+
+  --ui-accent: #689F89;          /* Warm Morandi Sage Green */
+  --ui-accent-hover: #7BB09B;
+  --ui-accent-soft: rgba(104, 159, 137, 0.16);
+  --ui-accent-border: rgba(104, 159, 137, 0.38);
+  --ui-accent-text: #8CC4AE;
+
+  --ui-danger: #D96B52;
+  --ui-danger-soft: rgba(217, 107, 82, 0.16);
+  --ui-warning: #D99B52;
+  --ui-warning-soft: rgba(217, 155, 82, 0.16);
+
+  --ui-rack-header: #323639;
+  --ui-rack-rail: #2A2E30;
+  --ui-rack-body: #232628;
+  --ui-rack-grid: rgba(234, 230, 223, 0.045);
+
+  --ui-cdu-header-bg: #2B3B3E;
+  --ui-cdu-body-bg: #223033;
+  --ui-cdu-border: #436066;
+  --ui-cdu-accent: #82C2CF;
+  --ui-cdu-fan-ring: #384F54;
+  --ui-cdu-fan-bg: #1E2A2D;
+  --ui-cdu-fan-hub: #4B6A70;
+  --ui-cdu-card-bg: #28373A;
+  --ui-cdu-cold: #7FB5DC;
+  --ui-cdu-hot: #DC846E;
+
+  --ui-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.18);
+  --ui-shadow-md: 0 6px 20px -2px rgba(0, 0, 0, 0.24);
+  --ui-shadow-lg: 0 16px 36px -4px rgba(0, 0, 0, 0.32);
+
+  /* Default Font: Editorial (Instrument Serif + Plus Jakarta Sans) */
+  --ui-font-sans: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ui-font-heading: 'Instrument Serif', 'Plus Jakarta Sans', 'Noto Sans TC', serif;
+  --ui-font-mono: 'JetBrains Mono', monospace;
+  --ui-radius-btn: 10px;
+  --ui-radius-card: 14px;
+
+  font-family: var(--ui-font-sans) !important;
+  color: var(--ui-text-primary) !important;
+  background-color: var(--ui-bg-canvas) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* ── Palette Option: Japandi Warm Minimalism (日式溫潤和紙) ── */
+.award-preview-root[data-award-theme="japandi"] {
+  --ui-bg-canvas: #F5F3EE;
+  --ui-bg-panel: #FCFBF9;
+  --ui-bg-surface: #FFFFFF;
+  --ui-bg-subtle: #EFECE6;
+  --ui-bg-hover: #EAE6DF;
+
+  --ui-border: #E2DDD5;
+  --ui-border-strong: #CFC8BC;
+  --ui-border-subtle: #ECE8E1;
+
+  --ui-text-primary: #2C2A28;
+  --ui-text-secondary: #5C5852;
+  --ui-text-muted: #8C867E;
+
+  --ui-accent: #3B6E5C;
+  --ui-accent-hover: #2F594A;
+  --ui-accent-soft: #E6F0EC;
+  --ui-accent-border: #B5D1C6;
+  --ui-accent-text: #275243;
+
+  --ui-danger: #C84B31;
+  --ui-danger-soft: #FDECE8;
+  --ui-warning: #C97A2B;
+  --ui-warning-soft: #FDF3E7;
+
+  --ui-rack-header: #EAE6DF;
+  --ui-rack-rail: #E2DDD5;
+  --ui-rack-body: #FAF9F6;
+  --ui-rack-grid: rgba(44, 42, 40, 0.05);
+
+  --ui-cdu-header-bg: #D5E8E4;
+  --ui-cdu-body-bg: #EBF4F2;
+  --ui-cdu-border: #ADCBC4;
+  --ui-cdu-accent: #245E55;
+  --ui-cdu-fan-ring: #B9D6CF;
+  --ui-cdu-fan-bg: #DFECE9;
+  --ui-cdu-fan-hub: #8CB6AD;
+  --ui-cdu-card-bg: #FCFBF9;
+  --ui-cdu-cold: #2B628F;
+  --ui-cdu-hot: #B84A32;
+
+  --ui-shadow-sm: 0 1px 2px rgba(44, 42, 40, 0.04), 0 2px 6px rgba(44, 42, 40, 0.03);
+  --ui-shadow-md: 0 4px 16px -2px rgba(44, 42, 40, 0.06), 0 2px 6px -1px rgba(44, 42, 40, 0.04);
+  --ui-shadow-lg: 0 12px 32px -4px rgba(44, 42, 40, 0.08), 0 4px 12px -2px rgba(44, 42, 40, 0.04);
+}
+
+/* ── Palette Option: Nordic Daylight (北歐晨光白鋁) ── */
+.award-preview-root[data-award-theme="nordic"] {
+  --ui-bg-canvas: #F3F5F8;
+  --ui-bg-panel: #FFFFFF;
+  --ui-bg-surface: #FFFFFF;
+  --ui-bg-subtle: #EDF0F5;
+  --ui-bg-hover: #E5EAF0;
+
+  --ui-border: #E2E8F0;
+  --ui-border-strong: #CBD5E1;
+  --ui-border-subtle: #F1F5F9;
+
+  --ui-text-primary: #1E293B;
+  --ui-text-secondary: #475569;
+  --ui-text-muted: #94A3B8;
+
+  --ui-accent: #3B5BDB;
+  --ui-accent-hover: #2F49B5;
+  --ui-accent-soft: #EEF2FF;
+  --ui-accent-border: #C7D2FE;
+  --ui-accent-text: #3148B8;
+
+  --ui-danger: #E03131;
+  --ui-danger-soft: #FFF5F5;
+  --ui-warning: #D97706;
+  --ui-warning-soft: #FFFBEB;
+
+  --ui-rack-header: #E8ECF2;
+  --ui-rack-rail: #DDE3EC;
+  --ui-rack-body: #FFFFFF;
+  --ui-rack-grid: rgba(30, 41, 59, 0.045);
+
+  --ui-cdu-header-bg: #DAEAF2;
+  --ui-cdu-body-bg: #EEF6FA;
+  --ui-cdu-border: #B3CFE0;
+  --ui-cdu-accent: #1D577A;
+  --ui-cdu-fan-ring: #BED7E6;
+  --ui-cdu-fan-bg: #E2EEF5;
+  --ui-cdu-fan-hub: #8FB4CA;
+  --ui-cdu-card-bg: #FFFFFF;
+  --ui-cdu-cold: #1D5B96;
+  --ui-cdu-hot: #C93B3B;
+
+  --ui-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 6px rgba(15, 23, 42, 0.02);
+  --ui-shadow-md: 0 6px 20px -3px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  --ui-shadow-lg: 0 16px 36px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* ── Font Pairing Variants ── */
+.award-preview-root[data-award-font="editorial"] {
+  --ui-font-sans: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+  --ui-font-heading: 'Instrument Serif', 'Plus Jakarta Sans', 'Noto Sans TC', serif;
+}
+
+.award-preview-root[data-award-font="jakarta"] {
+  --ui-font-sans: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+  --ui-font-heading: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+}
+
+.award-preview-root[data-award-font="dmsans"] {
+  --ui-font-sans: 'DM Sans', 'Noto Sans TC', sans-serif;
+  --ui-font-heading: 'DM Sans', 'Noto Sans TC', sans-serif;
+}
+
+/* ── Apply Smooth Typography Globally ── */
+.award-preview-root,
+.award-preview-root .font-sans,
+.award-preview-root button,
+.award-preview-root input,
+.award-preview-root select,
+.award-preview-root textarea {
+  font-family: var(--ui-font-sans) !important;
+  letter-spacing: -0.005em;
+}
+
+.award-preview-root h1,
+.award-preview-root h2,
+.award-preview-root h3 {
+  font-family: var(--ui-font-heading) !important;
+  letter-spacing: 0.01em !important;
+}
+
+.award-preview-root .font-mono {
+  font-family: var(--ui-font-mono) !important;
+  font-weight: 500 !important;
+}
+
+/* ── Main Canvas: Calm Architectural Workspace with Subtle Dot Grid ── */
+.award-preview-root .screen-layout,
+.award-preview-root .main-canvas {
+  background-color: var(--ui-bg-canvas) !important;
+  background-image: radial-gradient(var(--ui-rack-grid) 1.25px, transparent 1.25px) !important;
+  background-size: 20px 20px !important;
+  color: var(--ui-text-primary) !important;
+}
+
+/* Segmented bar containers that used bg-[#060c16] or bg-[#09111c] (Undo/Redo, View Mode, Project Name, Common Design / MSFT) */
+.award-preview-root header [class*="bg-[#060c16]"],
+.award-preview-root [class*="bg-[#09111c]"] {
+  background-color: var(--ui-bg-subtle) !important;
+  background-image: none !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  color: var(--ui-text-primary) !important;
+}
+
+/* Project Info Button & Modal Cards that used bg-[#14233c] */
+.award-preview-root [class*="bg-[#14233c]"] {
+  background-color: var(--ui-bg-surface) !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  color: var(--ui-text-primary) !important;
+}
+
+/* ── Header, Sidebar, RightPanel, and Modal Containers ── */
+.award-preview-root header,
+.award-preview-root [class*="bg-[#0b1523]"],
+.award-preview-root [class*="bg-[#0d1b2e]"],
+.award-preview-root [class*="bg-[#111e2e]"] {
+  background-color: var(--ui-bg-panel) !important;
+  color: var(--ui-text-primary) !important;
+  border-color: var(--ui-border) !important;
+}
+
+.award-preview-root header {
+  border-bottom: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+.award-preview-root header > div:first-child {
+  border-bottom: 1px solid var(--ui-border-subtle) !important;
+}
+
+/* Brand Logo in Header */
+.award-preview-root header h1 {
+  color: var(--ui-text-primary) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.award-preview-root header h1 span.text-\[\#D71422\],
+.award-preview-root header .text-\[\#D71422\] {
+  color: var(--ui-accent) !important;
+}
+
+/* Sidebar & RightPanel Soft Borders & Diffused Shadows */
+.award-preview-root aside#tour-sidebar {
+  border-right: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+  background-color: var(--ui-bg-panel) !important;
+}
+
+.award-preview-root aside#tour-right-panel {
+  border-left: 1px solid var(--ui-border) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+  background-color: var(--ui-bg-panel) !important;
+}
+
+/* ── Override Dark Slate / Neon Surfaces into Calm Tactile Cards ── */
+.award-preview-root [class*="bg-slate-950"],
+.award-preview-root [class*="bg-slate-900"],
+.award-preview-root [class*="bg-slate-800"] {
+  background-color: var(--ui-bg-subtle) !important;
+  color: var(--ui-text-primary) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-slate-900/50"],
+.award-preview-root [class*="bg-slate-900/40"],
+.award-preview-root [class*="bg-slate-800/50"],
+.award-preview-root [class*="bg-slate-800/40"] {
+  background-color: var(--ui-bg-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-card) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+/* Muted Morandi Accent Containers */
+.award-preview-root [class*="bg-indigo-950"],
+.award-preview-root [class*="bg-indigo-900"],
+.award-preview-root [class*="bg-indigo-500/10"],
+.award-preview-root [class*="bg-indigo-500/15"],
+.award-preview-root [class*="bg-blue-950"],
+.award-preview-root [class*="bg-blue-500/10"] {
+  background-color: var(--ui-accent-soft) !important;
+  border-color: var(--ui-accent-border) !important;
+  color: var(--ui-accent-text) !important;
+}
+
+.award-preview-root [class*="bg-emerald-950"],
+.award-preview-root [class*="bg-emerald-900"],
+.award-preview-root [class*="bg-emerald-500/10"] {
+  background-color: rgba(104, 159, 137, 0.14) !important;
+  border-color: rgba(104, 159, 137, 0.3) !important;
+  color: var(--ui-accent-text) !important;
+}
+
+.award-preview-root [class*="bg-amber-950"],
+.award-preview-root [class*="bg-amber-500/10"],
+.award-preview-root [class*="bg-orange-950"] {
+  background-color: var(--ui-warning-soft) !important;
+  border-color: rgba(201, 122, 43, 0.28) !important;
+  color: var(--ui-warning) !important;
+}
+
+.award-preview-root [class*="bg-rose-950"],
+.award-preview-root [class*="bg-rose-500/10"],
+.award-preview-root [class*="bg-red-950"] {
+  background-color: var(--ui-danger-soft) !important;
+  border-color: rgba(200, 75, 49, 0.28) !important;
+  color: var(--ui-danger) !important;
+}
+
+.award-preview-root [class*="bg-cyan-950"],
+.award-preview-root [class*="bg-cyan-500/10"],
+.award-preview-root [class*="bg-sky-500/10"] {
+  background-color: rgba(45, 122, 138, 0.14) !important;
+  border-color: rgba(45, 122, 138, 0.3) !important;
+  color: var(--ui-accent-text) !important;
+}
+
+.award-preview-root [class*="bg-purple-950"],
+.award-preview-root [class*="bg-purple-500/10"],
+.award-preview-root [class*="bg-violet-500/10"] {
+  background-color: rgba(108, 92, 148, 0.14) !important;
+  border-color: rgba(108, 92, 148, 0.3) !important;
+  color: var(--ui-text-primary) !important;
+}
+
+/* ── Typography Hierarchy: Soft Charcoal & Natural Tones ── */
+.award-preview-root [class*="text-slate-100"],
+.award-preview-root [class*="text-slate-200"],
+.award-preview-root [class*="text-slate-300"] {
+  color: var(--ui-text-primary) !important;
+}
+
+.award-preview-root [class*="text-slate-400"] {
+  color: var(--ui-text-secondary) !important;
+}
+
+.award-preview-root [class*="text-slate-500"] {
+  color: var(--ui-text-muted) !important;
+}
+
+.award-preview-root [class*="text-indigo-400"],
+.award-preview-root [class*="text-indigo-300"],
+.award-preview-root [class*="text-blue-400"],
+.award-preview-root [class*="text-blue-300"] {
+  color: var(--ui-accent-text) !important;
+}
+
+.award-preview-root [class*="text-sky-400"],
+.award-preview-root [class*="text-cyan-400"],
+.award-preview-root [class*="text-cyan-300"] {
+  color: #286B7A !important;
+}
+
+.award-preview-root [class*="text-emerald-400"],
+.award-preview-root [class*="text-emerald-300"],
+.award-preview-root [class*="text-green-400"] {
+  color: #2E6F56 !important;
+}
+
+.award-preview-root [class*="text-amber-400"],
+.award-preview-root [class*="text-amber-300"],
+.award-preview-root [class*="text-yellow-400"],
+.award-preview-root [class*="text-orange-400"] {
+  color: var(--ui-warning) !important;
+}
+
+.award-preview-root [class*="text-rose-400"],
+.award-preview-root [class*="text-rose-300"],
+.award-preview-root [class*="text-red-400"] {
+  color: var(--ui-danger) !important;
+}
+
+.award-preview-root [class*="text-purple-400"],
+.award-preview-root [class*="text-violet-400"] {
+  color: #63518F !important;
+}
+
+.award-preview-root[data-award-theme="dusk"] [class*="text-sky-400"],
+.award-preview-root[data-award-theme="dusk"] [class*="text-cyan-400"] {
+  color: #7CC2D1 !important;
+}
+
+.award-preview-root[data-award-theme="dusk"] [class*="text-emerald-400"] {
+  color: #82C4A8 !important;
+}
+
+.award-preview-root[data-award-theme="dusk"] [class*="text-purple-400"],
+.award-preview-root[data-award-theme="dusk"] [class*="text-violet-400"] {
+  color: #B4A5D9 !important;
+}
+
+/* ── Tactile Ergonomic Buttons (溫潤觸感圓角按鈕) ── */
+.award-preview-root button {
+  border-radius: var(--ui-radius-btn) !important;
+  border: 1px solid var(--ui-border) !important;
+  background-color: var(--ui-bg-surface) !important;
+  color: var(--ui-text-primary) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+  font-weight: 600 !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.award-preview-root button:hover:not(:disabled) {
+  background-color: var(--ui-bg-hover) !important;
+  border-color: var(--ui-border-strong) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--ui-shadow-md) !important;
+}
+
+.award-preview-root button:active:not(:disabled) {
+  transform: translateY(0px) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+/* Primary Buttons & Active Segmented Toggle Options (Common Design / MSFT / CDC / Active ViewMode) */
+.award-preview-root button[class*="bg-indigo-600"],
+.award-preview-root button[class*="bg-blue-600"],
+.award-preview-root button[class*="bg-emerald-600"],
+.award-preview-root button[class*="from-indigo-600"],
+.award-preview-root button[class*="from-sky-500"],
+.award-preview-root button[class*="from-emerald-600"] {
+  background-color: var(--ui-accent) !important;
+  background-image: none !important;
+  border-color: var(--ui-accent) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+  --tw-ring-color: transparent !important;
+}
+
+.award-preview-root button[class*="bg-indigo-600"] *,
+.award-preview-root button[class*="bg-blue-600"] *,
+.award-preview-root button[class*="bg-emerald-600"] *,
+.award-preview-root button[class*="from-indigo-600"] *,
+.award-preview-root button[class*="from-sky-500"] *,
+.award-preview-root button[class*="from-emerald-600"] * {
+  color: #FFFFFF !important;
+}
+
+/* Ensure the small indicator dot inside active Common Design / MSFT button is crisp white instead of slate-950 black */
+.award-preview-root button[class*="from-indigo-600"] span.rounded-full,
+.award-preview-root button[class*="from-sky-500"] span.rounded-full,
+.award-preview-root button[class*="from-emerald-600"] span.rounded-full {
+  background-color: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+/* Inactive buttons inside Segmented Controls (Common Design / MSFT / ViewMode switcher) */
+.award-preview-root [class*="bg-[#09111c]"] button[class*="border-transparent"],
+.award-preview-root header [class*="bg-[#060c16]"] button:not([class*="bg-indigo-600"]):not([class*="bg-indigo-500"]) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--ui-text-secondary) !important;
+}
+
+.award-preview-root [class*="bg-[#09111c]"] button[class*="border-transparent"]:hover,
+.award-preview-root header [class*="bg-[#060c16]"] button:not([class*="bg-indigo-600"]):not([class*="bg-indigo-500"]):hover {
+  background-color: var(--ui-bg-hover) !important;
+  color: var(--ui-text-primary) !important;
+}
+
+.award-preview-root button[class*="bg-indigo-600"]:hover,
+.award-preview-root button[class*="bg-blue-600"]:hover,
+.award-preview-root button[class*="bg-emerald-600"]:hover,
+.award-preview-root button[class*="from-indigo-600"]:hover,
+.award-preview-root button[class*="from-sky-500"]:hover {
+  background-color: var(--ui-accent-hover) !important;
+  border-color: var(--ui-accent-hover) !important;
+}
+
+.award-preview-root button[class*="bg-rose-600"],
+.award-preview-root button[class*="bg-red-600"] {
+  background-color: var(--ui-danger) !important;
+  border-color: var(--ui-danger) !important;
+  color: #FFFFFF !important;
+}
+
+.award-preview-root button[class*="bg-rose-600"] *,
+.award-preview-root button[class*="bg-red-600"] * {
+  color: #FFFFFF !important;
+}
+
+/* ── Inputs, Selects & Search Bars ── */
+.award-preview-root input[type="text"]:not(.bg-transparent),
+.award-preview-root input[type="number"]:not(.bg-transparent),
+.award-preview-root input[type="search"],
+.award-preview-root input[type="date"],
+.award-preview-root select,
+.award-preview-root textarea {
+  background-color: var(--ui-bg-surface) !important;
+  color: var(--ui-text-primary) !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  border-radius: 9px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Transparent inline inputs (e.g. Project Name input inside the Project Name pill bar) */
+.award-preview-root input.bg-transparent {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--ui-text-primary) !important;
+}
+
+.award-preview-root input:not(.bg-transparent):focus,
+.award-preview-root select:focus,
+.award-preview-root textarea:focus {
+  border-color: var(--ui-accent) !important;
+  box-shadow: 0 0 0 3px var(--ui-accent-soft) !important;
+  outline: none !important;
+}
+
+.award-preview-root input::placeholder,
+.award-preview-root textarea::placeholder {
+  color: var(--ui-text-muted) !important;
+}
+
+/* ── RACK VIEW: Anodized Aluminum / Warm Industrial Craft Racks ── */
+.award-preview-root .rack-container > div:first-child {
+  /* Rack Top Header */
+  background: var(--ui-rack-header) !important;
+  border: 1.5px solid var(--ui-border-strong) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  border-radius: 14px 14px 0 0 !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+.award-preview-root .rack-container > div:first-child > div:first-child {
+  /* Remove harsh diagonal hazard stripes on rack header */
+  display: none !important;
+}
+
+.award-preview-root .rack-container > div:first-child .text-slate-200,
+.award-preview-root .rack-container > div:first-child .text-slate-100 {
+  color: var(--ui-text-primary) !important;
+  text-shadow: none !important;
+  font-weight: 700 !important;
+}
+
+/* Rack Body Interior */
+.award-preview-root .rack-container > div:nth-child(2) {
+  background-color: var(--ui-rack-body) !important;
+  border-left: 1.5px solid var(--ui-border-strong) !important;
+  border-right: 1.5px solid var(--ui-border-strong) !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+/* Rack Left & Right Mounting Rails (Anodized Matte Rails) */
+.award-preview-root .rack-container > div:nth-child(2) > div.w-8 {
+  background: var(--ui-rack-rail) !important;
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root .rack-container > div:nth-child(2) > div.w-8 > div {
+  background: var(--ui-bg-canvas) !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  box-shadow: none !important;
+}
+
+/* U Slot Dividers & U Numbers */
+.award-preview-root .rack-container > div:nth-child(2) > div[style*="height: 24px"] {
+  border-bottom: 1px solid var(--ui-border-subtle) !important;
+}
+
+.award-preview-root .rack-container .-left-6,
+.award-preview-root .rack-container .-right-6 {
+  color: var(--ui-text-muted) !important;
+  font-weight: 600 !important;
+}
+
+/* Rack Base Foot & Leveling Feet */
+.award-preview-root .rack-container > div:nth-child(3) {
+  background: var(--ui-rack-header) !important;
+  border: 1.5px solid var(--ui-border-strong) !important;
+  border-radius: 0 0 8px 8px !important;
+  box-shadow: var(--ui-shadow-md) !important;
+}
+
+.award-preview-root .rack-container > div:nth-child(3) > div {
+  background: var(--ui-rack-rail) !important;
+  border-color: var(--ui-border-strong) !important;
+}
+
+.award-preview-root .rack-container > div:nth-child(4) > div {
+  background: var(--ui-rack-rail) !important;
+  background-image: none !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+/* ── SIDE CDU (Liquid to Air CDU) Harmonized Across All 3 Themes ── */
+.award-preview-root .side-cdu-container > div:first-child {
+  /* SideCDU Top Cap */
+  background: var(--ui-cdu-header-bg) !important;
+  background-image: none !important;
+  border: 1.5px solid var(--ui-cdu-border) !important;
+  border-bottom: 1px solid var(--ui-cdu-border) !important;
+  border-radius: 14px 14px 0 0 !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+.award-preview-root .side-cdu-container > div:first-child div {
+  color: var(--ui-cdu-accent) !important;
+  text-shadow: none !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.award-preview-root .side-cdu-container > div:nth-child(2) {
+  /* SideCDU Main Body */
+  background-color: var(--ui-cdu-body-bg) !important;
+  background-image: none !important;
+  border-left: 1.5px solid var(--ui-cdu-border) !important;
+  border-right: 1.5px solid var(--ui-cdu-border) !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+.award-preview-root .side-cdu-container > div:nth-child(2) > div[class*="repeating-linear-gradient"] {
+  display: none !important;
+}
+
+.award-preview-root .side-cdu-container svg {
+  color: var(--ui-cdu-accent) !important;
+  filter: none !important;
+}
+
+.award-preview-root .side-cdu-container .text-cyan-100 {
+  color: var(--ui-text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.award-preview-root .side-cdu-container [class*="text-cyan-500"] {
+  color: var(--ui-cdu-accent) !important;
+  font-weight: 600 !important;
+}
+
+/* SideCDU 4 Cooling Fans */
+.award-preview-root .side-cdu-container .w-24.h-24.rounded-full {
+  background-color: var(--ui-cdu-fan-bg) !important;
+  border: 2.5px solid var(--ui-cdu-fan-ring) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.award-preview-root .side-cdu-container .w-24.h-24.rounded-full > div.border-dashed {
+  border-color: var(--ui-cdu-border) !important;
+  border-width: 2.5px !important;
+}
+
+.award-preview-root .side-cdu-container .w-24.h-24.rounded-full > div.w-6.h-6 {
+  background-color: var(--ui-cdu-fan-hub) !important;
+}
+
+/* SideCDU Water Loop & BMC Sub-Cards */
+.award-preview-root .side-cdu-container .mt-auto > div {
+  background-color: var(--ui-cdu-card-bg) !important;
+  border: 1px solid var(--ui-cdu-border) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+.award-preview-root .side-cdu-container [class*="text-cyan-400"] {
+  color: var(--ui-cdu-accent) !important;
+  font-weight: 700 !important;
+}
+
+.award-preview-root .side-cdu-container .text-blue-300 {
+  color: var(--ui-cdu-cold) !important;
+  font-weight: 700 !important;
+}
+
+.award-preview-root .side-cdu-container .bg-blue-400 {
+  background-color: var(--ui-cdu-cold) !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root .side-cdu-container .text-red-300 {
+  color: var(--ui-cdu-hot) !important;
+  font-weight: 700 !important;
+}
+
+.award-preview-root .side-cdu-container .bg-red-400 {
+  background-color: var(--ui-cdu-hot) !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root .side-cdu-container [class*="text-white"] {
+  color: var(--ui-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* SideCDU Base Foot & Leveling Foot */
+.award-preview-root .side-cdu-container > div:nth-child(3) {
+  background: var(--ui-cdu-header-bg) !important;
+  border: 1.5px solid var(--ui-cdu-border) !important;
+  border-radius: 0 0 8px 8px !important;
+  box-shadow: var(--ui-shadow-md) !important;
+}
+
+.award-preview-root .side-cdu-container > div:nth-child(4) > div {
+  background: var(--ui-cdu-header-bg) !important;
+  background-image: none !important;
+  border: 1px solid var(--ui-cdu-border) !important;
+  box-shadow: var(--ui-shadow-sm) !important;
+}
+
+/* CDC Standalone CDU / Cooling Cabinets (if CDC mode is used) */
+.award-preview-root [class*="bg-[#050e18]"],
+.award-preview-root [class*="bg-[#081e28]"] {
+  background-color: var(--ui-cdu-body-bg) !important;
+  border-color: var(--ui-cdu-border) !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+/* ── DEVICES IN RACK & SIDEBAR: Soft Morandi Hardware Modules ── */
+.award-preview-root [id^="device-"] {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Light themes (Japandi / Nordic) device colors */
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#0f172a]"],
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#11152c]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#0f172a]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#11152c]"] {
+  background-color: #EBF2F7 !important;
+  border-color: #B8CEE0 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#081b23]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#081b23]"] {
+  background-color: #E4F4F2 !important;
+  border-color: #A3D6CF !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#061e14]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#061e14]"] {
+  background-color: #E9F3EC !important;
+  border-color: #B2D4BC !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#150e24]"],
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#120a1f]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#150e24]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#120a1f]"] {
+  background-color: #F0ECF7 !important;
+  border-color: #C9BBE2 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#201008]"],
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#211507]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#201008]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#211507]"] {
+  background-color: #FCF1E3 !important;
+  border-color: #E8C79E !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root[data-award-theme="japandi"] [class*="bg-[#111827]"],
+.award-preview-root[data-award-theme="nordic"] [class*="bg-[#111827]"] {
+  background-color: #E6E2DA !important;
+  border-color: #C7C0B5 !important;
+  box-shadow: none !important;
+}
+
+/* Morandi Dusk Mode (Default) Device Card Colors — Rich, distinct, eye-friendly Morandi tones */
+.award-preview-root [class*="bg-[#0f172a]"],
+.award-preview-root [class*="bg-[#11152c]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#0f172a]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#11152c]"] {
+  background-color: #2B3640 !important;
+  border-color: #4A6073 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-[#081b23]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#081b23]"] {
+  background-color: #24383B !important;
+  border-color: #41686E !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-[#061e14]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#061e14]"] {
+  background-color: #263830 !important;
+  border-color: #456958 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-[#150e24]"],
+.award-preview-root [class*="bg-[#120a1f]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#150e24]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#120a1f]"] {
+  background-color: #332E3F !important;
+  border-color: #5B5073 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-[#201008]"],
+.award-preview-root [class*="bg-[#211507]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#201008]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#211507]"] {
+  background-color: #3B3126 !important;
+  border-color: #6E5840 !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [class*="bg-[#220a14]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#220a14]"] {
+  background-color: #3D282E !important;
+  border-color: #6E4652 !important;
+  box-shadow: none !important;
+}
+
+/* Blank Panel / Slate theme (空白擋板 bg-[#111827]) in Morandi Dusk:
+   Warm Morandi Slate-Stone with subtle matte brushed texture & high-contrast warm sand text */
+.award-preview-root [class*="bg-[#111827]"],
+.award-preview-root[data-award-theme="dusk"] [class*="bg-[#111827]"] {
+  background-color: #34383B !important;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.025),
+    rgba(255, 255, 255, 0.025) 6px,
+    transparent 6px,
+    transparent 12px
+  ) !important;
+  border-color: #565D63 !important;
+  color: var(--ui-text-primary) !important;
+  box-shadow: none !important;
+}
+
+/* Clean up dark gradient overlays inside mounted device cards */
+.award-preview-root [id^="device-"] .from-black\/60,
+.award-preview-root [id^="device-"] [class*="repeating-linear-gradient"] {
+  background: none !important;
+  opacity: 0 !important;
+}
+
+.award-preview-root [id^="device-"] .text-white,
+.award-preview-root [id^="device-"] .text-white\/60,
+.award-preview-root [id^="device-"] .text-white\/70,
+.award-preview-root [id^="device-"] .text-white\/80 {
+  color: var(--ui-text-primary) !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+.award-preview-root [id^="device-"] .border-white\/20,
+.award-preview-root [id^="device-"] .border-white\/10 {
+  border-color: rgba(234, 230, 223, 0.16) !important;
+}
+
+/* Device Mounting Ears (掛耳) - Brushed Silver / Warm Stone */
+.award-preview-root [id^="device-"] > div.w-4 {
+  background: var(--ui-rack-header) !important;
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: none !important;
+}
+
+.award-preview-root [id^="device-"] > div.w-4 > div.rounded-full {
+  background: var(--ui-bg-surface) !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  box-shadow: none !important;
+}
+
+/* Selected Device Highlight */
+.award-preview-root [id^="device-"][class*="ring-2"][class*="ring-white"] {
+  outline: 2px solid var(--ui-accent) !important;
+  box-shadow: 0 4px 14px rgba(104, 159, 137, 0.28) !important;
+}
+
+/* ── ContainerView 2D Floor Plan & NetworkTopology Cards ── */
+.award-preview-root [class*="bg-[#09111e]"],
+.award-preview-root [id^="container-topdown-canvas-"] {
+  background-color: var(--ui-bg-panel) !important;
+  border: 2px solid var(--ui-border-strong) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+.award-preview-root [id^="container-topdown-inner-"] {
+  background-color: var(--ui-bg-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 14px !important;
+}
+
+.award-preview-root .bg-black\/20,
+.award-preview-root .bg-black\/30,
+.award-preview-root .bg-black\/40 {
+  background-color: var(--ui-bg-subtle) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+/* ── Modals & Tables ── */
+.award-preview-root .fixed.inset-0 {
+  background-color: rgba(20, 22, 23, 0.55) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+.award-preview-root .fixed.inset-0 > div {
+  border: 1px solid var(--ui-border-strong) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+  background-color: var(--ui-bg-panel) !important;
+}
+
+.award-preview-root thead {
+  background-color: var(--ui-bg-subtle) !important;
+  border-bottom: 1px solid var(--ui-border-strong) !important;
+}
+
+.award-preview-root thead th {
+  color: var(--ui-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.award-preview-root tbody tr {
+  border-bottom: 1px solid var(--ui-border-subtle) !important;
+  background-color: var(--ui-bg-surface) !important;
+}
+
+.award-preview-root tbody tr:hover {
+  background-color: var(--ui-bg-subtle) !important;
+}
+
+/* ── Calm Minimal Scrollbars (Override index.css #1e3a5f / #060c16) ── */
+.award-preview-root,
+.award-preview-root * {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--ui-border-strong) var(--ui-bg-canvas) !important;
+}
+
+.award-preview-root .custom-scrollbar,
+.award-preview-root aside {
+  scrollbar-color: var(--ui-border-strong) var(--ui-bg-panel) !important;
+}
+
+.award-preview-root ::-webkit-scrollbar,
+.award-preview-root .custom-scrollbar::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.award-preview-root ::-webkit-scrollbar-track,
+.award-preview-root .custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--ui-bg-canvas) !important;
+}
+
+.award-preview-root aside ::-webkit-scrollbar-track,
+.award-preview-root .custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--ui-bg-panel) !important;
+}
+
+.award-preview-root ::-webkit-scrollbar-thumb,
+.award-preview-root .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ui-border-strong) !important;
+  border-radius: 999px !important;
+}
+
+.award-preview-root ::-webkit-scrollbar-thumb:hover,
+.award-preview-root .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--ui-accent) !important;
+}

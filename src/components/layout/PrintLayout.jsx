@@ -1,6 +1,8 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { getServerCategory, getFabricGroup, getHighDensityNodes, getNicCount, getSwitchPortCount } from '../../utils/helpers';
+import { getServerCategory, getFabricGroup, getHighDensityNodes, getNicCount, getSwitchPortCount, formatRemotePort } from '../../utils/helpers';
+import { getMsftRackSubItems, getMsftDeviceSubItems } from '../../utils/msftBomConfig';
+import { generateProjectCableCutSheet } from '../../utils/cableCalculator';
 
 const PrintLayout = ({ isForDownload = false }) => {
     const { racks, devices, rackScreenshots, topoScreenshot, printTimestamp, projectName, projectInfo } = useRackPlanner();
@@ -14,26 +16,7 @@ const PrintLayout = ({ isForDownload = false }) => {
         return b.startU - a.startU;
     });
 
-
-
-    const formatRemotePortPrint = (portKey) => {
-        if (!portKey) return '-';
-        const pcieNodeMatch = portKey.match(/^pcie_slot_(\d+)_([nN]\d+)-(\d+)$/);
-        if (pcieNodeMatch) {
-            const [, slotIdx, nodeKey, portIdx] = pcieNodeMatch;
-            return `${nodeKey.toUpperCase()} Slot ${slotIdx} P${portIdx}`;
-        }
-        const pcieMatch = portKey.match(/^pcie_slot_(\d+)-(\d+)$/);
-        if (pcieMatch) {
-            const [, slotIdx, portIdx] = pcieMatch;
-            return `Slot ${slotIdx} P${portIdx}`;
-        }
-        if (portKey.startsWith('cx8-')) return portKey.replace('cx8-', 'EW NIC P');
-        if (portKey.startsWith('ocp-')) return portKey.replace('ocp-', 'OCP P');
-        if (portKey.startsWith('port-')) return portKey.replace('port-', 'Port ');
-        if (portKey === 'bmc') return 'BMC';
-        return portKey;
-    };
+    const formatRemotePortPrint = formatRemotePort;
 
     const getDeviceSpecsSummary = (dev) => {
         if (!dev) return '-';
@@ -216,359 +199,47 @@ const PrintLayout = ({ isForDownload = false }) => {
     const expandedDevices = [];
     sortedDevices.forEach(dev => {
         expandedDevices.push(dev);
-        if (dev.type === 'PowerShelf' && projectInfo?.designType === 'msft') {
-            const subKeys = [
-                { key: 'powerShelfKit', label: 'Power Shelf Kit', type: 'PowerShelfKit' },
-                { key: 'powerShelfEnclosure', label: 'Power Shelf Enclosure', type: 'PowerShelfEnclosure' },
-                { key: 'powerSupplyUnit', label: 'Power Supply Unit', type: 'PowerSupplyUnit' },
-                { key: 'railForPowerShelf', label: 'Rail for Power shelf', type: 'RailForPowerShelf' },
-                { key: 'rackScm', label: 'Rack-SCM', type: 'RackScm' },
-                { key: 'c13Module', label: 'C-13 Module', type: 'C13Module' },
-                { key: 'psuFiller', label: 'PSU filler', type: 'PsuFiller' }
-            ];
-            subKeys.forEach(sub => {
-                if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                    expandedDevices.push({
-                        id: `${dev.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: dev.startU,
-                        rackId: dev.rackId,
-                        isSubDevice: true,
-                        hardwareSpecs: {}
-                    });
-                }
+        if (projectInfo?.designType === 'msft') {
+            getMsftDeviceSubItems(dev, true).forEach(sub => {
+                expandedDevices.push({
+                    id: `${dev.id}-${sub.key}`,
+                    type: sub.type,
+                    customName: sub.label,
+                    size: 0,
+                    power: 0,
+                    price: 0,
+                    startU: dev.startU,
+                    rackId: dev.rackId,
+                    isSubDevice: true,
+                    hardwareSpecs: {}
+                });
             });
-            if (dev.powerShelfCustom && Array.isArray(dev.powerShelfCustom)) {
-                dev.powerShelfCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'PowerShelfCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-        }
-
-        if (dev.type === 'ServerGeneral' && projectInfo?.designType === 'msft') {
-            const subKeys = [
-                { key: 'computeNode', label: 'Compute Node', type: 'ComputeNode' },
-                { key: 'slideRailForNode', label: 'Slide Rail for Node', type: 'SlideRailForNode' },
-                { key: 'screwForNodeRail', label: 'Screw for Node Rail', type: 'ScrewForNodeRail' },
-                { key: 'nutForNodeRail', label: 'NUT for Node Rail', type: 'NutForNodeRail' }
-            ];
-            subKeys.forEach(sub => {
-                if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                    expandedDevices.push({
-                        id: `${dev.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: dev.startU,
-                        rackId: dev.rackId,
-                        isSubDevice: true,
-                        hardwareSpecs: {}
-                    });
-                }
-            });
-            if (dev.serverGeneralCustom && Array.isArray(dev.serverGeneralCustom)) {
-                dev.serverGeneralCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'ServerGeneralCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-        }
-
-        if (dev.type === 'Blank' && projectInfo?.designType === 'msft') {
-            const subKeys = [
-                { key: 'oneOu', label: '1OU', type: 'OneOu' },
-                { key: 'ouEia', label: 'OU-EIA', type: 'OuEia' }
-            ];
-            subKeys.forEach(sub => {
-                if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                    expandedDevices.push({
-                        id: `${dev.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: dev.startU,
-                        rackId: dev.rackId,
-                        isSubDevice: true,
-                        hardwareSpecs: {}
-                    });
-                }
-            });
-            if (dev.blankCustom && Array.isArray(dev.blankCustom)) {
-                dev.blankCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'BlankCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-        }
-
-        if (dev.type === 'StorageJBOD' && projectInfo?.designType === 'msft') {
-            const subKeys = [
-                { key: 'jbod', label: 'JBOD', type: 'Jbod' },
-                { key: 'railForJbod', label: 'Rail for JBOD', type: 'RailForJbod' },
-                { key: 'halfOuBlank', label: '0.5OU Blank', type: 'HalfOuBlank' }
-            ];
-            subKeys.forEach(sub => {
-                if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                    expandedDevices.push({
-                        id: `${dev.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: dev.startU,
-                        rackId: dev.rackId,
-                        isSubDevice: true,
-                        hardwareSpecs: {}
-                    });
-                }
-            });
-            if (dev.jbodCustom && Array.isArray(dev.jbodCustom)) {
-                dev.jbodCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'JbodCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-        }
-
-        if (dev.type === 'StorageJBOF' && projectInfo?.designType === 'msft') {
-            const subKeys = [
-                { key: 'jbof', label: 'JBOF', type: 'Jbof' },
-                { key: 'railForJbof', label: 'Rail for JBOF', type: 'RailForJbof' },
-                { key: 'halfOuBlank', label: '0.5OU Blank', type: 'HalfOuBlank' }
-            ];
-            subKeys.forEach(sub => {
-                if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                    expandedDevices.push({
-                        id: `${dev.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: dev.startU,
-                        rackId: dev.rackId,
-                        isSubDevice: true,
-                        hardwareSpecs: {}
-                    });
-                }
-            });
-            if (dev.jbofCustom && Array.isArray(dev.jbofCustom)) {
-                dev.jbofCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'JbofCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-        }
-        if ((dev.type || '').startsWith('Switch') && projectInfo?.designType === 'msft') {
-            const switchTag = dev.switchTag;
-            if (switchTag === 'tor') {
-                const subKeys = [
-                    { key: 'tor', label: 'TOR', type: 'Tor' },
-                    { key: 'eiaAdapter2U', label: 'EIA 19” Adapter 2U', type: 'EiaAdapter2U' },
-                    { key: 'mountingKitTor', label: 'Mounting kit for TOR', type: 'MountingKitTor' },
-                    { key: 'powerCordTor', label: 'Power cord for TOR', type: 'PowerCordTor' },
-                    { key: 'sleeveC13', label: 'Sleeve C13', type: 'SleeveC13' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        expandedDevices.push({
-                            id: `${dev.id}-${sub.key}`,
-                            type: sub.type,
-                            customName: sub.label,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            } else if (switchTag === 'mgmt') {
-                const subKeys = [
-                    { key: 'managementSwitch', label: 'Management Switch', type: 'ManagementSwitch' },
-                    { key: 'eiaAdapter1U', label: 'EIA 19” Adapter 1U', type: 'EiaAdapter1U' },
-                    { key: 'mountingKitMgmt', label: 'Mounting kit for MGMT', type: 'MountingKitMgmt' },
-                    { key: 'powerCordMgmt', label: 'Power cord for MGMT', type: 'PowerCordMgmt' },
-                    { key: 'sleeveC13', label: 'Sleeve C13', type: 'SleeveC13' }
-                ];
-                subKeys.forEach(sub => {
-                    if (dev.hardwareSpecs?.[sub.key]?.qty === 1) {
-                        expandedDevices.push({
-                            id: `${dev.id}-${sub.key}`,
-                            type: sub.type,
-                            customName: sub.label,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
-            if (dev.switchCustom && Array.isArray(dev.switchCustom)) {
-                dev.switchCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        expandedDevices.push({
-                            id: `${dev.id}-custom-${cIdx}`,
-                            type: 'SwitchCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: dev.startU,
-                            rackId: dev.rackId,
-                            isSubDevice: true,
-                            hardwareSpecs: {}
-                        });
-                    }
-                });
-            }
         }
     });
 
     // Add Rack attachments for MSFT design
     if (projectInfo?.designType === 'msft') {
         racks.forEach(rack => {
-            const subKeys = [
-                { key: 'rackEnclosure', label: 'Rack enclosure', type: 'RackEnclosure' },
-                { key: 'busbar', label: 'Busbar', type: 'Busbar' },
-                { key: 'sidePanel', label: 'Side Panel', type: 'SidePanel' },
-                { key: 'leakManagement', label: 'Leak Management', type: 'LeakManagement' },
-                { key: 'cableManagement', label: 'Cable Management', type: 'CableManagement' },
-                { key: 'rackNut', label: 'NUT', type: 'RackNut' },
-                { key: 'rackScrew', label: 'SCREW', type: 'RackScrew' },
-                { key: 'ioCables', label: 'IO Cables', type: 'IoCables' },
-                { key: 'cat6Rj45', label: 'CAT-6 RJ45', type: 'Cat6Rj45' },
-                { key: 'rackGrounding', label: 'Rack Grounding', type: 'RackGrounding' }
-            ];
-            subKeys.forEach(sub => {
-                if (rack[sub.key]) {
-                    const rackPosition = projectInfo?.isCdcProject
-                        ? (rack.slotIndex !== null && rack.slotIndex !== undefined 
-                            ? `Slot ${rack.slotIndex + 1}` 
-                            : "未分配")
-                        : "一般佈局";
-                    expandedDevices.push({
-                        id: `${rack.id}-${sub.key}`,
-                        type: sub.type,
-                        customName: sub.label,
-                        size: 0,
-                        power: 0,
-                        price: 0,
-                        startU: 1,
-                        rackId: rack.id,
-                        isSubDevice: true,
-                        customPosition: `${rackPosition} (附屬)`,
-                        hardwareSpecs: {}
-                    });
-                }
-            });
-            if (rack.rackCustom && Array.isArray(rack.rackCustom)) {
-                rack.rackCustom.forEach((customItem, cIdx) => {
-                    const trimmed = (customItem || '').trim();
-                    if (trimmed) {
-                        const rackPosition = projectInfo?.isCdcProject
-                            ? (rack.slotIndex !== null && rack.slotIndex !== undefined 
-                                ? `Slot ${rack.slotIndex + 1}` 
-                                : "未分配")
-                            : "一般佈局";
-                        expandedDevices.push({
-                            id: `${rack.id}-custom-${cIdx}`,
-                            type: 'RackCustom',
-                            customName: trimmed,
-                            size: 0,
-                            power: 0,
-                            price: 0,
-                            startU: 1,
-                            rackId: rack.id,
-                            isSubDevice: true,
-                            customPosition: `${rackPosition} (附屬)`,
-                            hardwareSpecs: {}
-                        });
-                    }
+            const rackPosition = projectInfo?.isCdcProject
+                ? (rack.slotIndex !== null && rack.slotIndex !== undefined 
+                    ? `Slot ${rack.slotIndex + 1}` 
+                    : "未分配")
+                : "一般佈局";
+            getMsftRackSubItems(rack, true).forEach(sub => {
+                expandedDevices.push({
+                    id: `${rack.id}-${sub.key}`,
+                    type: sub.type,
+                    customName: sub.label,
+                    size: 0,
+                    power: 0,
+                    price: 0,
+                    startU: 1,
+                    rackId: rack.id,
+                    isSubDevice: true,
+                    customPosition: `${rackPosition} (附屬)`,
+                    hardwareSpecs: {}
                 });
-            }
+            });
         });
     }
 
@@ -636,45 +307,8 @@ const PrintLayout = ({ isForDownload = false }) => {
     };
 
     const getCableRows = () => {
-        const rows = [];
-        devices.forEach(dev => {
-            if (dev.connections) {
-                Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
-                    if (!targetKey) return;
-                    const targetDev = devices.find(d => targetKey.startsWith(d.id + '-'));
-                    if (targetDev) {
-                        const targetDevId = targetDev.id;
-                        const targetPortKey = targetKey.substring(targetDevId.length + 1);
-                        const isSwitch = (d) => (d.type || '').startsWith('Switch') || d.type === 'Router';
-                        let cableRole = 'General';
-                        if (isSwitch(targetDev)) {
-                            cableRole = getFabricGroup(targetDev, projectInfo?.designType);
-                        } else if (isSwitch(dev)) {
-                            cableRole = getFabricGroup(dev, projectInfo?.designType);
-                        } else {
-                            const srcBase = localKey.replace(/__\d+$/, '');
-                            const tgtBase = targetPortKey.replace(/__\d+$/, '');
-                            const isBmc = srcBase === 'bmc' || tgtBase === 'bmc' || srcBase.startsWith('bmc') || tgtBase.startsWith('bmc');
-                            const isNsPort = srcBase.startsWith('ns_nic_') || tgtBase.startsWith('ns_nic_') || srcBase.startsWith('ocp-') || tgtBase.startsWith('ocp-');
-                            if (isBmc || isNsPort) {
-                                cableRole = 'North-South';
-                            } else {
-                                cableRole = 'East-West';
-                            }
-                        }
-
-                        rows.push({
-                            src: dev.customName || dev.type,
-                            srcPort: formatRemotePortPrint(localKey),
-                            dst: targetDev.customName || targetDev.type,
-                            dstPort: formatRemotePortPrint(targetPortKey),
-                            role: cableRole
-                        });
-                    }
-                });
-            }
-        });
-        return rows;
+        const { cutSheetRows } = generateProjectCableCutSheet(devices, racks, projectInfo);
+        return cutSheetRows;
     };
 
     const categorised = {
@@ -995,32 +629,50 @@ const PrintLayout = ({ isForDownload = false }) => {
 
                     <h2 className="text-md font-bold border-b border-slate-300 pb-1.5 mb-4 text-slate-800 flex items-center">
                         <span className="w-2.5 h-2.5 bg-[#D71422] rounded-full mr-2"></span>
-                        線路對接規格表 (Connection Specifications)
+                        L11 / L12 點對點線路對接施工表 (Point-to-Point Cable Cut-Sheet)
                     </h2>
 
-                    <table className="w-full border-collapse text-[10px] text-left">
+                    <table className="w-full border-collapse text-[9px] text-left">
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold">
-                                <th className="p-1.5 border border-slate-200 w-[22%]">來源設備</th>
-                                <th className="p-1.5 border border-slate-200 w-[18%]">來源端口</th>
-                                <th className="p-1.5 border border-slate-200 w-[22%]">目的設備</th>
-                                <th className="p-1.5 border border-slate-200 w-[18%]">目的端口</th>
-                                <th className="p-1.5 border border-slate-200 w-[20%]">所屬網路</th>
+                                <th className="p-1.5 border border-slate-200 w-[19%]">線標編號 (Cable ID)</th>
+                                <th className="p-1.5 border border-slate-200 w-[8%] text-center">層級</th>
+                                <th className="p-1.5 border border-slate-200 w-[23%]">來源端 (機櫃 / U位 / 設備 / 埠)</th>
+                                <th className="p-1.5 border border-slate-200 w-[23%]">目的端 (機櫃 / U位 / 設備 / 埠)</th>
+                                <th className="p-1.5 border border-slate-200 w-[19%]">介質與料號規格</th>
+                                <th className="p-1.5 border border-slate-200 w-[8%] text-center">採購線長</th>
                             </tr>
                         </thead>
                         <tbody>
                             {chunk.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="p-3 text-center text-slate-400">當前專案未規劃任何實體連接線路。</td>
+                                    <td colSpan="6" className="p-3 text-center text-slate-400">當前專案未規劃任何實體連接線路。</td>
                                 </tr>
                             ) : (
                                 chunk.map((row, idx) => (
-                                    <tr key={idx} className={`${idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'} border-b border-slate-200`}>
-                                        <td className="p-1.5 border border-slate-200 font-bold text-slate-800">{row.src}</td>
-                                        <td className="p-1.5 border border-slate-200 font-mono text-slate-600">{row.srcPort}</td>
-                                        <td className="p-1.5 border border-slate-200 font-bold text-slate-800">{row.dst}</td>
-                                        <td className="p-1.5 border border-slate-200 font-mono text-slate-600">{row.dstPort}</td>
-                                        <td className="p-1.5 border border-slate-200 text-slate-500">{row.role}</td>
+                                    <tr key={row.cableId || idx} className={`${idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'} border-b border-slate-200`}>
+                                        <td className="p-1.5 border border-slate-200 font-mono font-bold text-indigo-700">{row.cableId}</td>
+                                        <td className="p-1.5 border border-slate-200 text-center font-mono font-semibold text-slate-600">
+                                            {row.isIntraRack ? 'L11 櫃內' : 'L12 跨櫃'}
+                                        </td>
+                                        <td className="p-1.5 border border-slate-200 text-slate-800">
+                                            <span className="font-mono text-slate-500">[{row.srcRackCode} {row.srcU}]</span>{' '}
+                                            <span className="font-bold">{row.srcDeviceName}</span>{' '}
+                                            <span className="font-mono text-indigo-600">({row.srcPortFormatted})</span>
+                                        </td>
+                                        <td className="p-1.5 border border-slate-200 text-slate-800">
+                                            <span className="font-mono text-slate-500">[{row.dstRackCode} {row.dstU}]</span>{' '}
+                                            <span className="font-bold">{row.dstDeviceName}</span>{' '}
+                                            <span className="font-mono text-indigo-600">({row.dstPortFormatted})</span>
+                                        </td>
+                                        <td className="p-1.5 border border-slate-200 font-mono text-slate-600">
+                                            <div className="font-bold text-slate-700">{row.cableModel}</div>
+                                            <div className="text-[8px] text-slate-400">{row.mediaType}</div>
+                                        </td>
+                                        <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-amber-700">
+                                            {row.standardLength}m
+                                            <span className="block text-[7px] text-slate-400 font-normal">(實 {row.rawLength}m)</span>
+                                        </td>
                                     </tr>
                                 ))
                             )}

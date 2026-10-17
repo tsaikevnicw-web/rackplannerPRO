@@ -1,7 +1,8 @@
-import React from 'react';
-import { X, Share2, FileText, Download } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Share2, FileText, Download, Cable, Layers, Filter, Search, Tag, Ruler } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { getServerCategory, getHighDensityNodes } from '../../utils/helpers';
+import { generateProjectCableCutSheet, calculatePhysicalCableDistance } from '../../utils/cableCalculator';
 import { toCanvas } from 'html-to-image';
 
 // Retrieve all configured transceiver and cable details for a given device
@@ -24,7 +25,6 @@ const getCabledSpecsForDevice = (dev) => {
         }
     };
 
-    // 0. BMC (all cabled devices: general servers, AI servers, switches, routers, CDUs, storage)
     const cat = getServerCategory(dev);
     if (cat === 'HighDensity') {
         const nodes = getHighDensityNodes(dev);
@@ -41,17 +41,14 @@ const getCabledSpecsForDevice = (dev) => {
         }
     }
 
-    // 1. EW NIC (AI Server only)
     if (hw.cx8p) {
         addSpec('EW NIC', hw.cx8p, 'cx8p');
     }
 
-    // 2. Super NIC Mgt
     if (hw.super_nic_mgt) {
         addSpec('Super NIC Mgt', hw.super_nic_mgt, 'super_nic_mgt');
     }
 
-    // 3. OCP
     if (cat === 'HighDensity') {
         const nodes = getHighDensityNodes(dev);
         nodes.forEach(nodeKey => {
@@ -67,7 +64,6 @@ const getCabledSpecsForDevice = (dev) => {
         }
     }
 
-    // 4. PCIe Slots
     if (cat === 'HighDensity') {
         const nodes = getHighDensityNodes(dev);
         nodes.forEach(nodeKey => {
@@ -131,30 +127,7 @@ const findConnectedSwitch = (dev, specKey, devices) => {
     return null;
 };
 
-// Calculate real rack routing distance in meters (includes buffer)
-const calculateCableLength = (dev, sw, racks = []) => {
-    if (!dev || !sw) return null;
-    const U_HEIGHT_M = 0.04445; // 1.75 inches
-    const horizontalRun = 1.0;  // horizontal run inside cabinet
-    const buffer = 1.0;          // service loop buffer
-    
-    if (dev.rackId === sw.rackId) {
-        const verticalDistance = Math.abs((dev.startU || 1) - (sw.startU || 1)) * U_HEIGHT_M;
-        return Math.round((verticalDistance + horizontalRun + buffer) * 10) / 10;
-    } else {
-        const indexA = racks.findIndex(r => r.id === dev.rackId);
-        const indexB = racks.findIndex(r => r.id === sw.rackId);
-        const rackSpans = (indexA !== -1 && indexB !== -1) ? Math.abs(indexA - indexB) : 1;
-        const overheadRun = rackSpans * 0.6; // 0.6m standard rack width for side-by-side layout
-        
-        const rackHeightU = 42;
-        const rackA_vertical = (rackHeightU - (dev.startU || 1)) * U_HEIGHT_M;
-        const rackB_vertical = (rackHeightU - (sw.startU || 1)) * U_HEIGHT_M;
-        return Math.round((rackA_vertical + rackB_vertical + overheadRun + horizontalRun + buffer) * 10) / 10;
-    }
-};
-
-// Aggregate specs for the summary table
+// Aggregate manual specs for the summary table
 const aggregateSpecs = (devicesInRack) => {
     const nicTransceivers = {};
     const swTransceivers = {};
@@ -163,17 +136,14 @@ const aggregateSpecs = (devicesInRack) => {
     devicesInRack.forEach(dev => {
         const specs = getCabledSpecsForDevice(dev);
         specs.forEach(s => {
-            // NIC Transceivers
             if (s.nicTransceiverModel && s.nicTransceiverModel !== '-' && s.nicTransceiverQty > 0) {
                 const key = s.nicTransceiverModel.trim();
                 nicTransceivers[key] = (nicTransceivers[key] || 0) + s.nicTransceiverQty;
             }
-            // SW Transceivers
             if (s.swTransceiverModel && s.swTransceiverModel !== '-' && s.swTransceiverQty > 0) {
                 const key = s.swTransceiverModel.trim();
                 swTransceivers[key] = (swTransceivers[key] || 0) + s.swTransceiverQty;
             }
-            // Cables
             if (s.cableModel && s.cableModel !== '-' && s.cableQty > 0) {
                 const key = s.cableModel.trim();
                 cables[key] = (cables[key] || 0) + s.cableQty;
@@ -188,20 +158,54 @@ const NetworkCablingModal = () => {
     const { 
         isNetworkCablingOpen, setIsNetworkCablingOpen, 
         isGeneratingCablePDF, setIsGeneratingCablePDF,
-        devices, racks, activeRackId, projectName, viewMode
+        devices, racks, activeRackId, projectName, viewMode, projectInfo,
+        handleExportCableRouting, handleExportBOM
     } = useRackPlanner();
+
+    const [activeTab, setActiveTab] = useState('cutsheet'); // 'cutsheet' | 'bom' | 'manual'
+    const [scopeFilter, setScopeFilter] = useState('all'); // 'all' | 'l11' | 'l12'
+    const [fabricFilter, setFabricFilter] = useState('all'); // 'all' | 'EW' | 'NS' | 'OOB' | 'DLC'
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // 自動計算全系統 L11/L12 點對點拉線施工表與分長度 BOM
+    const cutSheetData = useMemo(
+        () => generateProjectCableCutSheet(devices, racks, projectInfo),
+        [devices, racks, projectInfo]
+    );
 
     if (!isNetworkCablingOpen) return null;
 
     const isOverview = viewMode === 'overview' || viewMode === 'container' || viewMode === 'network';
-
     const activeRack = racks.find(r => r.id === activeRackId);
     const activeRackName = activeRack ? activeRack.name : '未知機櫃';
-    
-    // Choose devices to analyze: active rack or all racks
+
+    const { cutSheetRows, lengthBinnedBom, transceiverMap, summary } = cutSheetData;
+
+    const filteredCutSheetRows = cutSheetRows.filter(row => {
+        if (!isOverview) {
+            const inActiveRack = row.srcRackName === activeRackName || row.dstRackName === activeRackName;
+            if (!inActiveRack) return false;
+        }
+        if (scopeFilter === 'l11' && !row.isIntraRack) return false;
+        if (scopeFilter === 'l12' && row.isIntraRack) return false;
+        if (fabricFilter !== 'all' && row.fabricCode !== fabricFilter) return false;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            return (
+                row.cableId.toLowerCase().includes(q) ||
+                row.srcDeviceName.toLowerCase().includes(q) ||
+                row.dstDeviceName.toLowerCase().includes(q) ||
+                row.srcRackName.toLowerCase().includes(q) ||
+                row.dstRackName.toLowerCase().includes(q) ||
+                row.cableModel.toLowerCase().includes(q) ||
+                row.mediaType.toLowerCase().includes(q)
+            );
+        }
+        return true;
+    });
+
+    // Choose devices to analyze for manual tab
     const devicesToAnalyze = isOverview ? devices : devices.filter(d => d.rackId === activeRackId);
-    
-    // Sort devices: by rack name alphabetically first (if overview), then U-height descending
     const sortedDevices = [...devicesToAnalyze].sort((a, b) => {
         if (isOverview && a.rackId !== b.rackId) {
             const rackA = racks.find(r => r.id === a.rackId)?.name || '';
@@ -211,20 +215,18 @@ const NetworkCablingModal = () => {
         return (b.startU || 0) - (a.startU || 0);
     });
 
-    // Get all devices that have cabling specifications
     const cabledDevices = sortedDevices.map(dev => {
         const specs = getCabledSpecsForDevice(dev);
         return { dev, specs };
     }).filter(item => item.specs.length > 0);
 
-    // Aggregate summary
     const { nicTransceivers, swTransceivers, cables } = aggregateSpecs(devicesToAnalyze);
-    const hasAnySummary = Object.keys(nicTransceivers).length > 0 || Object.keys(swTransceivers).length > 0 || Object.keys(cables).length > 0;
+    const hasAnySummary = cutSheetRows.length > 0 || Object.keys(nicTransceivers).length > 0 || Object.keys(swTransceivers).length > 0 || Object.keys(cables).length > 0;
 
     const handleGenerateSpecPDF = async () => {
         setIsGeneratingCablePDF(true);
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        await delay(500); // wait for render in DOM
+        await delay(500);
 
         const element = document.getElementById('pdf-cable-print-area');
         if (element) {
@@ -248,7 +250,7 @@ const NetworkCablingModal = () => {
                         }
                         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                     }
-                    pdf.save(`RackPlanner-NetworkCablingSpec-${projectName || 'Project'}-${new Date().toISOString().slice(0, 10)}.pdf`);
+                    pdf.save(`RackPlanner-L11L12-CablingSpec-${projectName || 'Project'}-${new Date().toISOString().slice(0, 10)}.pdf`);
                 }
             } catch (err) {
                 console.error("Error generating cabling spec PDF:", err);
@@ -257,47 +259,77 @@ const NetworkCablingModal = () => {
         setIsGeneratingCablePDF(false);
     };
 
-    // Split devices for PDF pages to avoid overflow (5 devices per page)
-    const devicesPerPage = 5;
-    const chunkedDevices = [];
-    for (let i = 0; i < cabledDevices.length; i += devicesPerPage) {
-        chunkedDevices.push(cabledDevices.slice(i, i + devicesPerPage));
+    // Split cutSheetRows for PDF pages (22 rows per page)
+    const rowsPerPage = 22;
+    const chunkedCutSheet = [];
+    for (let i = 0; i < cutSheetRows.length; i += rowsPerPage) {
+        chunkedCutSheet.push(cutSheetRows.slice(i, i + rowsPerPage));
     }
 
     const todayStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
+    const getFabricBadgeClass = (fabricCode) => {
+        switch (fabricCode) {
+            case 'EW': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+            case 'NS': return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+            case 'OOB': return 'bg-sky-500/15 text-sky-400 border-sky-500/30';
+            case 'DLC': return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+            default: return 'bg-slate-800 text-slate-300 border-slate-700';
+        }
+    };
+
     return (
         <>
             {/* Modal Dialog */}
-            <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-8 animate-fade-in animate-duration-200">
-                {/* Modal Body */}
-                <div className="bg-[#0b1424] border border-slate-700/60 w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-6 animate-fade-in animate-duration-200">
+                <div className="bg-[#0b1424] border border-slate-700/60 w-full max-w-6xl h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                     
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-[#0e192c]">
+                    <div className="px-6 py-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-3 bg-[#0e192c]">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
-                                <Share2 className="w-5 h-5 animate-pulse" />
+                            <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+                                <Cable className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-200">
-                                    機櫃網路線路與規格表 {isOverview && <span className="text-indigo-400 font-bold ml-2">(全機櫃總覽)</span>}
-                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-slate-100">
+                                        L11 / L12 產線拉線施工表與線材規格中心 (Cable Cut-Sheet & BOM)
+                                    </h3>
+                                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">
+                                        {isOverview ? '全機櫃叢集總覽' : `單櫃檢視: ${activeRackName}`}
+                                    </span>
+                                </div>
                                 <p className="text-xs text-slate-400 mt-0.5">
-                                    {isOverview 
-                                        ? "顯示目前專案所有機櫃設備的收發器與線路統計資料" 
-                                        : `顯示目前機櫃 ${activeRackName} 的設備收發器與線路統計資料`}
+                                    依機櫃 U 位高度與跨櫃曼哈頓距離自動計算標準採購線長 (0.5m~30m)、自動選型 DAC/AEC/AOC/光纖，並生成產線 Brady Label 線標編號
                                 </p>
                             </div>
                         </div>
                         
                         <div className="flex items-center gap-2">
+                            {cutSheetRows.length > 0 && (
+                                <>
+                                    <button
+                                        onClick={handleExportCableRouting}
+                                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-lg shadow-emerald-600/20"
+                                        title="匯出包含 Cable_ID、預估線長與交換器對照表的完整 CSV"
+                                    >
+                                        <Download className="w-3.5 h-3.5" /> 匯出 Cut-Sheet (.CSV)
+                                    </button>
+                                    <button
+                                        onClick={handleExportBOM}
+                                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                                        title="匯出包含分米數線材統計的完整專案 BOM 表"
+                                    >
+                                        <Download className="w-3.5 h-3.5 text-amber-400" /> 匯出分長度 BOM (.CSV)
+                                    </button>
+                                </>
+                            )}
                             {hasAnySummary && (
                                 <button
                                     onClick={handleGenerateSpecPDF}
                                     className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-lg shadow-indigo-600/20"
                                 >
-                                    <FileText className="w-3.5 h-3.5" /> 製作網路規格書 (PDF)
+                                    <FileText className="w-3.5 h-3.5" /> 匯出施工規格書 (.PDF)
                                 </button>
                             )}
                             <button 
@@ -309,142 +341,368 @@ const NetworkCablingModal = () => {
                         </div>
                     </div>
 
+                    {/* Top KPI Summary Bar */}
+                    <div className="px-6 py-3 bg-[#09111e] border-b border-slate-800/80 grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-semibold">總連線條數 (Links)</div>
+                                <div className="text-base font-black text-white font-mono">{summary.totalConnections} <span className="text-xs font-normal text-slate-400">條</span></div>
+                            </div>
+                            <Tag className="w-4 h-4 text-indigo-400 opacity-80" />
+                        </div>
+                        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-semibold">L11 櫃內 / L12 跨櫃</div>
+                                <div className="text-sm font-black font-mono">
+                                    <span className="text-cyan-400">{summary.l11Count}</span>
+                                    <span className="text-slate-600 mx-1">/</span>
+                                    <span className="text-purple-400">{summary.l12Count}</span>
+                                </div>
+                            </div>
+                            <Layers className="w-4 h-4 text-cyan-400 opacity-80" />
+                        </div>
+                        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-semibold">預估採購總米數</div>
+                                <div className="text-base font-black text-amber-400 font-mono">{summary.totalMeters} <span className="text-xs font-normal text-slate-400">m</span></div>
+                            </div>
+                            <Ruler className="w-4 h-4 text-amber-400 opacity-80" />
+                        </div>
+                        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-semibold">高速銅纜 / 主動光纖</div>
+                                <div className="text-sm font-black font-mono">
+                                    <span className="text-emerald-400" title="DAC / AEC 銅纜">{summary.dacCount} DAC</span>
+                                    <span className="text-slate-600 mx-1">/</span>
+                                    <span className="text-rose-400" title="MPO 光纖 / AOC">{summary.opticalCount} 光纖</span>
+                                </div>
+                            </div>
+                            <Share2 className="w-4 h-4 text-emerald-400 opacity-80" />
+                        </div>
+                        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-semibold">OOB 網路線 / 液冷管</div>
+                                <div className="text-sm font-black font-mono">
+                                    <span className="text-sky-400">{summary.utpCount} RJ45</span>
+                                    <span className="text-slate-600 mx-1">/</span>
+                                    <span className="text-blue-300">{summary.dlcCount} QDC</span>
+                                </div>
+                            </div>
+                            <Filter className="w-4 h-4 text-sky-400 opacity-80" />
+                        </div>
+                    </div>
+
+                    {/* Navigation Tabs */}
+                    <div className="px-6 pt-3 bg-[#0b1424] border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setActiveTab('cutsheet')}
+                                className={`px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer ${
+                                    activeTab === 'cutsheet'
+                                        ? 'border-indigo-500 text-indigo-300 bg-indigo-500/10'
+                                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                                }`}
+                            >
+                                1. 產線點對點拉線施工表 (Point-to-Point Cut-Sheet) ({filteredCutSheetRows.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('bom')}
+                                className={`px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer ${
+                                    activeTab === 'bom'
+                                        ? 'border-indigo-500 text-indigo-300 bg-indigo-500/10'
+                                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                                }`}
+                            >
+                                2. 分米數線材與光模組採購 BOM ({lengthBinnedBom.length} 項規格)
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('manual')}
+                                className={`px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer ${
+                                    activeTab === 'manual'
+                                        ? 'border-indigo-500 text-indigo-300 bg-indigo-500/10'
+                                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                                }`}
+                            >
+                                3. 設備介面自訂收發器明細 ({cabledDevices.length})
+                            </button>
+                        </div>
+
+                        {activeTab === 'cutsheet' && (
+                            <div className="flex items-center gap-2 pb-2">
+                                <select
+                                    value={scopeFilter}
+                                    onChange={(e) => setScopeFilter(e.target.value)}
+                                    className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1 outline-none focus:border-indigo-500"
+                                >
+                                    <option value="all">所有層級 (L11 + L12)</option>
+                                    <option value="l11">僅 L11 (櫃內 Intra-Rack)</option>
+                                    <option value="l12">僅 L12 (跨櫃 Inter-Rack)</option>
+                                </select>
+                                <select
+                                    value={fabricFilter}
+                                    onChange={(e) => setFabricFilter(e.target.value)}
+                                    className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1 outline-none focus:border-indigo-500"
+                                >
+                                    <option value="all">所有網路平面 (All Fabrics)</option>
+                                    <option value="EW">East-West (AI 運算網)</option>
+                                    <option value="NS">North-South (前端/業務網)</option>
+                                    <option value="OOB">OOB (BMC 帶外管理網)</option>
+                                    <option value="DLC">DLC (液冷管路)</option>
+                                </select>
+                                <div className="relative">
+                                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="搜尋線標、設備、機櫃、料號..."
+                                        className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-1 w-48 outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-                        
-                        {/* 1. Summary Section (總表) */}
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <span className="inline-block w-1.5 h-3 bg-indigo-500 rounded-sm"></span>
-                                {isOverview ? "全專案規格彙總表 (All Cabinets Summary)" : "機櫃規格彙總表 (Active Cabinet Summary)"}
-                            </h4>
-                            
-                            {!hasAnySummary ? (
-                                <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-6 text-center text-xs text-slate-500">
-                                    目前無設定任何連線規格數據。請先在右側編輯面板輸入設備的收發器或線路資訊。
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {/* NIC Transceivers Summary */}
-                                    <div className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-4 flex flex-col gap-2.5">
-                                        <div className="text-xs font-bold text-slate-400">NIC端 收發器 (Device End)</div>
-                                        <div className="divide-y divide-slate-800/60 flex-1">
-                                            {Object.keys(nicTransceivers).length === 0 ? (
-                                                <div className="text-xs text-slate-600 py-1.5">-</div>
-                                            ) : (
-                                                Object.entries(nicTransceivers).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center py-2 text-xs font-mono">
-                                                        <span className="text-slate-300 truncate pr-2" title={model}>{model}</span>
-                                                        <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded font-bold">{count} 個</span>
-                                                    </div>
-                                                ))
-                                            )}
+                    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 custom-scrollbar">
+                        {activeTab === 'cutsheet' && (
+                            <div className="space-y-3">
+                                {filteredCutSheetRows.length === 0 ? (
+                                    <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-2">
+                                        <Cable className="w-8 h-8 text-slate-600 mb-1" />
+                                        <p className="text-sm font-semibold text-slate-300">目前尚無符合條件的實體連線紀錄</p>
+                                        <p className="text-xs text-slate-500">請在機櫃視圖或網路拓撲視圖使用「自動佈線」或手動拖拽連接埠，系統將自動計算物理線長與產線線標。</p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full border-collapse text-left text-xs">
+                                                <thead>
+                                                    <tr className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800 text-[10px] uppercase tracking-wider">
+                                                        <th className="px-3 py-2.5 w-[4%] text-center">#</th>
+                                                        <th className="px-3 py-2.5 w-[19%]">產線線標編號 (Cable_ID)</th>
+                                                        <th className="px-3 py-2.5 w-[9%] text-center">層級 / 平面</th>
+                                                        <th className="px-3 py-2.5 w-[21%]">來源端 (Src Rack / U / Host / Port)</th>
+                                                        <th className="px-3 py-2.5 w-[21%]">目的端 (Dst Rack / U / Host / Port)</th>
+                                                        <th className="px-3 py-2.5 w-[10%] text-center">預估實長 / 採購線長</th>
+                                                        <th className="px-3 py-2.5 w-[16%]">自動選型介質與光模組</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                                                    {filteredCutSheetRows.map((row) => (
+                                                        <tr key={row.cableId} className="hover:bg-slate-800/40 transition-colors text-slate-200">
+                                                            <td className="px-3 py-2 text-center text-slate-500">{row.seq}</td>
+                                                            <td className="px-3 py-2">
+                                                                <span className="px-2 py-0.5 bg-indigo-950/90 text-indigo-300 border border-indigo-500/30 rounded font-bold text-[10px] select-all">
+                                                                    {row.cableId}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-center">
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${
+                                                                        row.isIntraRack
+                                                                            ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
+                                                                            : 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                                                                    }`}>
+                                                                        {row.isIntraRack ? 'L11 櫃內' : 'L12 跨櫃'}
+                                                                    </span>
+                                                                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${getFabricBadgeClass(row.fabricCode)}`}>
+                                                                        {row.fabricCode}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">
+                                                                        {row.srcRackName} · {row.srcU}
+                                                                    </span>
+                                                                    <span className="font-bold text-white truncate max-w-[130px]" title={row.srcDeviceName}>
+                                                                        {row.srcDeviceName}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-[10px] text-indigo-400 mt-0.5">
+                                                                    Port: {row.srcPortFormatted}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">
+                                                                        {row.dstRackName} · {row.dstU}
+                                                                    </span>
+                                                                    <span className="font-bold text-white truncate max-w-[130px]" title={row.dstDeviceName}>
+                                                                        {row.dstDeviceName}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-[10px] text-violet-400 mt-0.5">
+                                                                    Port: {row.dstPortFormatted}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-center">
+                                                                <div className="text-sm font-black text-amber-400">
+                                                                    {row.standardLength} m
+                                                                </div>
+                                                                <div className="text-[9px] text-slate-500">
+                                                                    實算: {row.rawLength} m
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <div className="font-bold text-emerald-300 text-[11px]">{row.cableModel}</div>
+                                                                <div className="text-[10px] text-slate-400">{row.mediaType}</div>
+                                                                {row.transceiverSrc !== '-' && !row.transceiverSrc.includes('DAC') && !row.transceiverSrc.includes('RJ45') && (
+                                                                    <div className="text-[9px] text-indigo-300/80 mt-0.5 truncate" title={`${row.transceiverSrc} / ${row.transceiverDst}`}>
+                                                                        光模組: {row.transceiverSrc}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                    {/* SW Transceivers Summary */}
-                                    <div className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-4 flex flex-col gap-2.5">
-                                        <div className="text-xs font-bold text-slate-400">Switch端 收發器 (Switch End)</div>
-                                        <div className="divide-y divide-slate-800/60 flex-1">
-                                            {Object.keys(swTransceivers).length === 0 ? (
-                                                <div className="text-xs text-slate-600 py-1.5">-</div>
-                                            ) : (
-                                                Object.entries(swTransceivers).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center py-2 text-xs font-mono">
-                                                        <span className="text-slate-300 truncate pr-2" title={model}>{model}</span>
-                                                        <span className="px-2 py-0.5 bg-violet-500/10 text-violet-400 border border-violet-500/20 rounded font-bold">{count} 個</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* Cable Summary */}
-                                    <div className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-4 flex flex-col gap-2.5">
-                                        <div className="text-xs font-bold text-slate-400">線路型號 (Cable Specs)</div>
-                                        <div className="divide-y divide-slate-800/60 flex-1">
-                                            {Object.keys(cables).length === 0 ? (
-                                                <div className="text-xs text-slate-600 py-1.5">-</div>
-                                            ) : (
-                                                Object.entries(cables).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center py-2 text-xs font-mono">
-                                                        <span className="text-slate-300 truncate pr-2" title={model}>{model}</span>
-                                                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-bold">{count} 條</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
 
-                        {/* 2. Cabling Details (明細表) */}
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <span className="inline-block w-1.5 h-3 bg-indigo-500 rounded-sm"></span>
-                                {isOverview ? "所有機櫃設備規格明細表 (All Devices Cabling Details)" : "設備規格明細表 (Device Cabling Details)"}
-                            </h4>
-
-                            {cabledDevices.length === 0 ? (
-                                <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-2">
-                                    <p className="text-sm font-semibold text-slate-400">目前無設定任何線路規格資訊</p>
-                                    <p className="text-xs text-slate-500">請在右側面板為各設備（如 BMC、PCIe 插槽、OCP、EW NIC）填寫 Transceiver 型號及 Cable 數量。</p>
+                        {activeTab === 'bom' && (
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <span className="inline-block w-1.5 h-3 bg-indigo-500 rounded-sm"></span>
+                                        分長度線材採購統計表 (Length-Binned Cable BOM)
+                                    </h4>
+                                    {lengthBinnedBom.length === 0 ? (
+                                        <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-8 text-center text-xs text-slate-500">
+                                            尚無任何連線可供統計。
+                                        </div>
+                                    ) : (
+                                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+                                            <table className="w-full border-collapse text-left text-xs">
+                                                <thead>
+                                                    <tr className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800 text-[10px] uppercase">
+                                                        <th className="px-4 py-2.5">線材類別描述</th>
+                                                        <th className="px-4 py-2.5">建議採購料號 (PN)</th>
+                                                        <th className="px-4 py-2.5">物理介質 (Media)</th>
+                                                        <th className="px-4 py-2.5 text-center">標準長度級距</th>
+                                                        <th className="px-4 py-2.5 text-center">L11 櫃內數量</th>
+                                                        <th className="px-4 py-2.5 text-center">L12 跨櫃數量</th>
+                                                        <th className="px-4 py-2.5 text-center">總採購數量</th>
+                                                        <th className="px-4 py-2.5 text-right">總米數小計</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                                                    {lengthBinnedBom.map((item, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-800/40 text-slate-200">
+                                                            <td className="px-4 py-2.5 font-sans font-bold text-slate-200">{item.bomCategoryName}</td>
+                                                            <td className="px-4 py-2.5 font-bold text-emerald-400">{item.cableModel}</td>
+                                                            <td className="px-4 py-2.5 text-slate-400">{item.mediaType}</td>
+                                                            <td className="px-4 py-2.5 text-center">
+                                                                <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded font-bold">
+                                                                    {item.standardLength} m
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-2.5 text-center text-cyan-400">{item.scopeBreakdown.l11}</td>
+                                                            <td className="px-4 py-2.5 text-center text-purple-400">{item.scopeBreakdown.l12}</td>
+                                                            <td className="px-4 py-2.5 text-center font-black text-white text-sm">{item.totalQty} 條</td>
+                                                            <td className="px-4 py-2.5 text-right text-slate-300">{item.totalMeters} m</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {cabledDevices.map(({ dev, specs }) => {
-                                        const devRack = racks.find(r => r.id === dev.rackId);
-                                        const devRackName = devRack ? devRack.name : '未知機櫃';
-                                        return (
-                                            <div key={dev.id} className="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
-                                                {/* Device Header */}
-                                                <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/80 flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-slate-200 font-mono">
-                                                        {isOverview ? `[${devRackName}] ` : ''}{dev.customName} <span className="text-slate-500 font-normal">({dev.type})</span>
+
+                                <div className="space-y-3">
+                                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <span className="inline-block w-1.5 h-3 bg-indigo-500 rounded-sm"></span>
+                                        獨立光模組統計表 (Optical Transceivers BOM — 排除已含於 DAC/AEC 銅纜之埠位)
+                                    </h4>
+                                    {Object.keys(transceiverMap).length === 0 ? (
+                                        <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-6 text-center text-xs text-slate-500">
+                                            目前連線全數採用銅纜 (DAC/AEC/Cat6A) 或一體化線材，無需額外採購獨立光纖收發器。
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            {Object.entries(transceiverMap).map(([model, count]) => (
+                                                <div key={model} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between font-mono">
+                                                    <div>
+                                                        <div className="text-xs font-bold text-indigo-300">{model}</div>
+                                                        <div className="text-[10px] text-slate-500">Optical Transceiver Module</div>
+                                                    </div>
+                                                    <span className="px-2.5 py-1 bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-lg font-black text-sm">
+                                                        {count} 顆
                                                     </span>
-                                                    <span className="text-[10px] px-2 py-0.5 bg-slate-850 text-slate-400 border border-slate-800 rounded font-bold">U{dev.startU} - U{dev.startU + dev.size - 1}</span>
                                                 </div>
-                                                {/* Device Specs Table */}
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full border-collapse text-left text-xs">
-                                                        <thead>
-                                                            <tr className="bg-slate-950/30 text-slate-500 font-bold border-b border-slate-800 text-[10px] uppercase">
-                                                                <th className="px-4 py-2 w-[12%]">介面 (Interface)</th>
-                                                                <th className="px-4 py-2 w-[22%]">NIC端 收發器</th>
-                                                                <th className="px-4 py-2 w-[8%] text-center">數量</th>
-                                                                <th className="px-4 py-2 w-[22%]">Switch端 收發器</th>
-                                                                <th className="px-4 py-2 w-[8%] text-center">數量</th>
-                                                                <th className="px-4 py-2 w-[22%]">線路型號</th>
-                                                                <th className="px-4 py-2 w-[8%] text-center">數量</th>
-                                                                <th className="px-4 py-2 w-[8%] text-center">長度 (Est)</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-slate-800/50 font-mono text-[11px]">
-                                                            {specs.map((s, idx) => {
-                                                                const connectedSwitch = findConnectedSwitch(dev, s.specKey, devices);
-                                                                const cableLength = calculateCableLength(dev, connectedSwitch, racks);
-                                                                const lengthStr = cableLength ? `${cableLength} m` : '-';
-                                                                return (
-                                                                    <tr key={idx} className="hover:bg-slate-850/20 text-slate-300">
-                                                                        <td className="px-4 py-2 font-semibold text-indigo-400/90">{s.interface}</td>
-                                                                        <td className="px-4 py-2">{s.nicTransceiverModel}</td>
-                                                                        <td className="px-4 py-2 text-center text-indigo-300">{s.nicTransceiverQty}</td>
-                                                                        <td className="px-4 py-2">{s.swTransceiverModel}</td>
-                                                                        <td className="px-4 py-2 text-center text-violet-300">{s.swTransceiverQty}</td>
-                                                                        <td className="px-4 py-2">{s.cableModel}</td>
-                                                                        <td className="px-4 py-2 text-center text-emerald-300">{s.cableQty}</td>
-                                                                        <td className="px-4 py-2 text-center text-amber-400 font-bold">{lengthStr}</td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'manual' && (
+                            <div className="space-y-4">
+                                {cabledDevices.length === 0 ? (
+                                    <div className="bg-slate-950/40 border border-slate-900 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-2">
+                                        <p className="text-sm font-semibold text-slate-400">目前無手動填寫之設備介面收發器明細</p>
+                                        <p className="text-xs text-slate-500">您可以在右側屬性面板針對特定設備手動指定 Transceiver 型號，或直接使用上方「1. 產線點對點拉線施工表」與「2. 分米數線材採購 BOM」檢視系統自動計算結果。</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {cabledDevices.map(({ dev, specs }) => {
+                                            const devRack = racks.find(r => r.id === dev.rackId);
+                                            const devRackName = devRack ? devRack.name : '未知機櫃';
+                                            return (
+                                                <div key={dev.id} className="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
+                                                    <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/80 flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-slate-200 font-mono">
+                                                            {isOverview ? `[${devRackName}] ` : ''}{dev.customName} <span className="text-slate-500 font-normal">({dev.type})</span>
+                                                        </span>
+                                                        <span className="text-[10px] px-2 py-0.5 bg-slate-850 text-slate-400 border border-slate-800 rounded font-bold">U{dev.startU} - U{dev.startU + dev.size - 1}</span>
+                                                    </div>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full border-collapse text-left text-xs">
+                                                            <thead>
+                                                                <tr className="bg-slate-950/30 text-slate-500 font-bold border-b border-slate-800 text-[10px] uppercase">
+                                                                    <th className="px-4 py-2 w-[12%]">介面 (Interface)</th>
+                                                                    <th className="px-4 py-2 w-[20%]">NIC端 收發器</th>
+                                                                    <th className="px-4 py-2 w-[8%] text-center">數量</th>
+                                                                    <th className="px-4 py-2 w-[20%]">Switch端 收發器</th>
+                                                                    <th className="px-4 py-2 w-[8%] text-center">數量</th>
+                                                                    <th className="px-4 py-2 w-[18%]">線路型號</th>
+                                                                    <th className="px-4 py-2 w-[6%] text-center">數量</th>
+                                                                    <th className="px-4 py-2 w-[8%] text-center">採購線長</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-slate-800/50 font-mono text-[11px]">
+                                                                {specs.map((s, idx) => {
+                                                                    const connectedSwitch = findConnectedSwitch(dev, s.specKey, devices);
+                                                                    const dist = connectedSwitch ? calculatePhysicalCableDistance(dev, s.specKey, connectedSwitch, 'port-1', racks) : null;
+                                                                    const lengthStr = dist ? `${dist.standardLength} m` : '-';
+                                                                    return (
+                                                                        <tr key={idx} className="hover:bg-slate-850/20 text-slate-300">
+                                                                            <td className="px-4 py-2 font-semibold text-indigo-400/90">{s.interface}</td>
+                                                                            <td className="px-4 py-2">{s.nicTransceiverModel}</td>
+                                                                            <td className="px-4 py-2 text-center text-indigo-300">{s.nicTransceiverQty}</td>
+                                                                            <td className="px-4 py-2">{s.swTransceiverModel}</td>
+                                                                            <td className="px-4 py-2 text-center text-violet-300">{s.swTransceiverQty}</td>
+                                                                            <td className="px-4 py-2">{s.cableModel}</td>
+                                                                            <td className="px-4 py-2 text-center text-emerald-300">{s.cableQty}</td>
+                                                                            <td className="px-4 py-2 text-center text-amber-400 font-bold">{lengthStr}</td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -453,170 +711,146 @@ const NetworkCablingModal = () => {
             {isGeneratingCablePDF && (
                 <div id="pdf-cable-print-area" style={{ position: 'absolute', left: '-9999px', top: '0', width: '794px', background: '#ffffff', color: '#0d1b2e' }}>
                     
-                    {/* Page 1: Summary Sheet */}
-                    <div className="pdf-page bg-white p-12 flex flex-col justify-between" style={{ width: '794px', height: '1123px', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
+                    {/* Page 1: L11/L12 Length-Binned BOM & Summary Sheet */}
+                    <div className="pdf-page bg-white p-10 flex flex-col justify-between" style={{ width: '794px', height: '1123px', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
                         <div>
-                            {/* Watermark/Branding Header */}
-                            <div className="flex justify-between items-center border-b-2 border-[#D71422] pb-4 mb-8">
+                            <div className="flex justify-between items-center border-b-2 border-[#D71422] pb-3 mb-6">
                                 <span className="text-xl font-black text-slate-800 tracking-wider">INVENTEC</span>
-                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest border border-red-200 px-2 py-0.5 rounded">Confidential</span>
+                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest border border-red-200 px-2 py-0.5 rounded">Confidential · L11/L12 Engineering</span>
                             </div>
 
-                            {/* Title */}
-                            <div className="space-y-2 mb-10">
-                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">專案網路規格書 / Network Cabling Specification</h1>
-                                <p className="text-xs text-slate-500">此文件載明指定機櫃內的連線設備收發器及對接線路明細規格。</p>
+                            <div className="space-y-1.5 mb-6">
+                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">L11 / L12 網路佈線與分米數線材採購規格書</h1>
+                                <p className="text-xs text-slate-500">Point-to-Point Cable Cut-Sheet & Length-Binned Cable / Transceiver BOM</p>
                             </div>
 
-                            {/* Project Information */}
-                            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8 text-xs text-slate-600">
+                            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 text-xs text-slate-600">
                                 <div>
-                                    <div className="mb-1.5"><span className="font-bold text-slate-800">專案名稱：</span>{projectName || '未命名專案'}</div>
-                                    <div><span className="font-bold text-slate-800">機櫃範圍：</span>{isOverview ? '所有機櫃 (All Cabinets)' : activeRackName}</div>
+                                    <div className="mb-1"><span className="font-bold text-slate-800">專案名稱：</span>{projectName || '未命名專案'}</div>
+                                    <div><span className="font-bold text-slate-800">統計範圍：</span>{isOverview ? '全機櫃叢集 (All Racks)' : activeRackName}</div>
                                 </div>
                                 <div>
-                                    <div className="mb-1.5"><span className="font-bold text-slate-800">產出時間：</span>{todayStr}</div>
-                                    <div><span className="font-bold text-slate-800">分析設備總數：</span>{devicesToAnalyze.length} 台</div>
+                                    <div className="mb-1"><span className="font-bold text-slate-800">產出時間：</span>{todayStr}</div>
+                                    <div><span className="font-bold text-slate-800">總連線數 / 總線長：</span>{summary.totalConnections} 條 (L11: {summary.l11Count} / L12: {summary.l12Count}) · 共 {summary.totalMeters} m</div>
                                 </div>
                             </div>
 
-                            {/* Cabling Summary */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-indigo-600 pl-2">機櫃規格彙總表 (Aggregate Summary)</h3>
-                                
-                                <div className="grid grid-cols-3 gap-4">
-                                    {/* NIC Transceivers Summary */}
-                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                                        <div className="text-[11px] font-bold text-slate-500 mb-2 pb-1 border-b border-slate-200">NIC端 收發器 (Device)</div>
-                                        <div className="space-y-1.5">
-                                            {Object.keys(nicTransceivers).length === 0 ? (
-                                                <div className="text-xs text-slate-400">-</div>
-                                            ) : (
-                                                Object.entries(nicTransceivers).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center text-xs">
-                                                        <span className="text-slate-700 font-semibold truncate pr-1" style={{ maxWidth: '140px' }}>{model}</span>
-                                                        <span className="font-bold text-slate-900 whitespace-nowrap">{count} 個</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* SW Transceivers Summary */}
-                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                                        <div className="text-[11px] font-bold text-slate-500 mb-2 pb-1 border-b border-slate-200">Switch端 收發器 (Switch)</div>
-                                        <div className="space-y-1.5">
-                                            {Object.keys(swTransceivers).length === 0 ? (
-                                                <div className="text-xs text-slate-400">-</div>
-                                            ) : (
-                                                Object.entries(swTransceivers).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center text-xs">
-                                                        <span className="text-slate-700 font-semibold truncate pr-1" style={{ maxWidth: '140px' }}>{model}</span>
-                                                        <span className="font-bold text-slate-900 whitespace-nowrap">{count} 個</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* Cable Summary */}
-                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                                        <div className="text-[11px] font-bold text-slate-500 mb-2 pb-1 border-b border-slate-200">線路 (Cable)</div>
-                                        <div className="space-y-1.5">
-                                            {Object.keys(cables).length === 0 ? (
-                                                <div className="text-xs text-slate-400">-</div>
-                                            ) : (
-                                                Object.entries(cables).map(([model, count]) => (
-                                                    <div key={model} className="flex justify-between items-center text-xs">
-                                                        <span className="text-slate-700 font-semibold truncate pr-1" style={{ maxWidth: '140px' }}>{model}</span>
-                                                        <span className="font-bold text-slate-900 whitespace-nowrap">{count} 條</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
+                            <div className="space-y-3 mb-6">
+                                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-l-4 border-indigo-600 pl-2">
+                                    一、分長度線材採購統計表 (Length-Binned Cable BOM)
+                                </h3>
+                                <table className="w-full border-collapse text-left text-[9px]">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                                            <th className="p-1.5 border border-slate-200">線材類別</th>
+                                            <th className="p-1.5 border border-slate-200">標準料號 (PN)</th>
+                                            <th className="p-1.5 border border-slate-200">物理介質</th>
+                                            <th className="p-1.5 border border-slate-200 text-center">採購線長</th>
+                                            <th className="p-1.5 border border-slate-200 text-center">L11 櫃內</th>
+                                            <th className="p-1.5 border border-slate-200 text-center">L12 跨櫃</th>
+                                            <th className="p-1.5 border border-slate-200 text-center">總數量</th>
+                                            <th className="p-1.5 border border-slate-200 text-right">總米數</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 font-mono">
+                                        {lengthBinnedBom.map((item, idx) => (
+                                            <tr key={idx} className={idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'}>
+                                                <td className="p-1.5 border border-slate-200 font-sans font-bold text-slate-800">{item.bomCategoryName}</td>
+                                                <td className="p-1.5 border border-slate-200 font-bold text-indigo-700">{item.cableModel}</td>
+                                                <td className="p-1.5 border border-slate-200 text-slate-600">{item.mediaType}</td>
+                                                <td className="p-1.5 border border-slate-200 text-center font-bold text-amber-700">{item.standardLength}m</td>
+                                                <td className="p-1.5 border border-slate-200 text-center">{item.scopeBreakdown.l11}</td>
+                                                <td className="p-1.5 border border-slate-200 text-center">{item.scopeBreakdown.l12}</td>
+                                                <td className="p-1.5 border border-slate-200 text-center font-bold text-slate-900">{item.totalQty}</td>
+                                                <td className="p-1.5 border border-slate-200 text-right">{item.totalMeters}m</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {Object.keys(transceiverMap).length > 0 && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-l-4 border-indigo-600 pl-2">
+                                        二、獨立光纖收發器統計表 (Optical Transceivers BOM)
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {Object.entries(transceiverMap).map(([model, count]) => (
+                                            <div key={model} className="bg-slate-50 border border-slate-200 rounded p-2 flex justify-between items-center text-[10px] font-mono">
+                                                <span className="font-bold text-slate-700 truncate pr-2">{model}</span>
+                                                <span className="font-black text-indigo-700">{count} 顆</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Page Footer */}
-                        <div className="border-t border-slate-200 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                            <span>Inventec Corporation</span>
-                            <span>頁次 1 / {chunkedDevices.length + 1}</span>
+                        <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            <span>Inventec Corporation · RackPlanner PRO</span>
+                            <span>頁次 1 / {chunkedCutSheet.length + 1}</span>
                         </div>
                     </div>
 
-                    {/* Page 2+: Cabling Details Sheets */}
-                    {chunkedDevices.map((chunk, pIdx) => {
+                    {/* Page 2+: Point-to-Point Cut-Sheet Pages */}
+                    {chunkedCutSheet.map((chunk, pIdx) => {
                         const pageNum = pIdx + 2;
                         return (
-                            <div key={pIdx} className="pdf-page bg-white p-12 flex flex-col justify-between" style={{ width: '794px', height: '1123px', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
+                            <div key={pIdx} className="pdf-page bg-white p-10 flex flex-col justify-between" style={{ width: '794px', height: '1123px', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
                                 <div>
-                                    {/* Page Header */}
-                                    <div className="flex justify-between items-center border-b-2 border-slate-200 pb-4 mb-6">
-                                        <span className="text-xs font-black text-slate-500 tracking-wider">INVENTEC - CABLING SPECIFICATION</span>
+                                    <div className="flex justify-between items-center border-b-2 border-slate-200 pb-3 mb-4">
+                                        <span className="text-xs font-black text-slate-500 tracking-wider">INVENTEC - L11/L12 POINT-TO-POINT CUT-SHEET</span>
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                            {isOverview ? '所有機櫃' : activeRackName} - 明細頁
+                                            {projectName || 'Project'} · Cut-Sheet Page {pIdx + 1}
                                         </span>
                                     </div>
 
-                                    {/* Page Title */}
-                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-indigo-600 pl-2 mb-6">
-                                        機櫃設備線路明細 (Cabling Details - Page {pIdx + 1})
+                                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-l-4 border-indigo-600 pl-2 mb-4">
+                                        產線點對點拉線施工表 (Point-to-Point Cut-Sheet - 第 {pIdx + 1} 頁)
                                     </h3>
 
-                                    {/* Device Specifications List */}
-                                    <div className="space-y-6">
-                                        {chunk.map(({ dev, specs }) => {
-                                            const devRack = racks.find(r => r.id === dev.rackId);
-                                            const devRackName = devRack ? devRack.name : '未知機櫃';
-                                            return (
-                                                <div key={dev.id} className="border border-slate-200 rounded-lg overflow-hidden">
-                                                    <div className="bg-slate-100 border-b border-slate-200 px-3 py-1.5 flex justify-between items-center text-[10px] font-bold text-slate-700">
-                                                        <span>{isOverview ? `[${devRackName}] ` : ''}{dev.customName} ({dev.type})</span>
-                                                        <span>U{dev.startU} - U{dev.startU + dev.size - 1}</span>
-                                                    </div>
-                                                    <table className="w-full border-collapse text-left text-[9px]">
-                                                        <thead>
-                                                            <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase">
-                                                                <th className="px-3 py-1.5 w-[12%]">介面 (IF)</th>
-                                                                <th className="px-3 py-1.5 w-[22%]">NIC 收發器</th>
-                                                                <th className="px-3 py-1.5 w-[8%] text-center">數量</th>
-                                                                <th className="px-3 py-1.5 w-[22%]">SW 收發器</th>
-                                                                <th className="px-3 py-1.5 w-[8%] text-center">數量</th>
-                                                                <th className="px-3 py-1.5 w-[22%]">線路型號</th>
-                                                                <th className="px-3 py-1.5 w-[8%] text-center">數量</th>
-                                                                <th className="px-3 py-1.5 w-[8%] text-center">長度</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-slate-100 font-mono">
-                                                            {specs.map((s, idx) => {
-                                                                const connectedSwitch = findConnectedSwitch(dev, s.specKey, devices);
-                                                                const cableLength = calculateCableLength(dev, connectedSwitch, racks);
-                                                                const lengthStr = cableLength ? `${cableLength} m` : '-';
-                                                                return (
-                                                                    <tr key={idx} className="text-slate-700">
-                                                                        <td className="px-3 py-1.5 font-bold text-indigo-700">{s.interface}</td>
-                                                                        <td className="px-3 py-1.5">{s.nicTransceiverModel}</td>
-                                                                        <td className="px-3 py-1.5 text-center">{s.nicTransceiverQty}</td>
-                                                                        <td className="px-3 py-1.5">{s.swTransceiverModel}</td>
-                                                                        <td className="px-3 py-1.5 text-center">{s.swTransceiverQty}</td>
-                                                                        <td className="px-3 py-1.5">{s.cableModel}</td>
-                                                                        <td className="px-3 py-1.5 text-center">{s.cableQty}</td>
-                                                                        <td className="px-3 py-1.5 text-center text-amber-600 font-bold">{lengthStr}</td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                    <table className="w-full border-collapse text-left text-[8.5px]">
+                                        <thead>
+                                            <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                                                <th className="p-1.5 border border-slate-200 w-[20%]">線標編號 (Cable ID)</th>
+                                                <th className="p-1.5 border border-slate-200 w-[8%] text-center">層級</th>
+                                                <th className="p-1.5 border border-slate-200 w-[23%]">來源端 (機櫃 / U位 / 設備 / 埠)</th>
+                                                <th className="p-1.5 border border-slate-200 w-[23%]">目的端 (機櫃 / U位 / 設備 / 埠)</th>
+                                                <th className="p-1.5 border border-slate-200 w-[18%]">線材規格與介質</th>
+                                                <th className="p-1.5 border border-slate-200 w-[8%] text-center">採購線長</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-200 font-mono">
+                                            {chunk.map((row) => (
+                                                <tr key={row.cableId} className="text-slate-700">
+                                                    <td className="p-1.5 border border-slate-200 font-bold text-indigo-700">{row.cableId}</td>
+                                                    <td className="p-1.5 border border-slate-200 text-center">{row.isIntraRack ? 'L11 櫃內' : 'L12 跨櫃'}</td>
+                                                    <td className="p-1.5 border border-slate-200 font-sans">
+                                                        <span className="font-mono text-slate-500">[{row.srcRackCode} {row.srcU}]</span>{' '}
+                                                        <span className="font-bold">{row.srcDeviceName}</span>{' '}
+                                                        <span className="font-mono text-indigo-700">({row.srcPortFormatted})</span>
+                                                    </td>
+                                                    <td className="p-1.5 border border-slate-200 font-sans">
+                                                        <span className="font-mono text-slate-500">[{row.dstRackCode} {row.dstU}]</span>{' '}
+                                                        <span className="font-bold">{row.dstDeviceName}</span>{' '}
+                                                        <span className="font-mono text-indigo-700">({row.dstPortFormatted})</span>
+                                                    </td>
+                                                    <td className="p-1.5 border border-slate-200">
+                                                        <div className="font-bold text-slate-800">{row.cableModel}</div>
+                                                        <div className="text-[7.5px] text-slate-500">{row.mediaType}</div>
+                                                    </td>
+                                                    <td className="p-1.5 border border-slate-200 text-center font-bold text-amber-700">
+                                                        {row.standardLength}m
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
 
-                                {/* Page Footer */}
-                                <div className="border-t border-slate-200 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                    <span>Inventec Corporation</span>
-                                    <span>頁次 {pageNum} / {chunkedDevices.length + 1}</span>
+                                <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                    <span>Inventec Corporation · RackPlanner PRO</span>
+                                    <span>頁次 {pageNum} / {chunkedCutSheet.length + 1}</span>
                                 </div>
                             </div>
                         );

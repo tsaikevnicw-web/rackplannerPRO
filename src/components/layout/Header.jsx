@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug, Cable, Plus, Minus, Info, X, Sparkles } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Server, Settings, FileBox, Save, Download, DownloadCloud, Monitor, LayoutDashboard, Share2, Minimize, Maximize, Eraser, Eye, EyeOff, LayoutTemplate, BookOpen, Undo, Redo, Flame, Box, Printer, Bug, Cable, Plus, Minus, Info, X, Sparkles, Palette, ChevronDown, Check } from 'lucide-react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
+import { calculateAllContainersStats } from '../../utils/helpers';
+
+const THEME_OPTIONS = [
+    { id: 'dusk', label: '靜謐莫蘭迪夜', sub: 'Morandi Sage Dusk', dotBg: '#272A2C', dotBorder: '#689F89' },
+    { id: 'japandi', label: '日式溫潤和紙', sub: 'Japandi Warm Washi', dotBg: '#F5F3EE', dotBorder: '#3B6E5C' },
+    { id: 'nordic', label: '北歐晨光白鋁', sub: 'Nordic Daylight', dotBg: '#F3F5F8', dotBorder: '#3B5BDB' }
+];
 
 const Header = () => {
     const { 
@@ -20,11 +27,15 @@ const Header = () => {
         undo, redo, canUndo, canRedo,
         deviceSearchTerm, setDeviceSearchTerm,
         projectName, setProjectName,
+        uiTheme, setUiTheme,
         containers, setContainers,
         projectInfo, setProjectInfo
     } = useRackPlanner();
 
     const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
+    const [showTourButton, setShowTourButton] = useState(false);
+    const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+    const currentThemeObj = THEME_OPTIONS.find(t => t.id === uiTheme) || THEME_OPTIONS[0];
 
     const handleSelectSearchDevice = (dev) => {
         setActiveRackId(dev.rackId);
@@ -38,75 +49,11 @@ const Header = () => {
         }, 100);
     };
 
-    // 計算貨櫃層級統計指標
-    const calculateContainerStats = () => {
-        let totalWeight = 0;
-        let totalItPower = 0;
-        let totalCoolingPower = 0;
-        let totalWeightLimit = 0;
-        let totalPowerLimit = 0;
-        
-        containers.forEach(container => {
-            totalWeightLimit += container.weightLimit;
-            totalPowerLimit += container.powerLimit;
-            
-            const selfW = container.selfWeight !== undefined ? container.selfWeight : (container.type === '20ft' ? 2200 : (container.type === '40ft' ? 3800 : (container.customLength ? container.customLength * 190 : 3800)));
-            totalWeight += selfW;
-            
-            const maxSlots = container.type === '20ft' ? 10 : (container.type === '40ft' ? 20 : Math.floor((container.customLength || 40) / 2));
-            const activeRacks = racks.filter(r => {
-                const cId = r.containerId || 'container-1';
-                return cId === container.id && r.slotIndex !== null && r.slotIndex !== undefined && r.slotIndex < maxSlots;
-            });
-            
-            activeRacks.forEach(rack => {
-                if (rack.type === 'Cooling') {
-                    totalWeight += (rack.weight || 320);
-                    totalCoolingPower += (rack.power || 4500);
-                } else if (rack.type === 'CDU') {
-                    totalWeight += (rack.weight || 350);
-                    totalCoolingPower += (rack.power || 2500);
-                } else if (rack.type === 'UPS') {
-                    totalWeight += (rack.weight || 850);
-                } else if (rack.type === 'Battery') {
-                    totalWeight += (rack.weight || 1200);
-                } else if (rack.type === 'Switchboard') {
-                    totalWeight += (rack.weight || 420);
-                } else if (rack.type === 'PowerPanel') {
-                    totalWeight += (rack.weight || 120);
-                } else if (rack.type === 'FireSuppression') {
-                    totalWeight += (rack.weight || 250);
-                } else if (rack.type === 'Monitoring') {
-                    totalWeight += (rack.weight || 180);
-                } else if (rack.type === 'EnvControl') {
-                    totalWeight += (rack.weight || 150);
-                } else {
-                    const rackDevices = devices.filter(d => d.rackId === rack.id);
-                    const devicePower = rackDevices.reduce((sum, d) => sum + (d.power || 0), 0);
-                    const deviceWeight = rackDevices.reduce((sum, d) => sum + (d.weight !== undefined && d.weight !== null ? d.weight : 10), 0);
-                    totalItPower += devicePower;
-                    totalWeight += (rack.weight || 150) + deviceWeight;
-                }
-            });
-        });
-        
-        const upsLosses = totalItPower * 0.05;
-        const pue = totalItPower > 0 
-            ? (totalItPower + totalCoolingPower + upsLosses) / totalItPower
-            : 1.15;
-            
-        return {
-            totalWeight,
-            totalItPower,
-            totalCoolingPower,
-            totalPower: totalItPower + totalCoolingPower + upsLosses,
-            pue: Math.max(1.15, pue),
-            totalWeightLimit,
-            totalPowerLimit
-        };
-    };
-
-    const containerStats = calculateContainerStats();
+    // 計算貨櫃層級統計指標（與 ContainerView 共用一致的公式）
+    const containerStats = useMemo(
+        () => calculateAllContainersStats(containers, racks, devices),
+        [containers, racks, devices]
+    );
 
     const totalSpace = devices.filter(d => d.type !== 'SideCDU').reduce((sum, dev) => sum + (dev.size || 0), 0);
     const totalPower = devices.reduce((sum, dev) => sum + (dev.power || 0), 0);
@@ -153,32 +100,106 @@ const Header = () => {
 
     return (
         <header id="tour-header" data-tour="header" className="bg-[#0b1523] border-b border-slate-700/40 flex flex-col shrink-0 relative z-[150] shadow-2xl">
-            {/* Top Row: Logo + File Controls */}
+            {/* Top Row: Logo + Theme Selector + Project Controls + File Controls */}
             <div className="h-14 w-full flex items-center justify-between px-6 border-b border-slate-700/25">
-                <div 
-                    className="relative group flex items-center gap-2.5 cursor-pointer py-1 px-1.5 rounded-lg hover:bg-slate-800/40 transition-all"
-                    title="Inventec Corp Kevin Tsai <Tsai.KevinC.W@inventec.com>"
-                >
-                    <div className="p-1.5 bg-white rounded-lg shadow-[0_0_12px_rgba(255,255,255,0.15)] transition-transform group-hover:scale-105">
-                        <Server className="w-4 h-4 text-[#D71422]" />
-                    </div>
-                    <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono select-none">
-                        RACK<span className="text-[#D71422]">PLANNER</span> <span className="text-[10px] text-slate-400 align-top">PRO</span>
-                    </h1>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div 
+                        className="relative group flex items-center gap-2.5 cursor-pointer py-1 px-1.5 rounded-lg hover:bg-slate-800/40 transition-all"
+                        title="Inventec Corp Kevin Tsai <Tsai.KevinC.W@inventec.com>"
+                    >
+                        <div className="p-1.5 bg-white rounded-lg shadow-[0_0_12px_rgba(255,255,255,0.15)] transition-transform group-hover:scale-105">
+                            <Server className="w-4 h-4 text-[#D71422]" />
+                        </div>
+                        <h1 className="text-xl font-bold text-slate-200 tracking-wide font-mono select-none">
+                            RACK<span className="text-[#D71422]">PLANNER</span> <span className="text-[10px] text-slate-400 align-top">PRO</span>
+                        </h1>
 
-                    {/* Author Info Hover Card */}
-                    <div className="absolute top-full left-0 mt-2 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[250]">
-                        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl text-xs whitespace-nowrap min-w-[270px] text-slate-200">
-                            <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                👨‍💻 開發者資訊 (Author Info)
-                            </div>
-                            <div className="font-semibold text-slate-100">
-                                Inventec Corp Kevin Tsai
-                            </div>
-                            <div className="text-[11px] text-sky-400 font-mono mt-0.5">
-                                Tsai.KevinC.W@inventec.com
+                        {/* Author Info Hover Card */}
+                        <div className="absolute top-full left-0 mt-2 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[250]">
+                            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl text-xs whitespace-nowrap min-w-[270px] text-slate-200">
+                                <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                    👨‍💻 開發者資訊 (Author Info)
+                                </div>
+                                <div className="font-semibold text-slate-100">
+                                    Inventec Corp Kevin Tsai
+                                </div>
+                                <div className="text-[11px] text-sky-400 font-mono mt-0.5">
+                                    Tsai.KevinC.W@inventec.com
+                                </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="w-px h-5 bg-slate-700/50"></div>
+
+                    {/* Theme Dropdown Menu next to RACKPLANNER PRO */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setIsThemeMenuOpen(prev => !prev)}
+                            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                isThemeMenuOpen
+                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                                    : 'border-slate-600/50 bg-slate-800/60 text-slate-200 hover:bg-slate-700/60 hover:border-slate-500/60'
+                            }`}
+                            title="切換系統主題配色 (Theme)"
+                        >
+                            <Palette className="w-3.5 h-3.5 text-indigo-400" />
+                            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Theme:</span>
+                            <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{
+                                    backgroundColor: currentThemeObj.dotBg,
+                                    border: `2px solid ${currentThemeObj.dotBorder}`
+                                }}
+                            />
+                            <span className="font-bold">{currentThemeObj.label}</span>
+                            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isThemeMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isThemeMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsThemeMenuOpen(false)}></div>
+                                <div className="absolute left-0 top-full mt-2 w-60 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">
+                                        Theme 主題風格選擇
+                                    </div>
+                                    {THEME_OPTIONS.map(opt => {
+                                        const isActive = uiTheme === opt.id;
+                                        return (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setUiTheme(opt.id);
+                                                    setIsThemeMenuOpen(false);
+                                                }}
+                                                className={`w-[calc(100%-8px)] flex items-center justify-between px-3.5 py-2.5 mx-1 rounded-lg text-left transition-colors ${
+                                                    isActive
+                                                        ? 'bg-indigo-500/15 text-indigo-300 font-bold'
+                                                        : 'hover:bg-slate-800/50 text-slate-300'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2.5">
+                                                    <span
+                                                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
+                                                        style={{
+                                                            backgroundColor: opt.dotBg,
+                                                            border: `2.5px solid ${opt.dotBorder}`
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <div className="text-xs font-bold leading-tight">{opt.label}</div>
+                                                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{opt.sub}</div>
+                                                    </div>
+                                                </div>
+                                                {isActive && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -244,17 +265,21 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* Demo Tour Button */}
-                    <button
-                        onClick={() => setIsTourOpen(true)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border border-indigo-500/50 bg-gradient-to-r from-indigo-600/30 to-purple-600/30 text-indigo-300 hover:from-indigo-600/50 hover:to-purple-600/50 hover:text-white hover:border-indigo-400 shadow-md shadow-indigo-500/10"
-                        title="開啟系統功能自動導覽與介面介紹 (Demo)"
-                    >
-                        <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                        <span>系統導覽</span>
-                    </button>
+                    {/* Demo Tour Button (only shown when enabled via File Menu toggle) */}
+                    {showTourButton && (
+                        <>
+                            <button
+                                onClick={() => setIsTourOpen(true)}
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border border-indigo-500/50 bg-gradient-to-r from-indigo-600/30 to-purple-600/30 text-indigo-300 hover:from-indigo-600/50 hover:to-purple-600/50 hover:text-white hover:border-indigo-400 shadow-md shadow-indigo-500/10"
+                                title="開啟系統功能自動導覽與介面介紹 (Demo)"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                                <span>系統導覽</span>
+                            </button>
 
-                    <div className="w-px h-5 bg-slate-700/60"></div>
+                            <div className="w-px h-5 bg-slate-700/60"></div>
+                        </>
+                    )}
 
                     {/* File & Export Actions Target for Demo Tour */}
                     <div id="tour-file-actions" data-tour="file-actions" className="flex items-center gap-2">
@@ -284,7 +309,7 @@ const Header = () => {
                             {isFileMenuOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsFileMenuOpen(false)}></div>
-                                    <div id="tour-file-dropdown-menu" className="absolute right-0 top-full mt-2 w-58 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                                    <div id="tour-file-dropdown-menu" className="absolute right-0 top-full mt-2 w-60 bg-[#0d1b2e] rounded-xl shadow-2xl border border-slate-600/50 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
                                         <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">專案存檔</div>
                                         <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 cursor-pointer text-sm text-slate-300 transition-colors mx-1 rounded-lg">
                                             <DownloadCloud className="w-4 h-4" /> 讀取專案檔 (.json)
@@ -310,6 +335,27 @@ const Header = () => {
                                         <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
                                         <button onClick={() => { setIsUserManualOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                             <BookOpen className="w-4 h-4" /> 系統使用手冊
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTourButton(prev => !prev)}
+                                            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-indigo-500/15 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left"
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <Sparkles className="w-4 h-4 text-cyan-400" />
+                                                <span>系統導覽按鈕</span>
+                                            </span>
+                                            <span
+                                                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                                                    showTourButton ? 'bg-emerald-500' : 'bg-slate-600'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                                        showTourButton ? 'translate-x-4' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </span>
                                         </button>
                                     </div>
                                 </>

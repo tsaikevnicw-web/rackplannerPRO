@@ -115,7 +115,7 @@ const Sidebar = () => {
                                     key={idx}
                                     draggable
                                     onDragStart={handleContainerDragStart}
-                                    className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing mb-1.5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 hover:border-${item.theme}-500/40 group`}
+                                    className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing mb-1.5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 ${tStyle.hoverBorder} group`}
                                 >
                                     <div className={`p-1.5 rounded-lg bg-slate-950/60 border ${tStyle.border} shadow-inner shrink-0`}>
                                         <ItemIcon className={`w-3.5 h-3.5 ${tStyle.text}`} />
@@ -139,6 +139,7 @@ const Sidebar = () => {
                     DEVICE_TEMPLATES.map((group, idx) => {
                         const isOpen = group.isGroup ? expandedGroups[group.name] : false;
                         const GroupIcon = group.icon;
+                        const groupStyle = THEME_STYLES[group.theme] || THEME_STYLES.slate;
 
                         if (group.isGroup) {
                             return (
@@ -148,7 +149,7 @@ const Sidebar = () => {
                                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-700/40 text-slate-300 transition-all group"
                                     >
                                         <div className="flex items-center gap-2.5 font-semibold text-sm">
-                                            <GroupIcon className={`w-4 h-4 text-${group.theme}-400 drop-shadow-[0_0_6px_currentColor] group-hover:scale-110 transition-transform`} />
+                                            <GroupIcon className={`w-4 h-4 ${groupStyle.text} drop-shadow-[0_0_6px_currentColor] group-hover:scale-110 transition-transform`} />
                                             {group.name}
                                         </div>
                                         {isOpen
@@ -167,7 +168,7 @@ const Sidebar = () => {
                                                         key={itemIdx}
                                                         draggable
                                                         onDragStart={(e) => handleDragStart(e, item)}
-                                                        className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 hover:border-${item.theme}-500/40 group`}
+                                                        className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 ${tStyle.hoverBorder} group`}
                                                     >
                                                         <div className={`p-1.5 rounded-lg bg-slate-950/60 border ${tStyle.border} shadow-inner shrink-0`}>
                                                             <ItemIcon className={`w-3.5 h-3.5 ${tStyle.text}`} />
@@ -191,7 +192,7 @@ const Sidebar = () => {
                                     key={idx}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, group)}
-                                    className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing mb-1 transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 hover:border-${group.theme}-500/40 group`}
+                                    className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-grab active:cursor-grabbing mb-1 transition-all hover:-translate-y-0.5 hover:shadow-lg ${tStyle.bg} border-slate-700/50 ${tStyle.hoverBorder} group`}
                                 >
                                     <div className={`p-1.5 rounded-lg bg-slate-950/60 border ${tStyle.border} shadow-inner shrink-0`}>
                                         <ItemIcon className={`w-3.5 h-3.5 ${tStyle.text}`} />

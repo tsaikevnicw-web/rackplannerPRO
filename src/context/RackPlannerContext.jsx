@@ -36,9 +36,17 @@ export const RackPlannerProvider = ({ children }) => {
     });
     const [selectedIds, setSelectedIds] = useState([]);
     const selectedId = selectedIds.length > 0 ? selectedIds[0] : null;
-    const setSelectedId = (id) => setSelectedIds(id ? [id] : []);
+    const setSelectedId = useCallback((id) => setSelectedIds(id ? [id] : []), []);
     const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
     const [projectName, setProjectName] = useState('未命名專案');
+    const [uiTheme, setUiTheme] = useState('dusk');
+
+    useEffect(() => {
+        const previewRoot = document.querySelector('.award-preview-root');
+        if (previewRoot) {
+            previewRoot.setAttribute('data-award-theme', uiTheme);
+        }
+    }, [uiTheme]);
 
     // History (Undo / Redo) States
     const [historyState, setHistoryState] = useState({ history: [], index: -1 });
@@ -153,7 +161,9 @@ export const RackPlannerProvider = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [layoutSize, setLayoutSize] = useState({ w: 1000, h: 1000 });
 
-    const showAlert = (message, title = '提示', type = 'info') => setAlertModal({ isOpen: true, message, title, type });
+    const showAlert = useCallback((message, title = '提示', type = 'info') => {
+        setAlertModal({ isOpen: true, message, title, type });
+    }, []);
     alertModalRef.current = showAlert;
 
     const { 
@@ -167,7 +177,7 @@ export const RackPlannerProvider = ({ children }) => {
         projectName, projectInfo, containers
     );
 
-    const handleFileChange = (e) => {
+    const handleFileChange = useCallback((e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -198,32 +208,49 @@ export const RackPlannerProvider = ({ children }) => {
             } catch { showAlert('檔案讀取失敗！', '錯誤', 'error'); }
         };
         reader.readAsText(file); e.target.value = '';
-    };
+    }, [setRacks, setDevices, setSelectedId, showAlert]);
+
+    const contextValue = useMemo(() => ({
+        racks, setRacks, devices, setDevices, activeRackId, setActiveRackId, viewMode, setViewMode, selectedId, setSelectedId,
+        selectedIds, setSelectedIds, deviceSearchTerm, setDeviceSearchTerm,
+        projectName, setProjectName,
+        uiTheme, setUiTheme,
+        projectInfo, setProjectInfo,
+        undo, redo, canUndo, canRedo,
+        draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
+        isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
+        showCables, setShowCables, showHeatmap, setShowHeatmap, hideNonItCabinets, setHideNonItCabinets, isCableRoutingOptimized, setIsCableRoutingOptimized, containers, setContainers, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
+        clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
+        isUserManualOpen, setIsUserManualOpen,
+        isBugTrackerOpen, setIsBugTrackerOpen,
+        isNetworkCablingOpen, setIsNetworkCablingOpen,
+        isGeneratingCablePDF, setIsGeneratingCablePDF,
+        isTourOpen, setIsTourOpen,
+        isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
+        isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
+        rackContainerRef, mainAreaRef, fileInputRef,
+        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
+        handleApplyRATemplate,
+        showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
+        handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
+    }), [
+        racks, setRacks, devices, setDevices, activeRackId, viewMode, selectedId, setSelectedId,
+        selectedIds, deviceSearchTerm, projectName, uiTheme, projectInfo,
+        undo, redo, canUndo, canRedo,
+        draggedItem, expandedGroups, expandedNetGroups,
+        isFileMenuOpen, isRaMenuOpen, isExporting, drawing, portCoords,
+        showCables, showHeatmap, hideNonItCabinets, isCableRoutingOptimized, containers, alertModal, clearConfirm, deleteRackConfirm,
+        clearDeviceConfirm, deleteDeviceConfirm, raModalState,
+        isUserManualOpen, isBugTrackerOpen, isNetworkCablingOpen, isGeneratingCablePDF, isTourOpen,
+        isFitToScreen, scaleFactor, isSidebarOpen, layoutSize,
+        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
+        handleApplyRATemplate,
+        showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
+        handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
+    ]);
 
     return (
-        <RackPlannerContext.Provider value={{
-            racks, setRacks, devices, setDevices, activeRackId, setActiveRackId, viewMode, setViewMode, selectedId, setSelectedId,
-            selectedIds, setSelectedIds, deviceSearchTerm, setDeviceSearchTerm,
-            projectName, setProjectName,
-            projectInfo, setProjectInfo,
-            undo, redo, canUndo, canRedo,
-            draggedItem, setDraggedItem, expandedGroups, setExpandedGroups, expandedNetGroups, setExpandedNetGroups,
-            isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen, isExporting, setIsExporting, drawing, setDrawing, portCoords, setPortCoords,
-            showCables, setShowCables, showHeatmap, setShowHeatmap, hideNonItCabinets, setHideNonItCabinets, isCableRoutingOptimized, setIsCableRoutingOptimized, containers, setContainers, alertModal, setAlertModal, clearConfirm, setClearConfirm, deleteRackConfirm, setDeleteRackConfirm,
-            clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, raModalState, setRaModalState,
-            isUserManualOpen, setIsUserManualOpen,
-            isBugTrackerOpen, setIsBugTrackerOpen,
-            isNetworkCablingOpen, setIsNetworkCablingOpen,
-            isGeneratingCablePDF, setIsGeneratingCablePDF,
-            isTourOpen, setIsTourOpen,
-            isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
-            isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
-            rackContainerRef, mainAreaRef, fileInputRef,
-            connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
-            handleApplyRATemplate,
-            showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
-            handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
-        }}>
+        <RackPlannerContext.Provider value={contextValue}>
             {children}
         </RackPlannerContext.Provider>
     );

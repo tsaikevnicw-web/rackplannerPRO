@@ -1,80 +1,141 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getSwitchSubPortCount, getNicCount, getPcieSlotInfo } from '../../utils/helpers';
+import { getDeviceLayerPrefix, getDeviceGroupName, getSwitchPortCount, getSwitchSubPortCount, getNicCount, getPcieSlotInfo, parseTargetConnection } from '../../utils/helpers';
 
 const CablesOverlay = () => {
     const { devices, racks, drawing, setDrawing, showCables, handleConnectionChange, scaleFactor, isFitToScreen, viewMode, selectedId, expandedNetGroups, isGeneratingPDF, isCableRoutingOptimized, projectInfo } = useRackPlanner();
     const [localCoords, setLocalCoords] = useState({});
+    const [cursorPos, setCursorPos] = useState(null);
+
+    const updateCoords = useCallback(() => {
+        if (!isGeneratingPDF && !showCables && !selectedId && !drawing) return;
+
+        const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+        if (!rackContainer) return;
+
+        const ports = document.querySelectorAll('[data-port-id]');
+        const groups = document.querySelectorAll('[data-group-anchor]');
+        const containerRect = rackContainer.getBoundingClientRect();
+
+        const newCoords = {};
+        let changed = false;
+
+        const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
+
+        ports.forEach(port => {
+            const id = port.getAttribute('data-port-id');
+            const rect = port.getBoundingClientRect();
+            const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
+            const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
+            newCoords[id] = { x, y };
+        });
+
+        const racksEl = document.querySelectorAll('[data-rack-id]');
+        racksEl.forEach(rackEl => {
+            const id = rackEl.getAttribute('data-rack-id');
+            const rect = rackEl.getBoundingClientRect();
+            const x = (rect.left - containerRect.left) / currentScale;
+            const y = (rect.top - containerRect.top) / currentScale;
+            const w = rect.width / currentScale;
+            const h = rect.height / currentScale;
+            newCoords[`rack-${id}`] = { x, y, w, h };
+        });
+
+        groups.forEach(group => {
+            const id = group.getAttribute('data-group-anchor');
+            const rect = group.getBoundingClientRect();
+            const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
+            const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
+            newCoords[id] = { 
+                id,
+                x, y, 
+                isGroup: true,
+                rect: {
+                    top: (rect.top - containerRect.top) / currentScale,
+                    bottom: (rect.bottom - containerRect.top) / currentScale,
+                    left: (rect.left - containerRect.left) / currentScale,
+                    right: (rect.right - containerRect.left) / currentScale
+                }
+            };
+        });
+
+        setLocalCoords(prev => {
+            for (let k in newCoords) {
+                if (!prev[k] || Math.abs(prev[k].x - newCoords[k].x) > 0.5 || Math.abs(prev[k].y - newCoords[k].y) > 0.5) {
+                    changed = true;
+                    break;
+                }
+            }
+            if (Object.keys(newCoords).length !== Object.keys(prev).length) changed = true;
+            return changed ? newCoords : prev;
+        });
+    }, [isGeneratingPDF, showCables, selectedId, drawing, isFitToScreen, viewMode, scaleFactor]);
 
     useEffect(() => {
-        let animationFrameId;
+        if (!isGeneratingPDF && !showCables && !selectedId && !drawing) return;
 
-        const updateCoords = () => {
-            const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
-            if (rackContainer) {
-                const ports = document.querySelectorAll('[data-port-id]');
-                const groups = document.querySelectorAll('[data-group-anchor]');
-                const containerRect = rackContainer.getBoundingClientRect();
-
-                const newCoords = {};
-                let changed = false;
-
-                const currentScale = (isFitToScreen && viewMode !== 'single') ? scaleFactor : 1;
-
-                ports.forEach(port => {
-                    const id = port.getAttribute('data-port-id');
-                    const rect = port.getBoundingClientRect();
-                    const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
-                    const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
-                    newCoords[id] = { x, y };
-                });
-
-                const racksEl = document.querySelectorAll('[data-rack-id]');
-                racksEl.forEach(rackEl => {
-                    const id = rackEl.getAttribute('data-rack-id');
-                    const rect = rackEl.getBoundingClientRect();
-                    const x = (rect.left - containerRect.left) / currentScale;
-                    const y = (rect.top - containerRect.top) / currentScale;
-                    const w = rect.width / currentScale;
-                    const h = rect.height / currentScale;
-                    newCoords[`rack-${id}`] = { x, y, w, h };
-                });
-
-                groups.forEach(group => {
-                    const id = group.getAttribute('data-group-anchor');
-                    const rect = group.getBoundingClientRect();
-                    const x = (rect.left + rect.width / 2 - containerRect.left) / currentScale;
-                    const y = (rect.top + rect.height / 2 - containerRect.top) / currentScale;
-                    newCoords[id] = { 
-                        id,
-                        x, y, 
-                        isGroup: true,
-                        rect: {
-                            top: (rect.top - containerRect.top) / currentScale,
-                            bottom: (rect.bottom - containerRect.top) / currentScale,
-                            left: (rect.left - containerRect.left) / currentScale,
-                            right: (rect.right - containerRect.left) / currentScale
-                        }
-                    };
-                });
-
-                setLocalCoords(prev => {
-                    for (let k in newCoords) {
-                        if (!prev[k] || Math.abs(prev[k].x - newCoords[k].x) > 0.5 || Math.abs(prev[k].y - newCoords[k].y) > 0.5) {
-                            changed = true;
-                            break;
-                        }
-                    }
-                    if (Object.keys(newCoords).length !== Object.keys(prev).length) changed = true;
-                    return changed ? newCoords : prev;
-                });
-            }
-            animationFrameId = requestAnimationFrame(updateCoords);
+        let rafId = null;
+        const scheduleUpdate = () => {
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                updateCoords();
+            });
         };
 
-        animationFrameId = requestAnimationFrame(updateCoords);
-        return () => cancelAnimationFrame(animationFrameId);
-    }, [showCables, isFitToScreen, scaleFactor, viewMode, selectedId]);
+        scheduleUpdate();
+        // Run a secondary pass after layout/transition settles
+        const timerId = setTimeout(scheduleUpdate, 150);
+
+        const mainCanvas = document.querySelector('.main-canvas');
+        const rackContainer = document.querySelector('.rack-container')?.parentElement?.parentElement || document.querySelector('.main-canvas > div > div');
+
+        window.addEventListener('resize', scheduleUpdate);
+        window.addEventListener('scroll', scheduleUpdate, true);
+        if (mainCanvas) {
+            mainCanvas.addEventListener('transitionend', scheduleUpdate);
+        }
+
+        let resizeObserver = null;
+        if (typeof ResizeObserver !== 'undefined' && rackContainer) {
+            resizeObserver = new ResizeObserver(scheduleUpdate);
+            resizeObserver.observe(rackContainer);
+        }
+
+        let mutationObserver = null;
+        if (typeof MutationObserver !== 'undefined' && rackContainer) {
+            mutationObserver = new MutationObserver(scheduleUpdate);
+            mutationObserver.observe(rackContainer, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class', 'data-port-id', 'data-group-anchor']
+            });
+        }
+
+        return () => {
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            clearTimeout(timerId);
+            window.removeEventListener('resize', scheduleUpdate);
+            window.removeEventListener('scroll', scheduleUpdate, true);
+            if (mainCanvas) {
+                mainCanvas.removeEventListener('transitionend', scheduleUpdate);
+            }
+            if (resizeObserver) resizeObserver.disconnect();
+            if (mutationObserver) mutationObserver.disconnect();
+        };
+    }, [updateCoords, devices, racks, expandedNetGroups, isCableRoutingOptimized]);
+
+    useEffect(() => {
+        if (!drawing) {
+            setCursorPos(null);
+            return;
+        }
+        setCursorPos({
+            x: drawing.currentX ?? drawing.startX,
+            y: drawing.currentY ?? drawing.startY
+        });
+    }, [drawing]);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -88,7 +149,7 @@ const CablesOverlay = () => {
                 const currentX = (e.clientX - containerRect.left) / currentScale;
                 const currentY = (e.clientY - containerRect.top) / currentScale;
 
-                setDrawing(prev => ({ ...prev, currentX, currentY }));
+                setCursorPos({ x: currentX, y: currentY });
             }
         };
 
@@ -418,8 +479,8 @@ const CablesOverlay = () => {
 
         // Optimized cabling routing path calculation
         if (viewMode !== 'network' && isCableRoutingOptimized && startPortId && endPortId && !startCoord.isGroup && !endCoord.isGroup) {
-            const devAId = startPortId.includes('-') ? startPortId.substring(0, startPortId.indexOf('-')) : startPortId;
-            const devBId = endPortId.includes('-') ? endPortId.substring(0, endPortId.indexOf('-')) : endPortId;
+            const { targetDevId: devAId } = parseTargetConnection(startPortId, devices);
+            const { targetDevId: devBId } = parseTargetConnection(endPortId, devices);
             
             const devA = devices.find(d => d.id === devAId);
             const devB = devices.find(d => d.id === devBId);
@@ -591,13 +652,12 @@ const CablesOverlay = () => {
         if (dev.connections) {
             Object.entries(dev.connections).forEach(([localKey, targetKey]) => {
                 if (targetKey) {
-                    const targetDevId = targetKey.includes('-') ? targetKey.substring(0, targetKey.indexOf('-')) : targetKey;
+                    const { targetDevId, targetPortKey } = parseTargetConnection(targetKey, devices);
                     const isHighlighted = !isGeneratingPDF && selectedId && (dev.id === selectedId || targetDevId === selectedId);
                     const shouldDraw = showCables || isHighlighted;
                     
                     if (shouldDraw) {
                         const baseLocalKey = localKey.replace(/__\d+$/, '');
-                        const targetPortKey = targetKey.substring(targetDevId.length + 1);
 
                         const localAnchor = getDeviceAnchor(dev.id, baseLocalKey);
                         const targetAnchor = getDeviceAnchor(targetDevId, targetPortKey);
@@ -628,13 +688,18 @@ const CablesOverlay = () => {
         }
     });
 
+    const activeCursorX = cursorPos ? cursorPos.x : drawing?.currentX;
+    const activeCursorY = cursorPos ? cursorPos.y : drawing?.currentY;
+
     // MSFT Switch Magnifier HUD calculation
     const msftMagnifier = (() => {
-        if (projectInfo?.designType !== 'msft' || !drawing || drawing.currentX === undefined) {
+        if (projectInfo?.designType !== 'msft' || !drawing || activeCursorX === undefined) {
             return null;
         }
 
-        const { currentX, currentY, hoverDevId, hoverPortKey } = drawing;
+        const currentX = activeCursorX;
+        const currentY = activeCursorY;
+        const { hoverDevId, hoverPortKey } = drawing;
         const switchDevices = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router');
         if (switchDevices.length === 0) return null;
 
@@ -748,14 +813,14 @@ const CablesOverlay = () => {
                     );
                 })}
 
-                {drawing && drawing.startX !== drawing.currentX && (
+                {drawing && activeCursorX !== undefined && drawing.startX !== activeCursorX && (
                     <g>
                         <path 
-                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
+                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: activeCursorX, y: activeCursorY})} 
                             stroke="#020617" strokeWidth="4" fill="none" strokeDasharray="8 4" opacity="0.25"
                         />
                         <path 
-                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: drawing.currentX, y: drawing.currentY})} 
+                            d={generatePath({x: drawing.startX, y: drawing.startY}, {x: activeCursorX, y: activeCursorY})} 
                             stroke={getLineColor(drawing.sourcePortKey, drawing.sourceId, null, '', null, null)} 
                             strokeWidth="2" fill="none" strokeDasharray="8 4" opacity="0.4"
                         />
@@ -768,8 +833,8 @@ const CablesOverlay = () => {
                 <div 
                     className="absolute pointer-events-none z-[250] flex flex-col items-center transition-all duration-75"
                     style={{
-                        left: `${drawing.currentX + 45}px`,
-                        top: `${drawing.currentY - 140}px`,
+                        left: `${activeCursorX + 45}px`,
+                        top: `${activeCursorY - 140}px`,
                         transform: 'translate(-50%, -50%)',
                     }}
                 >
