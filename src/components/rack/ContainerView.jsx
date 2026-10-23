@@ -13,6 +13,7 @@ const ContainerView = () => {
         racks,
         setRacks,
         devices,
+        setDevices,
         containers,
         setContainers,
         activeRackId,
@@ -273,6 +274,25 @@ const ContainerView = () => {
         }));
     };
 
+    // 手動切換進風/出風箭頭方向與佈局軸向 (down -> up -> left -> right 循環)
+    const handleToggleAirflowDirection = (rackId, e) => {
+        if (e) e.stopPropagation();
+        setRacks(prev => prev.map(r => {
+            if (r.id === rackId) {
+                const currentMode = r.airflowMode || 'down';
+                const modeOrder = ['down', 'up', 'left', 'right'];
+                const nextMode = modeOrder[(modeOrder.indexOf(currentMode) + 1) % modeOrder.length];
+                return {
+                    ...r,
+                    airflowMode: nextMode,
+                    blueArrowDir: nextMode,
+                    redArrowDir: nextMode
+                };
+            }
+            return r;
+        }));
+    };
+
     // 一鍵自動對齊排列機櫃
     const handleAutoAlignRacks = (containerId, maxSlots) => {
         setRacks(prev => {
@@ -307,7 +327,7 @@ const ContainerView = () => {
     };
 
     // 2D / 1D Canvas Drop 放下處理
-    const handleContainerCanvasDrop = (e, containerId, containerElement) => {
+    const handleContainerCanvasDrop = (e, containerId) => {
         e.preventDefault();
         
         const newContainerType = e.dataTransfer.getData('newContainerType');
@@ -322,7 +342,9 @@ const ContainerView = () => {
             try {
                 const p = JSON.parse(cabinetDataStr);
                 isZoneDrop = p.isZone || p.cabinetType === 'ColdAisleZone' || p.cabinetType === 'HotAisleZone';
-            } catch(err) {}
+            } catch {
+                // ignore malformed drag payload
+            }
         }
 
         const compW = isZoneDrop ? 450 : 80;
@@ -489,7 +511,7 @@ const ContainerView = () => {
             e.stopPropagation();
             const nextLetter = String.fromCharCode(65 + containers.length);
             const newContainer = {
-                id: `container-${Date.now()}`,
+                id: `container-${generateId()}`,
                 name: `貨櫃-${nextLetter}`,
                 type: newContainerType,
                 customLength: newContainerType === 'custom' ? 20 : undefined,
@@ -510,10 +532,31 @@ const ContainerView = () => {
             return;
         }
         if (window.confirm('確定要刪除此貨櫃嗎？其內部所有的機櫃將會被同步刪除。')) {
-            setRacks(prev => prev.filter(r => {
-                const cId = r.containerId || 'container-1';
-                return cId !== containerId;
-            }));
+            const removedRackIds = new Set(
+                racks.filter(r => (r.containerId || 'container-1') === containerId).map(r => r.id)
+            );
+            const removedDevIds = new Set(
+                devices.filter(d => removedRackIds.has(d.rackId)).map(d => d.id)
+            );
+            setRacks(prev => prev.filter(r => (r.containerId || 'container-1') !== containerId));
+            if (removedDevIds.size > 0) {
+                setDevices(prev => prev
+                    .filter(d => !removedRackIds.has(d.rackId))
+                    .map(d => {
+                        if (!d.connections) return d;
+                        const newConns = { ...d.connections };
+                        let changed = false;
+                        Object.keys(newConns).forEach(k => {
+                            const target = newConns[k];
+                            if (target && Array.from(removedDevIds).some(id => target.startsWith(id + '-'))) {
+                                delete newConns[k];
+                                changed = true;
+                            }
+                        });
+                        return changed ? { ...d, connections: newConns } : d;
+                    })
+                );
+            }
             setContainers(prev => prev.filter(c => c.id !== containerId));
         }
     };
@@ -522,7 +565,26 @@ const ContainerView = () => {
     const handleDeleteRack = (rackId, e) => {
         e.stopPropagation();
         if (window.confirm('確定要徹底刪除此機櫃以及其內部的所有設備嗎？')) {
+            const removedDevIds = new Set(
+                devices.filter(d => d.rackId === rackId).map(d => d.id)
+            );
             setRacks(prev => prev.filter(r => r.id !== rackId));
+            setDevices(prev => prev
+                .filter(d => d.rackId !== rackId)
+                .map(d => {
+                    if (!d.connections || removedDevIds.size === 0) return d;
+                    const newConns = { ...d.connections };
+                    let changed = false;
+                    Object.keys(newConns).forEach(k => {
+                        const target = newConns[k];
+                        if (target && Array.from(removedDevIds).some(id => target.startsWith(id + '-'))) {
+                            delete newConns[k];
+                            changed = true;
+                        }
+                    });
+                    return changed ? { ...d, connections: newConns } : d;
+                })
+            );
             if (activeRackId === rackId) {
                 const remaining = racks.filter(r => r.id !== rackId);
                 setActiveRackId(remaining[0]?.id || null);

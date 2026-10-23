@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getFabricGroup, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo, formatRemotePort } from '../utils/helpers';
+import { getFabricGroup, getSwitchPortCount, getSwitchSubPortCount, getServerCategory, getHighDensityNodes, getPcieSlotInfo, formatRemotePort } from '../utils/helpers';
 import { getMsftRackSubItems, getMsftDeviceSubItems } from '../utils/msftBomConfig';
 import { generateProjectCableCutSheet, calculatePhysicalCableDistance, determineCableAndTransceivers } from '../utils/cableCalculator';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
@@ -243,10 +243,11 @@ export function useExport(
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
 
             if (projectInfo?.designType === 'msft') {
-                getMsftRackSubItems(rack).forEach(subLabel => {
+                getMsftRackSubItems(rack, projectInfo?.isCdcProject).forEach(sub => {
+                    const subLabel = typeof sub === 'object' && sub !== null ? (sub.label || sub.type || '') : String(sub);
                     const subRow = [
                         rack.name,
-                        `${position} (附屬)`,
+                        `${position} (附屬${sub?.rackPosition ? `: ${sub.rackPosition}` : ''})`,
                         subLabel,
                         0,
                         0,
@@ -328,9 +329,11 @@ export function useExport(
             csv += rowData.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
 
             if (projectInfo?.designType === 'msft') {
-                getMsftDeviceSubItems(dev).forEach(subLabel => {
+                getMsftDeviceSubItems(dev).forEach(sub => {
+                    const subLabel = typeof sub === 'object' && sub !== null ? (sub.label || sub.type || '') : String(sub);
+                    const subType = typeof sub === 'object' && sub !== null ? (sub.type || 'Sub-Device') : 'Sub-Device';
                     const subRow = [
-                        rackName, `${position} (附屬)`, subLabel, 'Sub-Device', 0, 0, 0,
+                        rackName, `${position} (附屬)`, subLabel, subType, 0, 0, 0,
                         '', '', '', '', '', '', '', '', '', ''
                     ];
                     csv += subRow.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + "\n";
@@ -338,7 +341,7 @@ export function useExport(
             }
         });
 
-        const { cutSheetRows, lengthBinnedBom, transceiverMap } = generateProjectCableCutSheet(devices, racks, projectInfo);
+        const { lengthBinnedBom, transceiverMap } = generateProjectCableCutSheet(devices, racks, projectInfo);
 
         csv += "\n\nL11/L12 網路線材分長度採購統計 (Length-Binned Cables BOM)\n線材類別,標準料號/規格,物理介質 (DAC/AOC/Fiber/UTP),標準採購長度(m),L11櫃內數量,L12跨櫃數量,總採購數量,總米數(m)\n";
         lengthBinnedBom.forEach(item => {

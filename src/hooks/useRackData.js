@@ -1,12 +1,16 @@
 import { useState, useMemo, useCallback } from 'react';
-import { getSwitchPortCount, getSwitchSubPortCount, getFabricGroup, getServerCategory, syncLiquidCoolingConnections } from '../utils/helpers';
+import { getSwitchPortCount, getSwitchSubPortCount, getFabricGroup, syncLiquidCoolingConnections } from '../utils/helpers';
 import { DEFAULT_RACK_U_COUNT } from '../utils/constants';
 
-export function useRackData(alertModalRef) {
-    const [racks, setRacks] = useState([
-        { id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 24000, slotIndex: null, weight: 150 }
-    ]);
-    const [devices, setDevicesRaw] = useState([]);
+export function useRackData(alertModalRef, initialRacks, initialDevices) {
+    const [racks, setRacks] = useState(() => (
+        Array.isArray(initialRacks) && initialRacks.length > 0
+            ? initialRacks
+            : [{ id: 'rack-1', name: 'RACK-001', type: 'General', uCount: DEFAULT_RACK_U_COUNT, powerLimit: 24000, slotIndex: null, weight: 150 }]
+    ));
+    const [devices, setDevicesRaw] = useState(() => (
+        Array.isArray(initialDevices) ? syncLiquidCoolingConnections(initialDevices) : []
+    ));
 
     // 同步管理水冷 (LC) 連線與斷開，避免額外 useEffect 觸發二次渲染與污染 Undo 歷史
     const setDevices = useCallback((updater) => {
@@ -36,6 +40,31 @@ export function useRackData(alertModalRef) {
     }, [devices]);
 
     const handleUpdateRack = (id, updates) => {
+        const targetRack = racks.find(r => r.id === id);
+        if (targetRack) {
+            const nextRack = { ...targetRack, ...updates };
+            if (nextRack.type === 'ORv3') {
+                nextRack.uCount = 44;
+            }
+            const nextMaxU = nextRack.uCount || DEFAULT_RACK_U_COUNT;
+            const currentMaxU = targetRack.type === 'ORv3' ? 44 : (targetRack.uCount || DEFAULT_RACK_U_COUNT);
+            if (nextMaxU < currentMaxU) {
+                const exceedingDev = devices.find(
+                    d => d.rackId === id && d.type !== 'SideCDU' && (d.startU + d.size - 1) > nextMaxU
+                );
+                if (exceedingDev) {
+                    if (alertModalRef?.current) {
+                        alertModalRef.current(
+                            `警告：機櫃內有設備【${exceedingDev.customName || exceedingDev.type}】(位於 U${exceedingDev.startU}-U${exceedingDev.startU + exceedingDev.size - 1}) 超出 ${nextMaxU}U 空間上限！\n請先移動或移除高處設備後再變更機櫃高度或規格。`,
+                            '空間衝突',
+                            'warning'
+                        );
+                    }
+                    return;
+                }
+            }
+        }
+
         setRacks(prev => prev.map(rack => {
             if (rack.id !== id) return rack;
             const updatedRack = { ...rack, ...updates };
@@ -47,7 +76,60 @@ export function useRackData(alertModalRef) {
     };
 
     const handleUpdateDevice = (id, updates) => {
-        setDevices(prev => prev.map(dev => dev.id === id ? { ...dev, ...updates } : dev));
+        setDevices(prev => {
+            const dev = prev.find(d => d.id === id);
+            if (!dev) return prev;
+            const nextDev = { ...dev, ...updates };
+
+            if (
+                nextDev.type !== 'SideCDU' &&
+                (updates.size !== undefined || updates.startU !== undefined || updates.rackId !== undefined)
+            ) {
+                const targetRack = racks.find(r => r.id === nextDev.rackId);
+                const rackMaxU = targetRack?.type === 'ORv3' ? 44 : (targetRack?.uCount || DEFAULT_RACK_U_COUNT);
+                const nextStartU = nextDev.startU || 1;
+                const nextEndU = nextStartU + (nextDev.size || 1) - 1;
+
+                if (nextStartU < 1 || nextEndU > rackMaxU) {
+                    if (alertModalRef?.current) {
+                        alertModalRef.current(
+                            `警告：設備高度變更後 (U${nextStartU}-U${nextEndU}) 超出機櫃上限 (${rackMaxU}U)！`,
+                            '空間不足',
+                            'warning'
+                        );
+                    }
+                    return prev;
+                }
+
+                const conflictDev = prev.find(other => {
+                    if (other.id === id || other.rackId !== nextDev.rackId || other.type === 'SideCDU') return false;
+                    const otherEndU = other.startU + other.size - 1;
+                    return Math.max(nextStartU, other.startU) <= Math.min(nextEndU, otherEndU);
+                });
+
+                if (conflictDev) {
+                    if (alertModalRef?.current) {
+                        alertModalRef.current(
+                            `警告：設備高度變更後 (U${nextStartU}-U${nextEndU}) 會與【${conflictDev.customName || conflictDev.type}】(U${conflictDev.startU}-U${conflictDev.startU + conflictDev.size - 1}) 重疊！`,
+                            '空間衝突',
+                            'warning'
+                        );
+                    }
+                    return prev;
+                }
+            }
+
+            return prev.map(d => d.id === id ? nextDev : d);
+        });
+    };
+
+    const handleBatchUpdateDevices = (ids, updatesOrFn) => {
+        const idSet = new Set(ids);
+        setDevices(prev => prev.map(dev => {
+            if (!idSet.has(dev.id)) return dev;
+            const patch = typeof updatesOrFn === 'function' ? updatesOrFn(dev) : updatesOrFn;
+            return { ...dev, ...patch };
+        }));
     };
 
     const handleDisconnectPort = (fullPortId) => {
@@ -332,6 +414,7 @@ export function useRackData(alertModalRef) {
         generateId,
         handleUpdateRack,
         handleUpdateDevice,
+        handleBatchUpdateDevices,
         handleConnectionChange,
         handleDisconnectPort,
         handleHardwareSpecChange,

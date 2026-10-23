@@ -12,17 +12,17 @@ const THEME_OPTIONS = [
 const Header = () => {
     const { 
         devices,
-        viewMode, setViewMode, racks, setRacks, setDevices, activeRackId, setActiveRackId, setSelectedId,
-        setSelectedIds, selectedIds,
+        viewMode, setViewMode, racks, setRacks, activeRackId, setActiveRackId, setSelectedId,
+        setSelectedIds,
         isFitToScreen, setIsFitToScreen, showCables, setShowCables, showHeatmap, setShowHeatmap, hideNonItCabinets, setHideNonItCabinets,
         isCableRoutingOptimized, setIsCableRoutingOptimized,
         isFileMenuOpen, setIsFileMenuOpen, isRaMenuOpen, setIsRaMenuOpen,
-        isUserManualOpen, setIsUserManualOpen,
-        isBugTrackerOpen, setIsBugTrackerOpen,
-        isNetworkCablingOpen, setIsNetworkCablingOpen,
-        isTourOpen, setIsTourOpen,
+        setIsUserManualOpen,
+        setIsBugTrackerOpen,
+        setIsNetworkCablingOpen,
+        setIsTourOpen,
         isExporting, fileInputRef,
-        handleFileChange, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handlePrintPDF,
+        handleFileChange, handleSaveData, handleExportBOM, handleExportImage, handlePrintPDF,
         setClearConfirm, setRaModalState, generateId, showAlert,
         undo, redo, canUndo, canRedo,
         deviceSearchTerm, setDeviceSearchTerm,
@@ -65,7 +65,7 @@ const Header = () => {
     };
 
     const handleAddRackClick = () => {
-        const newId = `rack-${Date.now()}`;
+        const newId = `rack-${generateId()}`;
         const itRacks = racks.filter(r => r.type === 'General' || r.type === 'ORv3');
         let maxNum = 0;
         itRacks.forEach(r => {
@@ -87,7 +87,7 @@ const Header = () => {
     const handleAddContainerClick = () => {
         const nextLetter = String.fromCharCode(65 + containers.length);
         const newContainer = {
-            id: `container-${Date.now()}`,
+            id: `container-${generateId()}`,
             name: `貨櫃-${nextLetter}`,
             type: '40ft',
             powerLimit: 500000,
@@ -335,6 +335,9 @@ const Header = () => {
                                         <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">系統說明</div>
                                         <button onClick={() => { setIsUserManualOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/15 hover:text-indigo-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
                                             <BookOpen className="w-4 h-4" /> 系統使用手冊
+                                        </button>
+                                        <button onClick={() => { setIsBugTrackerOpen(true); setIsFileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-rose-500/15 hover:text-rose-300 text-sm text-slate-300 transition-colors mx-1 rounded-lg text-left">
+                                            <Bug className="w-4 h-4 text-rose-400" /> 問題追蹤與建議回報
                                         </button>
                                         <button
                                             type="button"
@@ -599,6 +602,22 @@ const Header = () => {
                                 >
                                     <Cable className="w-3.5 h-3.5" />
                                     <span className="whitespace-nowrap">{isCableRoutingOptimized ? '最佳化走線' : '直連走線'}</span>
+                                </button>
+                            )}
+
+                            {/* 散熱熱力圖 (Thermal Heatmap) */}
+                            {viewMode !== 'network' && (
+                                <button
+                                    onClick={() => setShowHeatmap(!showHeatmap)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                                        showHeatmap
+                                            ? 'bg-orange-500/20 text-orange-300 border-orange-500/45 shadow-[0_0_12px_rgba(249,115,22,0.25)] font-bold'
+                                            : 'bg-slate-700/40 text-slate-400 border-slate-600/50 hover:text-slate-200 hover:bg-slate-700/60'
+                                    }`}
+                                    title="切換散熱熱力圖 (標示水冷 LC 與氣冷 AC 高中低發熱分佈)"
+                                >
+                                    <Flame className={`w-3.5 h-3.5 ${showHeatmap ? 'text-orange-400 animate-pulse' : ''}`} />
+                                    <span className="whitespace-nowrap">熱力圖</span>
                                 </button>
                             )}
                         </>

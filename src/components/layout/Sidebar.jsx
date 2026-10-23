@@ -4,7 +4,7 @@ import { useRackPlanner } from '../../context/RackPlannerContext';
 import { DEVICE_TEMPLATES, THEME_STYLES, CONTAINER_INFRA_TEMPLATES } from '../../utils/constants';
 
 const Sidebar = () => {
-    const { isSidebarOpen, setIsSidebarOpen, expandedGroups, setExpandedGroups, viewMode, containers, setContainers } = useRackPlanner();
+    const { isSidebarOpen, setIsSidebarOpen, expandedGroups, setExpandedGroups, viewMode } = useRackPlanner();
 
     const handleDragStart = (e, deviceTemplate, isClone = false) => {
         let draggingDevice = { ...deviceTemplate };

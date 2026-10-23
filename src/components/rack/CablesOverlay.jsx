@@ -124,6 +124,7 @@ const CablesOverlay = () => {
             if (resizeObserver) resizeObserver.disconnect();
             if (mutationObserver) mutationObserver.disconnect();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [updateCoords, devices, racks, expandedNetGroups, isCableRoutingOptimized]);
 
     useEffect(() => {
@@ -169,7 +170,7 @@ const CablesOverlay = () => {
                 const occupiedPorts = new Set();
                 devices.forEach(d => {
                     if (d.connections) {
-                        Object.entries(d.connections).forEach(([key, tg]) => {
+                        Object.values(d.connections).forEach(tg => {
                             if (tg && (tg.startsWith(`${targetDevId}-port-`) || tg.startsWith(`${targetDevId}-subport-`))) {
                                 occupiedPorts.add(tg.substring(targetDevId.length + 1));
                             }
@@ -224,7 +225,7 @@ const CablesOverlay = () => {
             const occupiedPorts = new Set();
             devices.forEach(d => {
                 if (d.connections) {
-                    Object.entries(d.connections).forEach(([key, tg]) => {
+                    Object.values(d.connections).forEach(tg => {
                         if (tg && tg.startsWith(`${targetDevId}-`)) {
                             occupiedPorts.add(tg.substring(targetDevId.length + 1));
                         }
@@ -490,7 +491,6 @@ const CablesOverlay = () => {
                 const rackBCoords = localCoords[`rack-${devB.rackId}`];
                 
                 if (rackACoords && rackBCoords) {
-                    const rackAXCenter = rackACoords.x + rackACoords.w / 2;
                     const leftChannelAX = rackACoords.x + 16;
                     const rightChannelAX = rackACoords.x + rackACoords.w - 16;
                     const getCableSide = (device, portId) => {
@@ -525,7 +525,6 @@ const CablesOverlay = () => {
                     const sideA = getCableSide(devA, startPortId);
                     const channelAX = sideA === 'left' ? leftChannelAX : rightChannelAX;
 
-                    const rackBXCenter = rackBCoords.x + rackBCoords.w / 2;
                     const leftChannelBX = rackBCoords.x + 16;
                     const rightChannelBX = rackBCoords.x + rackBCoords.w - 16;
 

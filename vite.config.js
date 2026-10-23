@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import fs from 'fs'
 import path from 'path'
+import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Custom plugin to serve and handle bug records in a shared folder
 const bugTrackerPlugin = () => {
@@ -36,7 +40,7 @@ const bugTrackerPlugin = () => {
         const data = fs.readFileSync(bugsFilePath, 'utf-8');
         res.statusCode = 200;
         res.end(data);
-      } catch (err) {
+      } catch {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: 'Failed to read bugs list' }));
       }
@@ -51,7 +55,7 @@ const bugTrackerPlugin = () => {
           fs.writeFileSync(bugsFilePath, JSON.stringify(parsed, null, 2), 'utf-8');
           res.statusCode = 200;
           res.end(JSON.stringify({ success: true, data: parsed }));
-        } catch (err) {
+        } catch {
           res.statusCode = 400;
           res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
         }

@@ -90,6 +90,7 @@ const IssueTrackerModal = () => {
     // Load bugs when modal opens
     useEffect(() => {
         if (isBugTrackerOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchBugs();
         }
     }, [isBugTrackerOpen]);

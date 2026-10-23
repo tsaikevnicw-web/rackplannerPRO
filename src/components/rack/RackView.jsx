@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES, U_HEIGHT, DEFAULT_RACK_U_COUNT } from '../../utils/constants';
-import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
+import { getIconByType, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getPcieSlotInfo, checkHighGravityWarning, getDeviceWeight, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
 import { useRackInteractions } from '../../hooks/useRackInteractions';
 import { Droplets, Zap, LayoutGrid, Settings, ShieldAlert, Eye, Thermometer, Fan, Server } from 'lucide-react';
 
@@ -100,7 +100,7 @@ const getInfraTheme = (type) => {
 
 const RackView = ({ racksToRender }) => {
     const { 
-        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showCables, showHeatmap, drawing, setDrawing, connectedPortsSet, generateId, handleDisconnectPort,
+        devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, showHeatmap, drawing, setDrawing, connectedPortsSet, handleDisconnectPort,
         projectInfo
     } = useRackPlanner();
     
@@ -420,7 +420,7 @@ const RackView = ({ racksToRender }) => {
                         {Array.from({ length: rackMaxU }).map((_, idx) => {
                             const uNum = rackMaxU - idx;
                             return (
-                                <div key={uNum} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, uNum, rack.id)} className="absolute w-full border-b border-slate-800/30 flex items-center group" style={{ height: U_HEIGHT, top: (rackMaxU - uNum) * U_HEIGHT, zIndex: 1 }}>
+                                <div key={uNum} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, uNum, rack.id, rackMaxU)} className="absolute w-full border-b border-slate-800/30 flex items-center group" style={{ height: U_HEIGHT, top: (rackMaxU - uNum) * U_HEIGHT, zIndex: 1 }}>
                                     <div className="absolute -left-6 text-[10px] font-mono text-slate-500 w-5 text-right select-none z-20 font-bold">{uNum}</div>
                                     <div className="absolute -right-6 text-[10px] font-mono text-slate-500 w-5 text-left select-none z-20 font-bold">{uNum}</div>
                                     <div className="hidden group-hover:block absolute left-8 right-8 h-full bg-blue-500/10 border border-blue-500/30 z-0 backdrop-blur-[1px]"></div>
@@ -437,13 +437,9 @@ const RackView = ({ racksToRender }) => {
                             );
                             const Icon = getIconByType(dev.type);
                             const tStyle = THEME_STYLES[dev.theme] || THEME_STYLES.slate;
-                            const nic1Count = getNicCount(dev, 'ns_nic_1');
-                            const nic2Count = getNicCount(dev, 'ns_nic_2');
                             const ocpCount = getNicCount(dev, 'ocp');
                             const portCount = getSwitchPortCount(dev);
 
-                            const cx8NetworkType = dev.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
-                            const cx8ActiveColor = cx8NetworkType === 'Ethernet' ? 'bg-green-500 border-green-300 shadow-[0_0_8px_#22c55e]' : 'bg-orange-500 border-orange-300 shadow-[0_0_8px_#f97316]';
                             const superNicMgtCount = getNicCount(dev, 'super_nic_mgt');
 
                             const isHighGravity = checkHighGravityWarning(dev, rack);
@@ -1013,7 +1009,6 @@ const RackView = ({ racksToRender }) => {
                                                     : "w-2.5 h-2.5 shrink-0";
                                                 const isMsft = projectInfo?.designType === 'msft';
                                                 const bmcTitle = isMsft ? 'MGMT' : 'BMC';
-                                                const portPrefix = customNet?.portName || 'Port';
 
                                                 return (
                                                     <div className="flex items-center justify-end gap-3 border-l border-white/20 pl-3 shrink-0 h-full">

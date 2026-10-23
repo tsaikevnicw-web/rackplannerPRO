@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
-import { getServerCategory, getFabricGroup, getHighDensityNodes, getNicCount, getSwitchPortCount, formatRemotePort } from '../../utils/helpers';
+import { getServerCategory, getHighDensityNodes, getNicCount, getSwitchPortCount } from '../../utils/helpers';
 import { getMsftRackSubItems, getMsftDeviceSubItems } from '../../utils/msftBomConfig';
 import { generateProjectCableCutSheet } from '../../utils/cableCalculator';
 
@@ -15,8 +15,6 @@ const PrintLayout = ({ isForDownload = false }) => {
         if (a.rackId !== b.rackId) return a.rackId.localeCompare(b.rackId);
         return b.startU - a.startU;
     });
-
-    const formatRemotePortPrint = formatRemotePort;
 
     const getDeviceSpecsSummary = (dev) => {
         if (!dev) return '-';

@@ -132,7 +132,7 @@ export default function SystemTour({ isOpen, onClose }) {
     const [targetRect, setTargetRect] = useState(null);
 
     const { 
-        devices, setDevices, racks, setActiveRackId, 
+        devices, setDevices, setActiveRackId, 
         setSelectedId, setSelectedIds,
         setIsFileMenuOpen
     } = useRackPlanner();
@@ -165,7 +165,7 @@ export default function SystemTour({ isOpen, onClose }) {
             setIsFileMenuOpen(false);
             setTargetRect(null);
         }
-    }, [isOpen]);
+    }, [isOpen, setActiveRackId, setDevices, setIsFileMenuOpen]);
 
     // Handle step transitions and specific step setup
     useEffect(() => {
@@ -202,6 +202,7 @@ export default function SystemTour({ isOpen, onClose }) {
                 setSelectedIds([]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, currentStep, step.id]);
 
     // Measure target element position with generous padding for high visibility
@@ -279,6 +280,7 @@ export default function SystemTour({ isOpen, onClose }) {
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('scroll', handleResize, true);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStep, isOpen]);
 
     const handleNext = () => {

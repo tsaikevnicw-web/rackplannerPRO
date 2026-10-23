@@ -3,6 +3,21 @@ import { useRackData } from '../hooks/useRackData';
 import { useExport } from '../hooks/useExport';
 
 const RackPlannerContext = createContext({});
+const AUTOSAVE_STORAGE_KEY = 'rackplanner_pro_autosave_v1';
+
+const loadSavedProjectState = () => {
+    try {
+        const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.racks) && Array.isArray(parsed.devices)) {
+            return parsed;
+        }
+    } catch {
+        // ignore corrupted localStorage data
+    }
+    return null;
+};
 
 export const RackPlannerProvider = ({ children }) => {
     // Refs
@@ -11,20 +26,24 @@ export const RackPlannerProvider = ({ children }) => {
     const fileInputRef = useRef(null);
     const alertModalRef = useRef(null);
 
+    const [savedInitial] = useState(() => loadSavedProjectState());
+
     // Context Hooks Data
     const { 
         racks, setRacks, devices, setDevices, connectedPortsSet, generateId, 
-        handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, 
+        handleUpdateRack, handleUpdateDevice, handleBatchUpdateDevices, handleConnectionChange, handleDisconnectPort, 
         handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect, handleApplyRATemplate 
-    } = useRackData(alertModalRef);
+    } = useRackData(alertModalRef, savedInitial?.racks, savedInitial?.devices);
 
     // UI States
-    const [activeRackId, setActiveRackId] = useState('rack-1');
+    const [activeRackId, setActiveRackId] = useState(() => savedInitial?.activeRackId || savedInitial?.racks?.[0]?.id || 'rack-1');
     const [viewMode, setViewMode] = useState('single');
-    const [containers, setContainers] = useState([
-        { id: 'container-1', name: '貨櫃-A', type: '40ft', powerLimit: 500000, weightLimit: 30000, pueBase: 1.15 }
-    ]);
-    const [projectInfo, setProjectInfo] = useState({
+    const [containers, setContainers] = useState(() => (
+        Array.isArray(savedInitial?.containers) && savedInitial.containers.length > 0
+            ? savedInitial.containers
+            : [{ id: 'container-1', name: '貨櫃-A', type: '40ft', powerLimit: 500000, weightLimit: 30000, pueBase: 1.15 }]
+    ));
+    const [projectInfo, setProjectInfo] = useState(() => ({
         partners: [''],
         designType: 'common',
         isCdcProject: false,
@@ -32,14 +51,15 @@ export const RackPlannerProvider = ({ children }) => {
         deliveryDate: '',
         projectManager: '',
         clientName: '',
-        notes: ''
-    });
+        notes: '',
+        ...(savedInitial?.projectInfo || {})
+    }));
     const [selectedIds, setSelectedIds] = useState([]);
     const selectedId = selectedIds.length > 0 ? selectedIds[0] : null;
     const setSelectedId = useCallback((id) => setSelectedIds(id ? [id] : []), []);
     const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
-    const [projectName, setProjectName] = useState('未命名專案');
-    const [uiTheme, setUiTheme] = useState('dusk');
+    const [projectName, setProjectName] = useState(() => savedInitial?.projectName || '未命名專案');
+    const [uiTheme, setUiTheme] = useState(() => savedInitial?.uiTheme || 'dusk');
 
     useEffect(() => {
         const previewRoot = document.querySelector('.award-preview-root');
@@ -48,16 +68,31 @@ export const RackPlannerProvider = ({ children }) => {
         }
     }, [uiTheme]);
 
-    // History (Undo / Redo) States
-    const [historyState, setHistoryState] = useState({ history: [], index: -1 });
-    const isUndoRedoAction = useRef(false);
-
+    // Auto-save project state to localStorage to prevent accidental refresh data loss
     useEffect(() => {
-        setHistoryState({
-            history: [{ racks, devices }],
-            index: 0
-        });
-    }, []);
+        try {
+            const payload = {
+                projectName,
+                projectInfo,
+                containers,
+                racks,
+                devices,
+                activeRackId,
+                uiTheme,
+                updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+        } catch {
+            // ignore quota exceeded errors
+        }
+    }, [projectName, projectInfo, containers, racks, devices, activeRackId, uiTheme]);
+
+    // History (Undo / Redo) States
+    const [historyState, setHistoryState] = useState(() => ({
+        history: [{ racks, devices, containers }],
+        index: 0
+    }));
+    const isUndoRedoAction = useRef(false);
 
     useEffect(() => {
         if (isUndoRedoAction.current) {
@@ -68,16 +103,16 @@ export const RackPlannerProvider = ({ children }) => {
         setHistoryState(prev => {
             if (prev.index === -1) {
                 return {
-                    history: [{ racks, devices }],
+                    history: [{ racks, devices, containers }],
                     index: 0
                 };
             }
             const sliced = prev.history.slice(0, prev.index + 1);
             const last = sliced[sliced.length - 1];
-            if (last && last.racks === racks && last.devices === devices) {
+            if (last && last.racks === racks && last.devices === devices && last.containers === containers) {
                 return prev;
             }
-            const newHistory = [...sliced, { racks, devices }];
+            const newHistory = [...sliced, { racks, devices, containers }];
             if (newHistory.length > 50) {
                 newHistory.shift();
             }
@@ -86,7 +121,7 @@ export const RackPlannerProvider = ({ children }) => {
                 index: newHistory.length - 1
             };
         });
-    }, [racks, devices]);
+    }, [racks, devices, containers]);
 
     // 當切換到單櫃編輯模式時，若目前選中的是基礎設施櫃 (Cooling, UPS 等)，自動切換至第一個 IT 機櫃 (General 或 ORv3)
     useEffect(() => {
@@ -109,6 +144,7 @@ export const RackPlannerProvider = ({ children }) => {
             const snapshot = historyState.history[nextIdx];
             setRacks(snapshot.racks);
             setDevices(snapshot.devices);
+            if (snapshot.containers) setContainers(snapshot.containers);
             setHistoryState(prev => ({ ...prev, index: nextIdx }));
         }
     }, [historyState, setRacks, setDevices]);
@@ -120,6 +156,7 @@ export const RackPlannerProvider = ({ children }) => {
             const snapshot = historyState.history[nextIdx];
             setRacks(snapshot.racks);
             setDevices(snapshot.devices);
+            if (snapshot.containers) setContainers(snapshot.containers);
             setHistoryState(prev => ({ ...prev, index: nextIdx }));
         }
     }, [historyState, setRacks, setDevices]);
@@ -229,7 +266,7 @@ export const RackPlannerProvider = ({ children }) => {
         isFitToScreen, setIsFitToScreen, scaleFactor, setScaleFactor,
         isSidebarOpen, setIsSidebarOpen, layoutSize, setLayoutSize,
         rackContainerRef, mainAreaRef, fileInputRef,
-        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
+        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleBatchUpdateDevices, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
         handleApplyRATemplate,
         showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
         handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
@@ -243,7 +280,7 @@ export const RackPlannerProvider = ({ children }) => {
         clearDeviceConfirm, deleteDeviceConfirm, raModalState,
         isUserManualOpen, isBugTrackerOpen, isNetworkCablingOpen, isGeneratingCablePDF, isTourOpen,
         isFitToScreen, scaleFactor, isSidebarOpen, layoutSize,
-        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
+        connectedPortsSet, generateId, handleUpdateRack, handleUpdateDevice, handleBatchUpdateDevices, handleConnectionChange, handleDisconnectPort, handleHardwareSpecChange, handleAutoConnectGroup, handleHAAutoConnect,
         handleApplyRATemplate,
         showAlert, handleSaveData, handleExportBOM, handleExportCableRouting, handleExportImage, handleFileChange,
         handlePrintPDF, rackScreenshots, topoScreenshot, isGeneratingPDF, printTimestamp
@@ -256,4 +293,5 @@ export const RackPlannerProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRackPlanner = () => useContext(RackPlannerContext);

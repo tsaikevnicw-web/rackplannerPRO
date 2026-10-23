@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { useRackPlanner } from '../../context/RackPlannerContext';
 import { THEME_STYLES } from '../../utils/constants';
-import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getHighDensitySize, getAIServerSize, getPcieSlotInfo, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
+import { getIconByType, getGroupedDevices, getNicCount, getSwitchPortCount, getSwitchSubPortCount, getSwitchPortLayout, getSwitchPortNumber, getServerCategory, getServerConfig, getHighDensityNodes, getPcieSlotInfo, getCustomNetworkPortLabel, parseTargetConnection } from '../../utils/helpers';
 import { ChevronRight, ChevronDown, Minimize2, Maximize2 } from 'lucide-react';
 
 const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epDevs }) => {
-    const { racks, devices, selectedId, setSelectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort, projectInfo } = useRackPlanner();
+    const { racks, devices, selectedId, selectedIds, setSelectedIds, deviceSearchTerm, expandedNetGroups, setExpandedNetGroups, connectedPortsSet, drawing, setDrawing, handleDisconnectPort, projectInfo } = useRackPlanner();
 
     const connectedToSelectedSet = useMemo(() => {
         if (!selectedId || (selectedIds && selectedIds.length > 1)) return null;
@@ -134,7 +134,7 @@ const NetworkTopology = ({ nsSpineDevs, nsLeafDevs, ewSpineDevs, ewLeafDevs, epD
             const occupiedPorts = new Set();
             devices.forEach(d => {
                 if (d.connections) {
-                    Object.entries(d.connections).forEach(([key, tg]) => {
+                    Object.values(d.connections).forEach(tg => {
                         if (tg && tg.startsWith(`${dev.id}-port-`)) {
                             occupiedPorts.add(tg);
                         }

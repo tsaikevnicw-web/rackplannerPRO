@@ -29,7 +29,7 @@ const AppContent = () => {
         clearDeviceConfirm, setClearDeviceConfirm, deleteDeviceConfirm, setDeleteDeviceConfirm, setDevices, setRacks, setActiveRackId, setSelectedId,
         selectedId, selectedIds, setSelectedIds, undo, redo,
         generateId, showAlert,
-        raModalState, setRaModalState, handleApplyRATemplate, setViewMode, isGeneratingPDF, isGeneratingCablePDF, containers,
+        raModalState, setRaModalState, setViewMode, isGeneratingPDF, isGeneratingCablePDF, containers,
         projectInfo, hideNonItCabinets, isTourOpen, setIsTourOpen, uiTheme
     } = useRackPlanner();
 
@@ -71,7 +71,7 @@ const AppContent = () => {
 
         resizeObserver.observe(mainAreaRef.current);
         return () => resizeObserver.disconnect();
-    }, [viewMode, racks.length, isFitToScreen]);
+    }, [viewMode, racks.length, isFitToScreen, mainAreaRef, rackContainerRef, setLayoutSize, setScaleFactor]);
 
     // 若視圖模式切換 setViewMode ─ clipboardRef 用于儲存被複製的設備
     const clipboardRef = useRef(null);

@@ -6,8 +6,8 @@ import { LayoutDashboard, X, Trash2, Info, Copy, Unplug, Cpu, Network, Link2, Se
 
 const RightPanel = () => {
     const { 
-        racks, devices, setDevices, selectedId, setSelectedId, selectedIds, setSelectedIds, handleUpdateRack, handleUpdateDevice, handleHardwareSpecChange,
-        handleConnectionChange, handleAutoConnectGroup, handleHAAutoConnect, setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert,
+        racks, devices, setDevices, selectedId, setSelectedId, selectedIds, setSelectedIds, handleUpdateRack, handleUpdateDevice, handleBatchUpdateDevices, handleHardwareSpecChange,
+        setDeleteRackConfirm, setClearDeviceConfirm, setDeleteDeviceConfirm, showAlert,
         projectInfo
     } = useRackPlanner();
 
@@ -66,15 +66,6 @@ const RightPanel = () => {
         );
     };
     
-    const availableSwitches = devices.filter(d => (d.type || '').startsWith('Switch') || d.type === 'Router')
-        .sort((a, b) => {
-            if (a.rackId !== b.rackId) return a.rackId.localeCompare(b.rackId);
-            return (a.customName || '').localeCompare(b.customName || '');
-        }).map(sw => {
-            const swRack = racks.find(r => r.id === sw.rackId);
-            return { ...sw, rackName: swRack ? swRack.name : 'UnknownRack', portCount: getSwitchPortCount(sw) };
-        });
-
     /* ── Input / Select shared style ── */
     const inputCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner placeholder:text-slate-600";
     const selectCls = "w-full bg-slate-900/80 border border-slate-700/60 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 transition-all shadow-inner";
@@ -82,26 +73,20 @@ const RightPanel = () => {
 
     // ── 批次編輯面板 ──
     if (selectedIds.length > 1) {
-        const selectedDevices = devices.filter(d => selectedIds.includes(d.id));
-        
         const handleBatchUpdate = (fields) => {
-            selectedDevices.forEach(dev => {
-                handleUpdateDevice(dev.id, fields);
-            });
+            handleBatchUpdateDevices(selectedIds, fields);
         };
 
         const handleBatchCoolingUpdate = (field, value) => {
-            selectedDevices.forEach(dev => {
-                handleUpdateDevice(dev.id, {
-                    hardwareSpecs: {
-                        ...(dev.hardwareSpecs || {}),
-                        cooling: {
-                            ...(dev.hardwareSpecs?.cooling || {}),
-                            [field]: value
-                        }
+            handleBatchUpdateDevices(selectedIds, (dev) => ({
+                hardwareSpecs: {
+                    ...(dev.hardwareSpecs || {}),
+                    cooling: {
+                        ...(dev.hardwareSpecs?.cooling || {}),
+                        [field]: value
                     }
-                });
-            });
+                }
+            }));
         };
 
         return (
@@ -121,7 +106,23 @@ const RightPanel = () => {
                 <div className="flex gap-3 mb-6">
                     <button onClick={() => {
                         if (confirm(`確定要刪除這 ${selectedIds.length} 個設備嗎？`)) {
-                            setDevices(prev => prev.filter(d => !selectedIds.includes(d.id)));
+                            const removedSet = new Set(selectedIds);
+                            setDevices(prev => prev
+                                .filter(d => !removedSet.has(d.id))
+                                .map(d => {
+                                    if (!d.connections) return d;
+                                    const newConns = { ...d.connections };
+                                    let changed = false;
+                                    Object.keys(newConns).forEach(k => {
+                                        const target = newConns[k];
+                                        if (target && selectedIds.some(id => target.startsWith(id + '-'))) {
+                                            delete newConns[k];
+                                            changed = true;
+                                        }
+                                    });
+                                    return changed ? { ...d, connections: newConns } : d;
+                                })
+                            );
                             setSelectedIds([]);
                         }
                     }} className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 py-2.5 rounded-xl transition-colors text-sm font-medium border border-rose-500/25 shadow-sm">
@@ -163,11 +164,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), ew_nic: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableSides: { ...(dev.anchorCableSides || {}), ew_nic: val }
+                                                }));
                                                 showAlert(`已批次修改 EW NIC 走線方向`, '成功', 'success');
                                             }
                                         }} 
@@ -181,11 +181,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), ew_nic: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableColors: { ...(dev.anchorCableColors || {}), ew_nic: val }
+                                                }));
                                                 showAlert(`已批次修改 EW NIC 線路顏色`, '成功', 'success');
                                             }
                                         }} 
@@ -212,11 +211,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), pcie_slot: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableSides: { ...(dev.anchorCableSides || {}), pcie_slot: val }
+                                                }));
                                                 showAlert(`已批次修改 PCIe Slot 走線方向`, '成功', 'success');
                                             }
                                         }} 
@@ -230,11 +228,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), pcie_slot: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableColors: { ...(dev.anchorCableColors || {}), pcie_slot: val }
+                                                }));
                                                 showAlert(`已批次修改 PCIe Slot 線路顏色`, '成功', 'success');
                                             }
                                         }} 
@@ -261,11 +258,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), s_nic_m: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableSides: { ...(dev.anchorCableSides || {}), s_nic_m: val }
+                                                }));
                                                 showAlert(`已批次修改 S-NIC-M 走線方向`, '成功', 'success');
                                             }
                                         }} 
@@ -279,11 +275,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), s_nic_m: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableColors: { ...(dev.anchorCableColors || {}), s_nic_m: val }
+                                                }));
                                                 showAlert(`已批次修改 S-NIC-M 線路顏色`, '成功', 'success');
                                             }
                                         }} 
@@ -310,11 +305,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableSides: { ...(dev.anchorCableSides || {}), bmc: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableSides: { ...(dev.anchorCableSides || {}), bmc: val }
+                                                }));
                                                 showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 走線方向`, '成功', 'success');
                                             }
                                         }} 
@@ -328,11 +322,10 @@ const RightPanel = () => {
                                         value="" 
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                selectedDevices.forEach(dev => {
-                                                    handleUpdateDevice(dev.id, {
-                                                        anchorCableColors: { ...(dev.anchorCableColors || {}), bmc: e.target.value }
-                                                    });
-                                                });
+                                                const val = e.target.value;
+                                                handleBatchUpdateDevices(selectedIds, (dev) => ({
+                                                    anchorCableColors: { ...(dev.anchorCableColors || {}), bmc: val }
+                                                }));
                                                 showAlert(`已批次修改 ${projectInfo?.designType === 'msft' ? 'MGMT' : 'BMC'} 線路顏色`, '成功', 'success');
                                             }
                                         }} 
@@ -735,12 +728,9 @@ const RightPanel = () => {
         );
     }
 
-    const SelectedIcon = getIconByType(selectedDevice.type);
     const tStyle = THEME_STYLES[selectedDevice.theme] || THEME_STYLES.slate;
     const isSwitchOrRouter = (selectedDevice.type || '').startsWith('Switch') || selectedDevice.type === 'Router';
 
-    const nic1Count = getNicCount(selectedDevice, 'ns_nic_1');
-    const nic2Count = getNicCount(selectedDevice, 'ns_nic_2');
     const superNicMgtCount = getNicCount(selectedDevice, 'super_nic_mgt', projectInfo?.designType);
     const cx8NetworkType = selectedDevice.hardwareSpecs?.cx8NetworkType?.type || 'Ethernet';
 
@@ -769,7 +759,7 @@ const RightPanel = () => {
                 {/* Device preview card */}
                 <div className={`p-4 rounded-xl ${tStyle.bg} border ${tStyle.border} flex items-center gap-4 shadow-lg relative overflow-hidden`}>
                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${tStyle.led} rounded-l-xl`}></div>
-                    {SelectedIcon && <SelectedIcon className={`w-9 h-9 ${tStyle.text} drop-shadow-lg shrink-0`} />}
+                    {React.createElement(getIconByType(selectedDevice.type), { className: `w-9 h-9 ${tStyle.text} drop-shadow-lg shrink-0` })}
                     <div className="relative z-10 min-w-0">
                         <div className="text-white font-bold text-base truncate">{selectedDevice.customName}</div>
                         <div className="text-slate-400 text-xs font-mono mt-0.5">{selectedDevice.type === 'SideCDU' ? 'Full Rack' : `${selectedDevice.size}U`} · {selectedDevice.type}</div>
@@ -1549,7 +1539,7 @@ const RightPanel = () => {
                                                  const pciePortsList = [];
                                                  nodes.forEach((nodeKey, nIdx) => {
                                                      for (let i = 1; i <= pcieSlotQty; i++) {
-                                                         const { model, qty: slotPortCount } = getPcieSlotInfo(selectedDevice, i, nodeKey);
+                                                         const { qty: slotPortCount } = getPcieSlotInfo(selectedDevice, i, nodeKey);
                                                          if (slotPortCount > 0) {
                                                              for (let p = 1; p <= slotPortCount; p++) {
                                                                  const portKey = nodeKey ? `pcie_slot_${i}_${nodeKey}-${p}` : `pcie_slot_${i}-${p}`;
@@ -2554,7 +2544,7 @@ const RightPanel = () => {
                     const occupiedPorts = new Set();
                     devices.forEach(d => {
                         if (d.connections) {
-                            Object.entries(d.connections).forEach(([key, tg]) => {
+                            Object.values(d.connections).forEach(tg => {
                                 if (tg && (tg.startsWith(`${selectedDevice.id}-port-`) || tg.startsWith(`${selectedDevice.id}-subport-`))) {
                                     occupiedPorts.add(tg);
                                 }
